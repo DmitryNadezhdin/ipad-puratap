@@ -36,8 +36,9 @@ namespace Application
 					Tabs.SigningNav.PopToRootViewController (false);
 					Tabs.SigningNav.PushViewController (Tabs.SignPre, true);
 				}
-				else
+				else {
 					Tabs.SelectedViewController = Tabs.ViewControllers[Tabs.LastSelectedTab];
+				}
 			};
 			
 			GoForward = delegate {

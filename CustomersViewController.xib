@@ -768,7 +768,7 @@
 						<int key="IBUIContentMode">7</int>
 						<bool key="IBUIUserInteractionEnabled">NO</bool>
 						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<string key="IBUIText">To collect</string>
+						<string key="IBUIText">Price</string>
 						<reference key="IBUITextColor" ref="386540373"/>
 						<nil key="IBUIHighlightedColor"/>
 						<int key="IBUIBaselineAdjustment">1</int>
@@ -981,7 +981,7 @@
 						<string key="NSFrame">{{355, 465}, {328, 141}}</string>
 						<reference key="NSSuperview" ref="766721923"/>
 						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView"/>
+						<reference key="NSNextKeyView" ref="909463273"/>
 						<string key="NSReuseIdentifierKey">_NS:640</string>
 						<object class="NSColor" key="IBUIBackgroundColor">
 							<int key="NSColorSpace">1</int>

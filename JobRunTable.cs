@@ -24,7 +24,7 @@ namespace Application
 		public JobRunTableSource _ds { get; set; }
 		public DetailedTabs _tabs { get; set; }
 		public bool HighlightedMode {
-			get { return _highlightedMode; }
+			get { return _highlightedMode; }	
 			set { _highlightedMode = value; }
 		}
 		
@@ -62,6 +62,8 @@ namespace Application
 			else return new JobRunTable(UITableViewStyle.Grouped);
 		}
 		*/
+
+
 
 		private List<Customer> _customers;
 		public List<Customer> Customers { get { return _customers;  } set { _customers = value; } }
@@ -154,7 +156,7 @@ namespace Application
 					// if it exists, the user should have added to his job cluster, show a message explaining that
 					Customer c = new Customer(result, "Mr.", "FirstName", "LastName", "Address", "Suburb", 
 									                          					String.Format("({0}){1}", "000", "000-0000"), 
-									                          					String.Format("({0}){1}", "000", "000-0000"), DateTime.Now, "", "", "", true);
+									                          					String.Format("({0}){1}", "000", "000-0000"), DateTime.Now, "", "", 0, "", true);
 					c.JobHistory = new List<HistoryJob>();
 					c.CustomerMemos = new List<Memo>();
 					
@@ -183,7 +185,7 @@ namespace Application
 										c.FallbackPhoneNumber = cust.FallbackPhoneNumber;
 										c.CustomerMemos = cust.CustomerMemos;
 										c.JobHistory = cust.JobHistory;
-
+										c.CompanyID = cust.CompanyID;
 									}
 								}
 								if (! found)
@@ -204,6 +206,7 @@ namespace Application
 											c.FallbackPhoneNumber = cust.FallbackPhoneNumber;
 											c.CustomerMemos = cust.CustomerMemos;
 											c.JobHistory = cust.JobHistory;
+											c.CompanyID = cust.CompanyID;
 										}
 									}
 								}
@@ -339,8 +342,8 @@ namespace Application
 				{
 					connection.Open();
 					var cmd = connection.CreateCommand();
-					cmd.CommandText = "INSERT INTO Wclient (Cusnum, Wcclcde, Wctitle, Wconame, Wcsname, Wcsoname, Wcssname, Wcadd1, Wcadd2, Wcacde, Wcphone, Mobpre, Mobile, Wccoacde, Wccophone) " + 
-													" VALUES ( " + c.CustomerNumber.ToString () +", 'CREATEDONIPAD', \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\" )";
+					cmd.CommandText = "INSERT INTO Wclient (Cusnum, Wcclcde, Wctitle, Wconame, Wcsname, Wcsoname, Wcssname, Wcadd1, Wcadd2, Wcacde, Wcphone, Mobpre, Mobile, Wccoacde, Wccophone, Coi_ID) " + 
+										" VALUES ( " + c.CustomerNumber.ToString () +", 'CREATEDONIPAD', \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", 0 )";
 					// cmd.Parameters.Add ("@CustomerID", DbType.Int32).Value = c.CustomerNumber;
 					cmd.ExecuteNonQuery();		
 				}
@@ -522,7 +525,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				
 				Customer c = new Customer(999999999, "Mr.", "FirstName", "LastName", "Address", "Suburb", 
 								                          					String.Format("({0}){1}", "PhoneAreaCode", "PhoneNumber"), 
-								                          					String.Format("({0}){1}", "MobileCode", "MobileNumber"), DateTime.Now, "", "", "", true); // dummy customer
+								                          					String.Format("({0}){1}", "MobileCode", "MobileNumber"), DateTime.Now, "", "", 0, "", true); // dummy customer
 				_table._customers = new List<Customer> {c};
 				
 				Job j = new Job(999999999, 999999999, 999999999, DateTime.Now, DateTime.Now, 0, DateTime.Now, 0, "", "", "FIL", 0, false, false, "", "");	// dummy job
@@ -595,7 +598,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						string sql = 	"SELECT " +  // "MAX(wsales.wdateins), " +
 											" wclient.cusnum, wctitle, wconame, wcsname, wcomname, " +
 											" wcadd1 || \" \" || wcadd11 as street_address, wcadd2, wcacde||exdigit, wcphone, mobpre, mobile, " +
-											" wcstitle, wcsoname, wcssname, wccoacde, wccophone, tu_done " +
+											" wcstitle, wcsoname, wcssname, wccoacde, wccophone, tu_done, coi_id " +
 											" FROM wclient, pl_recor " + // , wsales " +
 											" WHERE pl_recor.plappdate= " + dbDate +
 												" AND wclient.cusnum=pl_recor.cusnum " +
@@ -612,6 +615,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							{
 								// TODO :: put thorough error handling here (data type checks, default values, etc.)
 								long CustomerNumber = (long)reader["cusnum"];
+								long companyID = (long)reader ["coi_id"];
 								string companyName = (string)reader["wcomname"];
 								string Title = (string)reader["wctitle"];
 								string FirstName = (string)reader["wconame"];
@@ -639,18 +643,23 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, 
 								                          					String.Format("{0} {1}", PhoneAreaCode, PhoneNumber), 
 								                          					String.Format("{0} {1}", MobilePrefix, MobileNumber),
-								                          					lastInstallDate, fbContact, fbPhone, companyName, tubingDone);				
+								                          					lastInstallDate, fbContact, fbPhone, companyID, companyName, tubingDone);				
 								_table._customers.Add(c);
 							}
 							if (! reader.IsClosed) reader.Close ();
 						}
+
+
 						
 						Job j;
 						// Gets today's job details for all customers from PL_RECOR:: IMPLEMENTED reading the child jobs as well
+						// This will ignore manually added jobs
 					
-						sql = " SELECT wsales.specialinstruct, wsales.wplcomment, wsales.contact_name, pl_recor.* " +
+						sql = " SELECT wsales.specialinstruct, wsales.wplcomment, wsales.contact_name, " +
+								" wsales.wsoldprice as sales_price, " +
+								" pl_recor.* " +
 								" FROM pl_recor LEFT OUTER JOIN wsales ON pl_recor.cusnum=wsales.cusnum AND pl_recor.unitnum=wsales.unitnum " +  // getting rid of multiple results from WSALES
-								" WHERE pl_recor.plAppDate = " + dbDate +	// FIXED :: was a hardcoded date, has been replaced by something a bit more flexible
+								" WHERE pl_recor.plAppDate = " + dbDate +		// FIXED :: was a hardcoded date, has been replaced by something a bit more flexible
 									" AND pl_recor.cusnum != 72077 " +			// getting rid of dummy records ( Mr. Puratap )
 									" AND pl_recor.parentnum != -1 " +																																		// FIXED :: we are to get rid of user created jobs 
 									" AND (NOT EXISTS (SELECT booknum FROM pl_recor plr WHERE plr.booknum=pl_recor.parentnum AND plr.parentnum=-1)) " + 	// AND their children here!
@@ -664,6 +673,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							while ( reader.Read () )
 							{
 								// TODO:: put thorough error handling here (data type checks, default values, etc.)
+								// Implemented:: draw price from WSALES for install jobs (to consider deposits later on)
 								long jnum = Convert.ToInt64( (double)reader["booknum"] );
 								long cusnum = (long)reader["cusnum"];
 								long unitnum = (reader["unitnum"] == DBNull.Value) ? 0 : Convert.ToInt64 (reader["unitnum"]);
@@ -676,7 +686,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									jTime = (reader["time"] == DBNull.Value) ? new DateTime(1990, 1, 1) : (DateTime)reader["time"];
 									jDate = (reader["plappdate"] == DBNull.Value) ? new DateTime(1990, 1, 1) : (DateTime)reader["plappdate"];
 								} 
-								catch (Exception e)
+								catch
 								{
 									// Console.WriteLine (e.Message);
 									jTime = new DateTime(1990, 1, 1);
@@ -684,7 +694,14 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								}
 
 								string jType = (string)reader["type"];
-								double money = (double)reader["pay_pl"];
+
+								// if this is an installation type job, this should be SALES_PRICE, deposits will be considered on the payments screen
+								double money = 0;
+								if (jType == "TWI" || jType == "RAI" || jType == "ROOF")
+									money = (double)reader ["sales_price"];
+								else
+									money = (double)reader["pay_pl"];
+
 								DateTime jbOn = (DateTime)reader["timeentered"];
 								long jbBy = (long)reader["repnum"];
 								bool attention = Convert.ToBoolean (reader["attention"]);									
@@ -739,7 +756,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						// Get user created customers
 						sql = 	"SELECT wclient.cusnum, wclient.wcclcde, wcomname, wctitle, wconame, wcsname, " + // used to be :: SELECT DISTINCT
 												" wcadd1, wcadd2, wcacde||exdigit, wcphone, mobpre, mobile,  " +
-												" wcstitle, wcsoname, wcssname, wccoacde, wccophone  " +
+												" wcstitle, wcsoname, wcssname, wccoacde, wccophone, coi_id  " +
 												" FROM wclient, pl_recor " +
 												" WHERE pl_recor.plappdate= " + dbDate +
 												"	AND wclient.cusnum=pl_recor.cusnum  " +
@@ -754,6 +771,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							while (reader.Read () )
 							{
 									long CustomerNumber = (long)reader["cusnum"];
+									long CompanyID = (long)reader["coi_id"];
 									string CompanyName = (reader["wcomname"] != DBNull.Value) ? (string)reader["wcomname"] : "";
 									string Title = (reader["wctitle"] != DBNull.Value)? (string)reader["wctitle"] : "";
 									string FirstName = (reader["wconame"] != DBNull.Value) ? (string)reader["wconame"] : "";
@@ -784,7 +802,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, 
 									                          					String.Format("({0}){1}", PhoneAreaCode, PhoneNumber), 
 									                          					String.Format("({0}){1}", MobilePrefix, MobileNumber),
-									                          					lastInstallDate, fbContact, fbPhone, CompanyName, tubingDone);
+								                          						lastInstallDate, fbContact, fbPhone, CompanyID, CompanyName, tubingDone);
 									
 									if (_table.UserAddedCustomers == null) _table.UserAddedCustomers = new List<Customer> {c};
 									else _table.UserAddedCustomers.Add (c);
@@ -792,7 +810,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							if (! reader.IsClosed) reader.Close();
 						}
 						
-						// Get user added jobs (that were not booked)
+						// Get user added jobs (manually created, were not booked)
 						sql = " SELECT pl_recor.*, " +
 										" '' as contact_name, '' as attention_reason " +
 									" FROM pl_recor " +
@@ -930,8 +948,104 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					} // END using dbCommand
 				}	// END using dbConnection
 
+				this.ReadCustomerDeposits (dbDate, databasePath);
+				this.ReadCustomerCharges (dbDate, databasePath);
+
 				JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB (); // just in case the employee mode changes, they'd need to reload job types so that the fees are calculated correctly
 				// dbConnection.Close (); redundant since "using" pattern is implemented
+			}
+
+			public void ReadCustomerCharges( string dbDate, string databasePath)
+			{
+				using (var dbConnection = new SqliteConnection("Data Source="+databasePath))
+				{
+					dbConnection.Open ();
+					using (var cmd = dbConnection.CreateCommand () )
+					{
+						// Get the InvoiceFeesWaived flag for each customer
+						string sql = "Select CusNum, Coi_No_Fees FROM WCLIENT, COI WHERE COI.COI_ID = WCLIENT.COI_ID";
+						cmd.CommandText = sql;
+						using (var reader = cmd.ExecuteReader ()) {
+							while (reader.Read ()) {
+								foreach (Customer c in _table.Customers) {
+									if (c.CustomerNumber == (long)reader["CusNum"]) {
+										c.InvoiceChargesWaived = Convert.ToBoolean ((byte)reader["Coi_No_Fees"]);
+									}
+								}
+							}
+						}
+
+						// Get client charges from CHARGES table
+						sql = " SELECT Cust_OID, " +
+							" SUM(Amount) as Charges " +
+								" FROM CHARGES " +
+								" GROUP BY Cust_OID";
+						cmd.CommandText = sql;
+						using (var reader = cmd.ExecuteReader())
+						{
+							while (reader.Read () )
+							{
+								foreach(Customer c in _table.Customers){
+									if (c.CustomerNumber == (long)reader ["Cust_OID"] && !c.InvoiceChargesWaived) {
+										c.ChargeAmount = (double)reader ["Charges"];
+									}
+								}
+							}
+						}
+					} // end using dbCommand
+				} // end using dbConnection
+			}
+
+			public void ReadCustomerDeposits(string dbDate, string databasePath)
+			{
+				using (var dbConnection = new SqliteConnection("Data Source="+databasePath))
+				{
+					dbConnection.Open ();
+					using (var cmd = dbConnection.CreateCommand () )
+					{
+						// Get client deposits from JOURNAL: exclude old deposits, deduct SUM(debit) from SUM(credit)
+						string sql = " SELECT CusNum, " +
+										" SUM(Credit) - SUM(Debit) as Deposit " +
+										" FROM JOURNAL " +
+										" WHERE Journal.AccNum = 2.1300 " +
+											" AND Journal.jDate > DATE('now', '-12 months') " +
+											" AND Journal.jDesc != 'Deposit used on iPad' " +
+									" GROUP BY CusNum";
+						cmd.CommandText = sql;
+						using (var reader = cmd.ExecuteReader())
+						{
+							while (reader.Read () )
+							{
+								foreach(Customer c in _table.Customers){
+									if (c.CustomerNumber == (long)reader ["CusNum"]) {
+										c.DepositAmount = (double)reader ["Deposit"];
+									}
+								}
+							}
+						}
+
+						sql = " SELECT CusNum, " +
+							" SUM(Debit) as DepositUsed " +
+								" FROM JOURNAL " +
+								" WHERE Journal.AccNum = 2.1300 " +
+								" AND Journal.jDate = " + dbDate +
+								" AND Journal.jDesc = 'Deposit used on iPad' " +
+								" GROUP BY CusNum";
+						cmd.CommandText = sql;
+						using (var reader = cmd.ExecuteReader ()) {
+							while (reader.Read ()) {
+								foreach (Customer c in _table.Customers) {
+									if (c.CustomerNumber == (long)reader ["CusNum"]) {
+										c.DepositUsed = (double)reader ["DepositUsed"];
+										c.DepositAmount = c.DepositAmount - c.DepositUsed;
+									}
+								}
+							}
+						}
+
+
+					} // end using dbCommand
+				} // end using dbConnection
 			}
 
 			public List<string> GetRunDatesFromDB(string dbPath)
@@ -1484,8 +1598,15 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public long CustomerNumber;
 
 		public bool isCompany { get; set; }
+		public long CompanyID { get; set; }
 		public string CompanyName { get; set; }
-		public string AttentionReason { get; set; }
+
+		public bool InvoiceChargesWaived { get; set; }
+		public string ChargeType { get; set; }
+		public double ChargeAmount { get; set; }
+
+		public double DepositAmount { get; set; }
+		public double DepositUsed { get; set; }
 
 		public string Title { get; set; }
 		public string FirstName { get; set; }
@@ -1496,6 +1617,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public string MobileNumber { get; set; }
 
 		public bool TubingUpgradeDone { get; set; }
+		public string AttentionReason { get; set; }
 
 		public DateTime LastInstallDate 
 		{ 
@@ -1522,14 +1644,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public int PhotosTakenToday; // defaults to 0
 
 		public List<string> FilesToPrint { get; set; }
-		
-		// This couuld be implemented later on
-		/*
-		private string _phoneAreaCode;
-		private string _phoneNumber;
-		private string _mobilePrefix;
-		private string _mobileNumber;
-		*/
+
 		
 		public string GetStreet()
 		{
@@ -1544,7 +1659,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		                string address, string suburb, // postcode ? probably unnecessary
 		                string phonenumber, string mobilenumber, 
 		                DateTime lastinstalldate, string fbcontact, 
-		                string fbphone, string companyName, bool tubingDone)
+		                string fbphone, long companyID, string companyName, bool tubingDone)
 		{
 			this.HighLighted = false;
 			this.CustomerNumber = customernumber;
@@ -1558,11 +1673,14 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			// this.LastInstallDate = lastinstalldate;
 			this.FallbackContact = fbcontact;
 			this.FallbackPhoneNumber = fbphone;
+			this.CompanyID = companyID;
 			this.CompanyName = companyName;
 			this.isCompany = (companyName != "");
 			this.PhotosTakenToday = 0;
 			this.TubingUpgradeDone = tubingDone;
 			this.FilesToPrint = new List<string>();
+			this.DepositAmount = 0;
+			this.DepositUsed = 0;
 
 
 			if (this.FirstName != "FirstName")	// if this condition is true, it is either a dummy customer or a newly created one by user
@@ -1668,7 +1786,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									this._customerMemos.Add (m);
 								}
 								if (! reader.IsClosed) reader.Close ();
-							}
+							} // end using reader
 						} // end using command
 					} // end using connection
 				} // end File.Exists( dbPath )
@@ -1684,6 +1802,16 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 			} // end Customer's FirstName != "FirstName" i. e. this is not a dummy record
 		} // end constructor Customer()
+
+		public bool CheckIfInvoiceChargesWaived()
+		{
+			// TODO :: determine if the InvoiceCharges are Waived
+
+			// open database connection, read COI table with COI_ID = Customer.COI_ID
+			// get the value of InvoiceFeesWaived field
+
+			return false;
+		}
 	} // end class Customer
 	
 	public class HistoryJob
@@ -2040,23 +2168,24 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			bool found=false;
 			if (JobRunTable.JobTypes == null) 
 				JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB();
-			if (JobRunTable.JobTypes != null)  
-				foreach(JobType jt in JobRunTable.JobTypes)
-			{
-				if ( jt.Code == code || 
-				    ( code == "SIN" && jt.Code == "TWI") || 
-				    ( code == "MIL" && jt.Code == "FIL" ) )
-				{	// the above is ugly and unacceptable, should be rewritten
-					found = true;
-					this.Code = jt.Code;
-					this.Description = jt.Description;
-					this.RetailPrice = jt.RetailPrice;
-					this.LoyaltyPrice = jt.LoyaltyPrice;
-					this.EmployeeFee = jt.EmployeeFee;
-					this.CanDo = jt.CanDo;
-					break;
+
+			if (JobRunTable.JobTypes != null) {
+				foreach (JobType jt in JobRunTable.JobTypes) {
+					if (jt.Code == code || 
+						( (code == "SIN" || code == "RAI" || code == "ROOF") && jt.Code == "TWI") || 
+						(code == "MIL" && jt.Code == "FIL")) {	// the above is ugly and unacceptable, should be rewritten
+						found = true;
+						this.Code = jt.Code;
+						this.Description = jt.Description;
+						this.RetailPrice = jt.RetailPrice;
+						this.LoyaltyPrice = jt.LoyaltyPrice;
+						this.EmployeeFee = jt.EmployeeFee;
+						this.CanDo = jt.CanDo;
+						break;
+					}
 				}
 			}
+
 			if (! found)
 			{
 				Code = "UNK";

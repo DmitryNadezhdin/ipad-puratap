@@ -266,17 +266,16 @@ namespace Application
 					} 					
 				}
 				
-				if (!ok)	{
+				if (!ok) {
 					var alert = new UIAlertView("Incorrect input value for price ignored", "Please try again", null, "OK");
 					alert.Show ();
 				}
-				
+
 				_tabs._payment.SetTotalToCollect (total);
 
-				// WAS :: if (mainJob.Payments.Type.Contains ( PaymentTypes.CCDetails) || mainJob.Payments.Type.Contains ( PaymentTypes.CreditCard) || mainJob.Payments.Type.Contains ( PaymentTypes.Invoice))
 				if (this._tabs._payment.ContainsInvoicePaymentType (mainJob.Payments))
 					_tabs._payment.SetTotalReceived (0);
-				else _tabs._payment.SetTotalReceived (total);
+				// else _tabs._payment.SetTotalReceived (total); // --- no need for this, this has been done in SetTotalToCollect() already
 
 				if (Root[0].Footer != "") Root[0].Footer = "";
 				

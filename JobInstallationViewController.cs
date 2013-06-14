@@ -463,6 +463,29 @@ namespace Application
 
 			if (curJob.EmployeeFee < 1) curJob.EmployeeFee = curJob.Type.EmployeeFee;
 			curJob.EmployeeFee += GetExtraFeeForOptionID(optionID);
+
+			bool found = false;
+			foreach (Job j in SaleOptionsDVC.jrt.MainJobList) {
+				if (j.JobBookingNumber == curJob.JobBookingNumber) {
+					j.EmployeeFee = curJob.EmployeeFee;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				foreach (Job j in SaleOptionsDVC.jrt.UserCreatedJobs) {
+					if (j.JobBookingNumber == curJob.JobBookingNumber) {
+						j.EmployeeFee = curJob.EmployeeFee;
+						found = true;
+						break;
+					}
+				}
+			}
+
+			if (!found) {
+				// Bad things have happened
+			}
 		}		
 
 		public void RemoveExtraFeeForSaleOption(long optionID)
@@ -566,10 +589,13 @@ namespace Application
 	{
 		public SaleOptionsDVC dvcSO;
 
-		public void ResetToDefaults()
+		public void ResetToDefaults(bool resetFee)
 		{
 			ClearPartsList ();
-			SetCurrentJobFeeToDefault ();
+
+			if (resetFee)
+				SetCurrentJobFeeToDefault ();
+
 			EntryElement pressureElement = (this.Root[0].Elements[0] as EntryElement);
 			pressureElement.Value = String.Empty;
 			dvcSO = new SaleOptionsDVC(null, false, true, this.NavUsedParts.Tabs._jobRunTable, this);

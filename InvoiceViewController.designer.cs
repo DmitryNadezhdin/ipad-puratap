@@ -1,6 +1,6 @@
 // WARNING
 //
-// This file has been generated automatically by MonoDevelop to store outlets and
+// This file has been generated automatically by Xamarin Studio to store outlets and
 // actions made in the Xcode designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
@@ -85,6 +85,18 @@ namespace Application
 
 		[Outlet]
 		MonoTouch.UIKit.UITextField tfSplitPaymentAmount2 { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UILabel lbDeposit { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UITextField tfDeposit { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UILabel lbInvoiceFee { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UITextField tfInvoiceFee { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
@@ -211,6 +223,26 @@ namespace Application
 			if (tfSplitPaymentAmount2 != null) {
 				tfSplitPaymentAmount2.Dispose ();
 				tfSplitPaymentAmount2 = null;
+			}
+
+			if (lbDeposit != null) {
+				lbDeposit.Dispose ();
+				lbDeposit = null;
+			}
+
+			if (tfDeposit != null) {
+				tfDeposit.Dispose ();
+				tfDeposit = null;
+			}
+
+			if (lbInvoiceFee != null) {
+				lbInvoiceFee.Dispose ();
+				lbInvoiceFee = null;
+			}
+
+			if (tfInvoiceFee != null) {
+				tfInvoiceFee.Dispose ();
+				tfInvoiceFee = null;
 			}
 		}
 	}

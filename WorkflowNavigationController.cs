@@ -405,7 +405,13 @@ namespace Application
 			};
 			
 			_finishWorkflow = delegate {
-				
+
+				Customer c = _tabs._jobRunTable.CurrentCustomer;
+				if (c.DepositAmount > 0) {
+					c.DepositUsed = c.DepositAmount;
+					c.DepositAmount = 0;
+				}
+
 				// workflow has been finished normally, which means that the jobs in current job cluster have been performed and (hopefully) paid for
 				Job selectedJob = _tabs._jobRunTable.CurrentJob;
 				Job main;
@@ -434,10 +440,10 @@ namespace Application
 					SaveJobResultsToDatabase (childJob, false);
 				}
 
-				tabs._app.myLocationDelegate.GeocodeLastKnownLocation(); 			// this also sends checkpoint data to TestFlight: customer number, coordinates, geocoded address of the location
+				tabs._app.myLocationDelegate.GeocodeLastKnownLocation(); 		// this also sends checkpoint data to TestFlight: customer number, coordinates, geocoded address of the location
 				tabs._app.myLocationDelegate.DumpLocationsBufferToDatabase ();	// this will write locations buffer into database in a thread-safe way
 
-				// IMPLEMENTED :: reset the signing nav controller
+				// reset the signing nav controller
 				_tabs.SigningNav.PopToRootViewController (false);
 				
 				// check if every job in the table has been done
@@ -457,15 +463,12 @@ namespace Application
 				this._tabs._scView.Log (String.Format ("Workflow finished for Job ID: {0}", _tabs._jobRunTable.CurrentJob.JobBookingNumber));
 
 				ResetToDefaultView();	// return to the default view : customer tab selected, navigation buttons, toolbar buttons, tab pictures, all tabs enabled
-				ResetViewControllersToDefaults();	// clear all user data that is still maintained in view controllers
-
-				// string checkPointMessage = String.Format ("Finished: CN = {0}, Lng = {1}, Lat = {2}", selectedJob.CustomerNumber, tabs.thisDeviceLng, tabs.thisDeviceLat);
-				// TestFlightSdk.TestFlight.PassCheckpoint (checkPointMessage);
+				ResetViewControllersToDefaults(false);	// clear all user data that is still maintained in view controllers
 			};
 			
 			_resetWorkflow = delegate {
-				ResetViewControllersToDefaults();	// clear all user data that is still maintained in view controllers
-				ResetUserCreatedJobs();					// clear all data about user created jobs
+				ResetViewControllersToDefaults(true);	// clear all user data that is still maintained in view controllers
+				ResetUserCreatedJobs();				// clear all data about user created jobs
 				if (_tabs._jobRunTable.CurrentJob != null) 
 				{
 					if (_tabs._jobRunTable.CurrentJob.Payments != null) 
@@ -477,7 +480,7 @@ namespace Application
 				_tabs.Mode = DetailedTabsMode.Lookup;
 				UIView.CommitAnimations ();
 				
-				ResetToDefaultView();					// return to the default view : customer tab selected, navigation buttons, toolbar buttons, tab pictures, all tabs enabled
+				ResetToDefaultView();	// return to the default view : customer tab selected, navigation buttons, toolbar buttons, tab pictures, all tabs enabled
 			};
 			
 			_proceedToSignPrePlumbing = delegate {
@@ -548,31 +551,7 @@ namespace Application
 		{
 			_tabs._scView.Log (String.Format ("Saving child job to pl_RECOR: ID = {0}", j.JobBookingNumber));
 
-			Job mainJob = (j.HasParent())? _tabs._jobRunTable.FindParentJob (j) : j; 
-
-			/*
-			// Job mainJob = new Job(false);
-			bool foundMain = false;
-			foreach(Job main in _tabs._jobRunTable.MainJobList)
-			{
-				if (main.JobBookingNumber == j.ParentJobBookingNumber)
-				{
-					mainJob = main;
-					foundMain = true;
-					break;
-				}
-			}
-			if (!foundMain)
-			{
-				foreach(Job main in _tabs._jobRunTable.UserCreatedJobs)
-				{
-					if (main.JobBookingNumber == j.ParentJobBookingNumber)
-					{
-						mainJob = main;
-						break;
-					}
-				}
-			} */
+			Job mainJob = (j.HasParent()) ? _tabs._jobRunTable.FindParentJob(j) : j;
 
 			using (var connection = new SqliteConnection("Data Source="+ServerClientViewController.dbFilePath) )
 			{
@@ -739,7 +718,7 @@ namespace Application
 				
 				_tabs._jobRunTable.TableView.ReloadData ();
 				
-				ResetViewControllersToDefaults();
+				ResetViewControllersToDefaults(false);
 				ResetToDefaultView();
 				
 				// check if every job in the table has been done
@@ -764,7 +743,7 @@ namespace Application
 		}
 		*/
 		
-		public void ResetViewControllersToDefaults()
+		public void ResetViewControllersToDefaults(bool resetInstallFees)
 		{
 			/*
 			foreach (UIViewController vc in this.ViewControllers)
@@ -798,7 +777,9 @@ namespace Application
 			_tabs._serviceParts.ClearPartsList ();
 			_tabs._serviceParts.ResetToDefaults ();
 			_tabs._jobService.ResetToDefaults ();
-			_tabs._jobInstall.ResetToDefaults ();
+
+			_tabs._jobInstall.ResetToDefaults (resetInstallFees);
+
 			_tabs._jobUninstall.ClearPartsList ();
 			_tabs._prePlumbView.ResetChoices ();
 			_tabs._payment.ResetToDefaults ();
@@ -831,7 +812,7 @@ namespace Application
 		
 		public void ResetToDefaultView()
 		{
-			// _tabs._jobRunTable.CurrentJob = null;
+			// _tabs._jobRunTable.CurrentJob = null; --- this was a cause of many a crash, after removing this, the number of crash reports on TestFlight has diminished greatly
 			UIView.SetAnimationDuration (0.3f);
 			UIView.BeginAnimations (null);
 
@@ -1081,7 +1062,68 @@ namespace Application
 						if (savePayment) 
 						{
 							// save payment data
-							// if (j.Payment.Received)	// since the payment system was reworked, there's no need to check this
+
+							if (_tabs._jobRunTable.CurrentCustomer.DepositUsed > 0) {
+								// delete deposit record(s)
+								sql = "DELETE FROM Journal WHERE CusNum = ? AND BookNum = ? AND jDesc = 'Deposit used on iPad' ";
+								cmd.CommandText = sql;
+								cmd.Parameters.Clear ();
+								cmd.Parameters.Add ("@CustomerID", System.Data.DbType.Int64).Value = j.CustomerNumber;
+								cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+								cmd.ExecuteNonQuery ();
+
+								// generate deposit record
+								sql = "INSERT INTO JOURNAL (JDATE, COMPUPDATE, ACCNUM, JORNTYPE, JNUM, DEBIT, CREDIT, CUSNUM, REPNUM, PLNUM, JDESC, BOOKNUM) " +
+									" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+								cmd.CommandText = sql;
+								cmd.Parameters.Clear ();
+								cmd.Parameters.Add ("@jDate", System.Data.DbType.String).Value = j.JobDate.ToString("yyyy-MM-dd");
+								cmd.Parameters.Add ("@CompUpdate", System.Data.DbType.String).Value = j.JobDate.ToString("yyyy-MM-dd");
+								cmd.Parameters.Add ("Account", System.Data.DbType.Double).Value = 2.1300;
+								cmd.Parameters.Add ("JournalType", System.Data.DbType.String).Value = "SJ";
+								cmd.Parameters.Add ("JournalID", System.Data.DbType.Int64).Value = 0;
+								cmd.Parameters.Add ("DebitAmount", System.Data.DbType.Double).Value = _tabs._jobRunTable.CurrentCustomer.DepositUsed;
+								cmd.Parameters.Add ("CreditAmount", System.Data.DbType.Double).Value = 0.00;
+								cmd.Parameters.Add ("CustomerID", System.Data.DbType.Int64).Value = j.CustomerNumber;
+								cmd.Parameters.Add ("FranchiseeID", System.Data.DbType.Int32).Value = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee)? MyConstants.EmployeeID : 0;
+								cmd.Parameters.Add ("PlumberID", System.Data.DbType.Int32).Value = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber)? MyConstants.EmployeeID : 0;
+								cmd.Parameters.Add ("Description", System.Data.DbType.String).Value = "Deposit used on iPad";
+								cmd.Parameters.Add ("JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+								cmd.ExecuteNonQuery ();
+							}
+
+							// generate invoice fee charge if needed
+							if (_tabs._payment.ShouldGenerateInvoiceFee ()) {
+								// delete invoice fee records for this job ID
+								sql = "DELETE FROM Charges WHERE Cust_OID = ? AND Job_OID = ?";
+								cmd.CommandText = sql;
+								cmd.Parameters.Clear ();
+								cmd.Parameters.Add ("@CustomerID", System.Data.DbType.Int64).Value = j.CustomerNumber;
+								cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+								cmd.ExecuteNonQuery ();
+
+								// read the invoice fee amount
+								double InvoiceChargeAmount = 5.00;
+								sql = "SELECT CT_Amount as Amount FROM Charge_Types WHERE CT_ID = 1";
+								cmd.CommandText = sql;
+								using (var reader = cmd.ExecuteReader ()) {
+									while (reader.Read ())
+										InvoiceChargeAmount = (double)reader["Amount"];
+								}
+
+								// generate invoice fee records for this job ID
+								sql = "INSERT INTO Charges (Charge_ID, CT_oID, Amount, Cust_oID, Job_oID, Created_By) VALUES (?, ?, ?, ?, ?, ?)";
+								cmd.CommandText = sql;
+								cmd.Parameters.Clear ();
+								cmd.Parameters.Add ("@Charge_ID", System.Data.DbType.Int32).Value = j.JobBookingNumber;
+								cmd.Parameters.Add ("@Charge_Type", System.Data.DbType.Int32).Value = 1;
+								cmd.Parameters.Add ("@Amount", System.Data.DbType.Double).Value = InvoiceChargeAmount;
+								cmd.Parameters.Add ("@Customer_ID", System.Data.DbType.Int64).Value = j.CustomerNumber;
+								cmd.Parameters.Add ("@Job_ID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+								cmd.Parameters.Add ("@Created_By", System.Data.DbType.String).Value = "iPad";
+								cmd.ExecuteNonQuery ();
+							}
+
 							sql = "DELETE FROM Payments WHERE BookingNum = ? AND Payment_ID = ?";
 							cmd.Parameters.Clear ();
 							cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
@@ -1234,7 +1276,7 @@ namespace Application
 			}
 
 			// clear all data maintained in view controllers
-			ResetViewControllersToDefaults ();
+			ResetViewControllersToDefaults (true);
 			// IMPLEMENTED :: erase results from database
 			EraseMainJobResultsFromDatabase(j);
 			if (j.ChildJobs != null)
@@ -1333,6 +1375,30 @@ namespace Application
 						cmd.ExecuteNonQuery ();
 						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
 						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
+						// reset deposit info
+						sql = "DELETE FROM JOURNAL WHERE BookNum = ? AND AccNum = 2.1300";
+						cmd.CommandText = sql;
+						cmd.Parameters.Clear ();
+						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+						int rowsDeleted = cmd.ExecuteNonQuery ();
+						if (rowsDeleted > 0) {
+							// find the customer and reset DepositUsed to 0
+							foreach (Customer c in _tabs._jobRunTable.Customers) {
+								if (c.CustomerNumber == j.CustomerNumber) {
+									
+									// check if the deposit was used for the job that is being reset
+									c.DepositAmount = c.DepositUsed;
+									c.DepositUsed = 0;
+								}
+							}
+						}
+						//reset invoice fee info
+						sql = "DELETE FROM Charges WHERE Cust_oID = ? AND Job_oID = ?";
+						cmd.CommandText = sql;
+						cmd.Parameters.Clear ();
+						cmd.Parameters.Add ("@CustomerID", System.Data.DbType.Int64).Value = j.CustomerNumber;
+						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+						cmd.ExecuteNonQuery ();
 						// reset follow up data
 						sql = "DELETE FROM Followups WHERE Job_ID IN (SELECT Booknum FROM Pl_recor WHERE Booknum = ? OR Parentnum = ?)";
 						cmd.CommandText = sql;

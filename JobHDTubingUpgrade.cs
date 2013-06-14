@@ -135,9 +135,11 @@ namespace Application
 						}
 						// this.NavWorkflow._tabs._jobRunTable.CurrentJob.EmployeeFee = 10;
 						break; }
+
 					case 1: { 
 						int buildNumber = 19; SetPartsToBuildNumber(buildNumber); 
 						ThisJob.EmployeeFee = 14; 
+
 						if (ThisJob.HasParent ()) {
 							Job parent = this.NavWorkflow._tabs._jobRunTable.FindParentJob (ThisJob);
 							foreach (Job main in this.NavWorkflow._tabs._jobRunTable.MainJobList) {

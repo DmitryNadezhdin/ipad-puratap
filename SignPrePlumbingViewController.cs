@@ -26,8 +26,9 @@ namespace Application
 			this.NavigationItem.HidesBackButton = true;
 			
 			GoBack = delegate {
-				if (!SigningMode)
+				if (!SigningMode) {
 					Tabs.SelectedViewController = Tabs.ViewControllers[Tabs.LastSelectedTab];
+				}
 				else {
 					FinishSigning(null, null);
 					hasBeenSigned = false;

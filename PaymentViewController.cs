@@ -37,6 +37,7 @@ namespace Application
 				{
 					btnSplitPayment.Title = "Normal payment";
 					HideAllPaymentOptions ();
+					HideInvoiceFee ();
 					lbTip.Text = "Entered split payment mode. Please enter details of two payments received.";
 
 					if (scPaymentType != null) 
@@ -44,7 +45,7 @@ namespace Application
 						// DON'T CARE if (scPaymentType.SelectedSegment<2 && scPaymentType.SelectedSegment != -1) 
 					
 						scPaymentType.SelectedSegment = -1;						// if one of these was selected, "unselect" it in the UI
-						this._payments.Clear ();											// clear all payment types selected previously
+						this._payments.Clear ();								// clear all payment types selected previously
 
 						// add 2 payments
 						this._payments.Add (new JobPayment() { Amount = selectedJob.MoneyToCollect } );				
@@ -89,6 +90,7 @@ namespace Application
 					// hide top segmented control that allows the user to choose payment type in normal mode
 					// show elements corresponding to split payment mode
 					ShowNormalModeUIElements ();
+					CheckInvoiceFee ();
 
 					if (btnSplitPayment != null) btnSplitPayment.Title = "Split payment";
 					if (scPaymentType != null) scPaymentType.SelectedSegment = -1;
@@ -203,11 +205,29 @@ namespace Application
 					return true;
 			return false;
 		}
+
+		public bool ShouldGenerateInvoiceFee()
+		{
+			bool NoInvoiceFees = _navWorkflow._tabs._jobRunTable.CurrentCustomer.InvoiceChargesWaived;
+			if (ReceivedLessMoneyThanShould () 
+			    && (NoInvoiceFees == false) 
+			    && !(ContainsPaymentType (_payments, PaymentTypes.CCDetails) || (ContainsPaymentType (_payments, PaymentTypes.CreditCard))))
+
+				return true;
+			else
+				return false;
+		}
 		
 		public void GenerateReceiptPDFPreview()
 		{
 			Customer c = _navWorkflow._tabs._jobRunTable.CurrentCustomer;
-			int jobCount = this.Summary.mainJob.ChildJobs.Count+1;
+			// mark the deposit as "used" for the customer
+//			if (c.DepositAmount > 0) {
+//				c.DepositUsed = c.DepositAmount;
+//				c.DepositAmount = 0;
+//			}
+
+			int jobCount = this.Summary.mainJob.ChildJobs.Count + 1;
 			
 			NSArray a = NSBundle.MainBundle.LoadNib ("ReceiptPDFView", this, null);
 			GeneratedPdfView = (UIView)MonoTouch.ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
@@ -218,13 +238,36 @@ namespace Application
 			((UILabel)GeneratedPdfView.ViewWithTag (2)).Text = "Receipt for Job # "+this.Summary.mainJob.JobBookingNumber.ToString();
 			((UILabel)GeneratedPdfView.ViewWithTag (3)).Text = "Customer # "+c.CustomerNumber.ToString();
 			((UILabel)GeneratedPdfView.ViewWithTag (4)).Text = "Jobs performed: "+(jobCount).ToString ();
-			((UILabel)GeneratedPdfView.ViewWithTag (5)).Text = (c.isCompany)? "Company name: "+c.CompanyName : "Customer name: "+" "+c.FirstName+" "+c.LastName; // +c.Title -- took out because it was causing issues with users
+			((UILabel)GeneratedPdfView.ViewWithTag (5)).Text = (c.isCompany)? "Company name: "+c.CompanyName : "Customer name: "+" "+c.FirstName+" "+c.LastName; // +c.Title -- taken out because it was causing issues with customers & users
 			((UILabel)GeneratedPdfView.ViewWithTag (31)).Text = "Address: "+c.Address+", "+c.Suburb;
-
 			((UILabel)GeneratedPdfView.ViewWithTag (6)).Text = "Date: "+DateTime.Now.Date.ToShortDateString();
-			((UILabel)GeneratedPdfView.ViewWithTag (8)).Text = "Total to collect (inc. GST): "+this.tfToBeCollected.Text;
-			((UILabel)GeneratedPdfView.ViewWithTag (9)).Text = "Total received: "+this.tfTotalMoneyReceived.Text;
-			((UILabel)GeneratedPdfView.ViewWithTag (24)).Text = "Balance: "+string.Format("$ {0:0.00}", (this.CalculateMoneyToCollect()-this.MoneyReceived));
+
+			double GSTAmount = (ShouldGenerateInvoiceFee () ) ? (5 + this.CalculateMoneyToCollect ()) / 11 : this.CalculateMoneyToCollect () / 11;
+			((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.GSTLabel)).Text = "GST amount: " + String.Format("$ {0:0.00}", GSTAmount);
+
+			if (c.DepositAmount - c.DepositUsed > 0) {
+				((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.DepositLabel)).Text = 
+					"Deposit: " + String.Format ("$ {0:0.00}", c.DepositAmount - c.DepositUsed);
+				((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.DepositLabel)).Hidden = false;
+			} else {
+				((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.DepositLabel)).Hidden = true;
+			}
+
+			// display an invoice fee if there would be an invoice sent out
+			((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.InvoiceFeeAmount)).Hidden = ! ShouldGenerateInvoiceFee();
+			((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.InvoiceFeeLabel)).Hidden = ! ShouldGenerateInvoiceFee();
+
+			double displayedTotalToReceive = (ShouldGenerateInvoiceFee () ) ? 5 + this.CalculateMoneyToCollect () : this.CalculateMoneyToCollect ();
+			((UILabel)GeneratedPdfView.ViewWithTag (8)).Text = "Total to receive (inc. GST): " + String.Format("$ {0:0.00}", displayedTotalToReceive); // + this.tfToBeCollected.Text;
+			((UILabel)GeneratedPdfView.ViewWithTag (9)).Text = "Received: " + String.Format("{0:0.00}", this.tfTotalMoneyReceived.Text);
+
+			double displayedBalance = (this.CalculateMoneyToCollect () - this.MoneyReceived - c.DepositAmount);
+			displayedBalance = (ShouldGenerateInvoiceFee ()) ? (5 + displayedBalance) : displayedBalance;
+			((UILabel)GeneratedPdfView.ViewWithTag (24)).Text = "Balance: " + String.Format("$ {0:0.00}", displayedBalance);
+			if (displayedBalance > 0) 
+				((UILabel)GeneratedPdfView.ViewWithTag (24)).Font = UIFont.BoldSystemFontOfSize (20);
+			else ((UILabel)GeneratedPdfView.ViewWithTag (24)).Font = UIFont.SystemFontOfSize (20);
+
 			((UILabel)GeneratedPdfView.ViewWithTag (27)).Text = String.Format ("App version: {0}", NSBundle.MainBundle.ObjectForInfoDictionary("CFBundleVersion").ToString());
 
 			((UILabel)GeneratedPdfView.ViewWithTag (25)).Text = "Puratap representative: "+MyConstants.EmployeeName;
@@ -239,7 +282,6 @@ namespace Application
 			((UILabel)GeneratedPdfView.ViewWithTag (11)).Text = String.Format ("$ {0:0.00}", this.Summary.mainJob.MoneyToCollect);
 
 			// If the selected payment method is "Invoice", the invoice will be sent out separately, so we make a reminder of that visible
-
 			if (this.ContainsInvoicePaymentType (_payments))
 				((UILabel)GeneratedPdfView.ViewWithTag (30)).Hidden = false;
 			else ((UILabel)GeneratedPdfView.ViewWithTag (30)).Hidden = true;
@@ -299,9 +341,9 @@ namespace Application
 			
 			// Adjusting the dimensions of the views for the job list to fit and for payment info to be placed directly after the end of the job list
 			UIView jobList = (UIView)GeneratedPdfView.ViewWithTag (28);
-			jobList.Frame = new RectangleF(jobList.Frame.X, jobList.Frame.Y, jobList.Frame.Width, Math.Min (21 + (jobCount-1)*29, 166));
+			jobList.Frame = new RectangleF(jobList.Frame.X, jobList.Frame.Y, jobList.Frame.Width, Math.Min (41 + (jobCount-1)*29, 186));
 			UIView paymentInfo = (UIView)GeneratedPdfView.ViewWithTag (29);
-			paymentInfo.Frame = new RectangleF(paymentInfo.Frame.X, jobList.Frame.Y+jobList.Frame.Height+19, paymentInfo.Frame.Width, paymentInfo.Frame.Height);
+			paymentInfo.Frame = new RectangleF(paymentInfo.Frame.X, jobList.Frame.Y+jobList.Frame.Height+20, paymentInfo.Frame.Width, paymentInfo.Frame.Height);
 			
 			// Adjusting the frame of the main view so that we won't use any whitespace unnecessarily
 			float lowestPdfPoint = paymentInfo.Frame.Y + paymentInfo.Frame.Height;
@@ -343,8 +385,16 @@ namespace Application
 		
 		public void SetTotalToCollect(double total)
 		{
-			tfToBeCollected.Text = String.Format ("$ {0:0.00}", total);
-			tfTotalMoneyReceived.Text = tfToBeCollected.Text;
+			if (this.selectedJob.Type.Code == "TWI" || this.selectedJob.Type.Code == "RAI" || this.selectedJob.Type.Code == "ROOF" 
+			    && (this._navWorkflow._tabs._jobRunTable.CurrentCustomer.DepositAmount > 0)) 
+			{
+				tfToBeCollected.Text = String.Format ("$ {0:0.00}", total - double.Parse (tfDeposit.Text.Replace ("$", " ")));
+				tfTotalMoneyReceived.Text = tfToBeCollected.Text;
+			}
+			else {
+				tfToBeCollected.Text = String.Format ("$ {0:0.00}", total);
+				tfTotalMoneyReceived.Text = tfToBeCollected.Text;
+			}
 		}
 		public void SetTotalReceived(double total)
 		{
@@ -547,23 +597,11 @@ namespace Application
 			var curj = this.selectedJob;
 			if (curj.HasParent ()) curj = this._navWorkflow._tabs._jobRunTable.FindParentJob (curj);
 			
-			if ( (curj.Type.Code != "SER" && curj.Type.Code != "UNI" 
-			      && curj.Type.Code != "REI") && (curj.UsedParts.Count == 0))
+			if ( (curj.Type.Code != "SER" && curj.Type.Code != "UNI" && curj.Type.Code != "REI") 
+			    	&& (curj.UsedParts.Count == 0))
 				return false;
 			else {
-				// old logic was used here, we don't need to use it anymore, 
-				// uninstall, re-install, service and delivery jobs should be allowed to be performed without using any stock parts
-
-//				bool replaced = false;
-//				if (_navWorkflow._tabs._jobService.SR != null)
-//					foreach (ProblemAndAction pa in _navWorkflow._tabs._jobService.SR.ProblemsAndActions) 
-//					{
-//						if (pa.ActionTaken.Action == PossibleActionsEnum.Replaced)
-//						{
-//							replaced = true; break;
-//						}
-//					}
-//				if (replaced && curj.UsedParts.Count == 0) return false;
+				// uninstall, re-install and service jobs should be allowed to be performed without using any stock parts
 				return true;
 			}
 		}
@@ -594,9 +632,16 @@ namespace Application
 				
 				if (moneyReceived < moneyToCollect)
 				{
-					var moneyAlert = new UIAlertView("", "Money received is less than money to be collected. Are you sure?", null, "No", "Yes");
-					moneyAlert.Dismissed += HandleMoneyAlertDismissed;
-					moneyAlert.Show ();
+					// check if there are deposits involved, it may still be fine
+					double depositFieldValue = double.Parse (tfDeposit.Text.Replace ("$", " "));
+					if (moneyReceived < moneyToCollect - depositFieldValue) {
+						var moneyAlert = new UIAlertView ("", "Money received is less than money to be collected. Are you sure?", null, "No", "Yes");
+						moneyAlert.Dismissed += HandleMoneyAlertDismissed;
+						moneyAlert.Show ();
+					} else {
+						MoneyReceived = moneyToCollect - depositFieldValue;
+						GoToSigning ();
+					}
 				}
 				else
 				{
@@ -649,13 +694,12 @@ namespace Application
 			}
 			else 
 			{
-				// so the user told us that he has received an incomplete payment 
-				// we must INSERT a record INTO Followups
+				// so the guy tells us that he has received an incomplete payment -- we must INSERT a record INTO Followups
 				using (var connection = new SqliteConnection("Data Source=" + ServerClientViewController.dbFilePath) )
 				{
 					var cmd = connection.CreateCommand();
 					connection.Open();
-					// add a followup so that someone can look into it and probably call customer or whatever
+					// add a followup so that someone can look into it and issue an invoice or something
 					string sql = "INSERT INTO Followups (JOB_ID, REASON_ID, DONE) VALUES (?, ?, ?)";
 					cmd.CommandText = sql;
 					cmd.Parameters.Clear ();
@@ -705,6 +749,7 @@ namespace Application
 				// look up the list of payments and set the amount to the text field value
 			}
 
+
 			GenerateReceiptPDFPreview();
 			RedrawReceiptPDF(false);
 
@@ -735,12 +780,6 @@ namespace Application
 					}
 				}
 
-				/*
-				if (main.Type.Code == "SER") ShouldSignService = true;
-				foreach(Job child in main.ChildJobs)
-					if (child.Type.Code == "SER") ShouldSignService = true;
-				*/
-
 				if (ShouldSignService)
 				{
 					Tabs.SigningNav.PopToRootViewController (false);
@@ -770,62 +809,6 @@ namespace Application
 		{
 			_navWorkflow._extraJobs(sender, null);
 		}
-		
-		/*
-		void acPaymentTypeTouchDown ()
-		{
-			ac = new GetChoicesForObject("Please choose how the customer paid", PaymentType);
-			ac.WillDismiss += delegate(object _sender, UIButtonEventArgs e) {
-				if (e.ButtonIndex!=-1) PaymentType = (PaymentTypes) e.ButtonIndex;
-			};
-			ac.ShowInView (this.View);
-		}
-		
-		void acInvoicePOTouchDown ()
-		{
-			ac = new GetChoicesForObject("Was there an Purchase Order (service request) sent out for this job?", null, null, null, "Yes", "No");
-			ac.WillDismiss += delegate(object _sender, UIButtonEventArgs e) {
-				if (e.ButtonIndex!=-1)
-				{
-					switch (e.ButtonIndex)
-					{
-					case 0:	
-						HideEverythingButInvoice ();
-						tfInvoicePO.Text = "PO / Invoice";
-						tfPaymentType.Text = "Invoice";
-						PaymentType = PaymentTypes.Invoice;
-						lbTip.Text = "There's no need to collect payment. Tap \"Forward\" arrow to proceed";
-						tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
-						HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
-						break;
-					case 1: 
-						ShowPaymentChoiceOptions();
-						tfInvoicePO.Text = "No purchase order";
-						PaymentType = PaymentTypes.None;
-						lbTip.Text = "Please specify how the customer paid for the job";
-						break;
-					}
-				}	
-			};
-			ac.ShowInView (this.View);
-		}
-		*/
-		/*
-		partial void acAmountEditingDidBegin ()
-		{
-			// tfToBeCollected.Text = String.Format ("{0:0.00}", selectedJob.Payment.Amount);	
-		}
-		
-		partial void acCreditCardNumberEditingDidBegin (NSObject sender)
-		{
-			// tfCreditCardNumber.Text = ""; // deserves long and hard thinking
-		}
-		
-		partial void acExpiryDateEditingDidBegin (NSObject sender)
-		{
-			// tfCreditCardExpiry.Text = selectedJob.Payment.CreditCardExpiry;
-		}
-			*/	
 		
 		void acAmountEditingDidEnd ()
 		{
@@ -1003,7 +986,9 @@ namespace Application
 				this.scPaymentType.SelectedSegment = -1;
 
 				tfToBeCollected.Hidden = false;
-				// tfInvoicePO.Hidden = false;
+
+				lbInvoiceFee.Hidden = true;
+				tfInvoiceFee.Hidden = true;
 				
 				HideAllPaymentOptions();
 				lbTip.Text = "Please choose a payment type above.";
@@ -1070,7 +1055,31 @@ namespace Application
 			}
 			return (sum % 10 == 0);			
 		}
-		
+
+		public void ShowInvoiceFee()
+		{
+			tfInvoiceFee.Hidden = false;
+			lbInvoiceFee.Hidden = false;
+		}
+
+		public void HideInvoiceFee()
+		{
+			tfInvoiceFee.Hidden = true;
+			lbInvoiceFee.Hidden = true;
+		}
+
+		public void CheckInvoiceFee()
+		{
+			try {
+				if (ReceivedLessMoneyThanShould ()) {
+					ShowInvoiceFee ();
+				} else
+					HideInvoiceFee ();
+			} catch {
+				// HideInvoiceFee ();
+			}
+		}
+
 		public override void ViewDidAppear (bool animated)
 		{
 			if (selectedJob != null)
@@ -1099,6 +1108,12 @@ namespace Application
 				}
 			}
 			selectedJob = _navWorkflow._tabs._jobRunTable.CurrentJob;
+
+			// if paid by invoice, make the appropriate interface elements visible
+			if (ContainsPaymentType (selectedJob.Payments, PaymentTypes.Invoice))
+				ShowInvoiceFee ();
+			else
+				HideInvoiceFee ();
 
 			if (selectedJob.Payments.Count > 0)
 			{
@@ -1147,13 +1162,34 @@ namespace Application
 			}
 			
 			double money = CalculateMoneyToCollect ();
-			tfToBeCollected.Text = String.Format ("$ {0:0.00}", money);
+			double deposit = _navWorkflow._tabs._jobRunTable.CurrentCustomer.DepositAmount - _navWorkflow._tabs._jobRunTable.CurrentCustomer.DepositUsed;
+			tfToBeCollected.Text = String.Format ("$ {0:0.00}", money - deposit);
+
+			if (deposit > 0) {
+				tfDeposit.Text = String.Format ("$ {0:0.00}", deposit);
+				ShowDeposit ();
+			} else {
+				HideDeposit ();
+			}
+
 			tfTotalMoneyReceived.Text = (this.ContainsInvoicePaymentType (_payments)) ? String.Format ("$ {0:0.00}", 0) : tfToBeCollected.Text;
 			CalculateFees();
 			
 			base.ViewDidAppear (animated);
 			Summary.ViewDidAppear (animated);
 			// lbJobsInCluster.Text = "Jobs for current customer: " + jobCount.ToString ();
+		}
+
+		public void HideDeposit() {
+			// hide the appropriate interface elements
+			tfDeposit.Hidden = true;
+			lbDeposit.Hidden = true;
+		}
+
+		public void ShowDeposit() {
+			// make the appropriate interface elements visible
+			tfDeposit.Hidden = false;
+			lbDeposit.Hidden = false;
 		}
 		
 		public double CalculateMoneyToCollect()
@@ -1182,6 +1218,7 @@ namespace Application
 						jobCount += 1;
 					}
 			}
+
 			return money;
 		}
 		
@@ -1398,7 +1435,7 @@ namespace Application
 		public override void DidReceiveMemoryWarning ()
 		{
 			// Releases the view if it doesn't have a superview.
-			base.DidReceiveMemoryWarning ();
+			// base.DidReceiveMemoryWarning ();
 			
 			// Release any cached data, images, etc that aren't in use.
 		}
@@ -1444,7 +1481,7 @@ namespace Application
 			else lbCCNumberTip.Hidden = true;
 		}
 		
-		private bool ShouldChangeCharacters(UITextField textField, NSRange range, string replacementString)
+		private bool CCNShouldChangeCharacters(UITextField textField, NSRange range, string replacementString)
 		{
 			// TODO :: less restrictions on user input, bring cursor to the end of the input after the field text has been formatted
 			if (range.Location != textField.Text.Length && 
@@ -1478,7 +1515,7 @@ namespace Application
 			lbChequeNumberInvalid.TextColor = UIColor.Red;
 			lbCardOwnerNameInvalid.TextColor = UIColor.Red;
 			
-			tfCreditCardNumber.ShouldChangeCharacters = ShouldChangeCharacters;
+			tfCreditCardNumber.ShouldChangeCharacters = CCNShouldChangeCharacters;
 			
 			/*
 			 // FUCK THIS SHIT
@@ -1815,7 +1852,8 @@ namespace Application
 				}
 				else 
 				{
-					this._payments[0].Type = PaymentTypes.Invoice; 
+					this._payments[0].Type = PaymentTypes.Invoice;
+					ShowInvoiceFee ();
 					break; 
 				}
 			case 1: 
@@ -1829,7 +1867,7 @@ namespace Application
 				}
 				else 
 				{
-					this._payments[0].Type = PaymentTypes.CCDetails; 
+					this._payments[0].Type = PaymentTypes.CCDetails;
 					break;
 				}
 			case 2: 
@@ -1843,7 +1881,7 @@ namespace Application
 				}
 				else 
 				{
-					this._payments[0].Type = PaymentTypes.CreditCard; 
+					this._payments[0].Type = PaymentTypes.CreditCard;
 					break;
 				}
 			case 3: { this._payments[0].Type = PaymentTypes.Cash; break; }
@@ -1886,6 +1924,7 @@ namespace Application
 					lbTip.Text = "Please collect cash and tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = tfToBeCollected.Text;
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
+					CheckInvoiceFee ();
 					break;
 				case PaymentTypes.Cheque : 
 					ShowChequePaymentOptions ();
@@ -1893,35 +1932,42 @@ namespace Application
 					lbTip.Text = "Please enter the cheque number into the field. When done, tap \"Forward\" arrow to proceed."; 
 					tfTotalMoneyReceived.Text = tfToBeCollected.Text;
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
+					CheckInvoiceFee ();
 					break;
 				case PaymentTypes.EFTPOS : 
 					HideAllPaymentOptions (); 
 					lbTip.Text = "Please process the payment with the EFT POS. When done, tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = tfToBeCollected.Text;
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
+					CheckInvoiceFee ();
 					break;
 
-				// in all other cases, money collected should be set to 0, disallowing the user to change that
-				case PaymentTypes.Invoice :
+				// in all other valid cases, money collected should be set to 0, disallowing the user to change that
+				case PaymentTypes.Invoice:
 					HideAllPaymentOptions ();
 					lbTip.Text = "No payment to be collected, customer will be invoiced. Tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
+					ShowInvoiceFee ();
 					break;
-				case PaymentTypes.CreditCard : 
+				case PaymentTypes.CreditCard: 
 					ShowCreditCardPaymentOptions (); 
 					HideChequePaymentOptions (); 
 					lbTip.Text = "Please enter credit card details into the fields. When done, tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
+					HideInvoiceFee ();
 					break;
-				case PaymentTypes.CCDetails :
+				case PaymentTypes.CCDetails:
 					HideAllPaymentOptions ();
 					tfPaymentType.Text = "";
 					lbTip.Text = "Credit card will be drawn by accounting department. Tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
+					HideInvoiceFee ();
 					break;
+
+				// default
 				case PaymentTypes.None :
 					HideAllPaymentOptions ();
 					tfPaymentType.Text = "";
@@ -1989,10 +2035,24 @@ namespace Application
 			if (ok) tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", received);
 			else 
 			{
-				// UIAlertView invalidInputAlert = new UIAlertView("Cannot accept input", "Invalid amount entered (negative or more than the amount to collect)", null, "OK");
-				// invalidInputAlert.Show ();
-				tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", totalToReceive);
+				// tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", totalToReceive); --- this was fine until the deposits thingy kicked in
+				tfTotalMoneyReceived.Text = tfToBeCollected.Text;
 			}
+
+			// check if we are now receiving less than we should
+			ReceivedLessMoneyThanShould ();
+		}
+
+		bool ReceivedLessMoneyThanShould()
+		{
+			double should = double.Parse (tfToBeCollected.Text.Replace ("$", " "));
+			double received = double.Parse (tfTotalMoneyReceived.Text.Replace ("$", " "));
+
+			if (received < should) {
+				ShowInvoiceFee ();
+				return true;
+			} else
+				return false;
 		}
 
 		void HandleTfToBeCollectedEditingDidEndOnExit (object sender, EventArgs e)

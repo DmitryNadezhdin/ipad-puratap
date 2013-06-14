@@ -11,7 +11,6 @@ namespace Application
 		{
 			NavUsedParts = upnav;
 			NavWorkflow=nav;
-			//Parts = new List<Part>();
 			DBParts = new List<Part>();
 			DeactivateEditingMode ();
 

@@ -170,6 +170,10 @@ namespace Application
 		{
 			public static int Logo = 1;
 			public static int Signature = 32;
+			public static int GSTLabel = 35;
+			public static int DepositLabel = 36;
+			public static int InvoiceFeeAmount = 37;
+			public static int InvoiceFeeLabel = 38;
 		}
 		 
 		public MyConstants ()

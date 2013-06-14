@@ -1,0 +1,17 @@
+2013-06-14  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* JobSummary.cs:
+	* JobRunTable.cs:
+	* MyConstants.cs:
+	* ReceiptPDFView.xib:
+	* JobTubingUpgrade.cs:
+	* JobHDTubingUpgrade.cs:
+	* PaymentViewController.cs:
+	* PaymentViewController.xib:
+	* CustomersViewController.xib:
+	* WorkflowNavigationController.cs:
+	* SignPrePlumbingViewController.cs:
+	* JobInstallationViewController.cs:
+	* InvoiceViewController.designer.cs:
+	* SignServiceReportViewController.cs: 
+
