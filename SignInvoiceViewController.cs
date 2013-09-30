@@ -182,9 +182,9 @@ namespace Application
 					// Signature.Image = new UIImage();
 					Signature.Clear ();
 				}
-				
-				iv.Dispose ();	im.Dispose ();
-				im = null; iv = null;
+
+				if (iv != null) { iv.Dispose (); iv = null; }
+				if (im != null) { im.Dispose (); im = null; }
 			};			
 			
 			back = new UIBarButtonItem(UIBarButtonSystemItem.Reply);
@@ -319,12 +319,17 @@ namespace Application
 			}
 		}
 
+		public override void ViewWillAppear (bool animated)
+		{
+			base.ViewWillAppear (animated);
+
+			string pdfFileName = (this.NavigationController as SigningNavigationController).Tabs._payment.pdfReceiptFileName;
+			PDFView.LoadRequest (new NSUrlRequest( NSUrl.FromFilename (pdfFileName)));
+		}
+
 		public override void ViewDidAppear (bool animated)
 		{
 			hasBeenSigned = false;
-			string pdfFileName = (this.NavigationController as SigningNavigationController).Tabs._payment.pdfReceiptFileName;
-			PDFView.LoadRequest (new NSUrlRequest( NSUrl.FromFilename (pdfFileName)));
-			
 			Tabs.SigningNav.SetToolbarHidden (false, true);
 			Tabs.SigningNav.SetToolbarItems (this.ToolbarItems, true);
 

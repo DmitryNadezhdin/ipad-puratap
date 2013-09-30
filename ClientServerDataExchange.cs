@@ -91,24 +91,25 @@ namespace Application
 					
 					ThreadStart ts = new ThreadStart ( delegate {
 						using (var pool = new NSAutoreleasePool() ) {
-							TcpClient tcpClient;
+
+							const int maxSize = 1024;
+
+							TcpClient tcpClient = new TcpClient(hostName, port);
+							tcpClient.ReceiveTimeout = 10000;
+							tcpClient.SendTimeout = 10000; // these timeouts only apply to sync read and write operations
+
 							try {
 								_controller.Log ("Data exchange thread started: " + Thread.CurrentThread.ManagedThreadId.ToString ());
 
-								const int maxSize = 1024;
-								tcpClient = new TcpClient(hostName, port);
-								tcpClient.ReceiveTimeout = 10000;
-								tcpClient.SendTimeout = 10000; // these timeouts only apply to sync read and write operations
-
-								
 								using (NetworkStream netStream = tcpClient.GetStream() )
 								{
 									/*		A couple potential issues here:
 									 * 		1. We should never assume that data piece, however small it may be, will come through the network synchronously
-									 * 			Therefore, every send or receive operation should be performed in async mode (not the case currently!)
+									 * 			Therefore, every send or receive operation should be performed in async mode (!not the case currently!).
 									 * 		2. Device identification. We DO NOT rely on devices' serial numbers or ECIDs, we create a GUID on the device and 
-									 * 			tie those GUIDs to employee number (REPNUM in WREP or PLNUM in PLUMB) in FoxPro database
-									 * 			When the device requests a file, it simply sends over its GUID, the server then checks the database to decide which file(s) should be transferred to the device
+									 * 			tie those GUIDs to employee number (REPNUM in WREP or PLNUM in PLUMB) in FoxPro database.
+									 * 			When the device initiates the data exchange, it sends over its GUID. 
+									 * 			The server then checks the database to decide which file(s) should be transferred to the device.
 									*/		
 									receiveDone.Reset();
 									sendDone.Reset();
@@ -138,8 +139,8 @@ namespace Application
 										// user makes his choice, the app sends it back to the server along with a device GUID
 										// the client then receives a database file
 											
-											tcpClient.ReceiveTimeout = 999999;
-											tcpClient.SendTimeout = 999999;
+											tcpClient.ReceiveTimeout = 100000;
+											tcpClient.SendTimeout = 100000;
 
 											EmployeeHasBeenChosen.Reset ();
 
@@ -187,9 +188,9 @@ namespace Application
 												sendSuccess = SendFilesToServer (netStream);
 											}
 											catch (Exception e)
-											{
-												
+											{												
 												_controller.Log (e.Message);
+												sendSuccess = false;
 											}
 											
 											if (sendSuccess)
@@ -255,6 +256,13 @@ namespace Application
 								_controller.Log(String.Format("Exception when calling server: {0} \r\n Message: {0}", ex, ex.Message));
 								_controller.SetExchangeActivityHidden ();
 								_controller.SetDataExchangeButtonDisabled ();
+
+								_controller.InvokeOnMainThread (delegate {
+									using (var dataExchangeUnsuccessful = new UIAlertView("Data exchange unsuccessful", "Please try again", null, "OK")) 
+									{
+										dataExchangeUnsuccessful.Show (); 
+									}
+								});
 								return;
 							}
 						}
@@ -424,16 +432,17 @@ namespace Application
 					DatabaseFileHasBeenReceived.Set ();
 				}
 				else { DatabaseFileHasBeenReceived.Set (); return false; }
+
+				MyConstants.DBReceivedFromServer = fileName;
+				MyConstants.LastDataExchangeTime = DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss");
+				return true;
 			} 
 			catch (Exception e) 
 			{ 
 				_controller.Log (String.Format ("ReceiveDatabaseFile : Exception : {0}", e.Message));
 				DatabaseFileHasBeenReceived.Set ();
 				return false; 
-			}
-			
-			MyConstants.DBReceivedFromServer = fileName;
-			return true;
+			}			
 		}
 		
 		public byte[] ReceiveFileContents (NetworkStream netStream)
@@ -556,6 +565,7 @@ namespace Application
 				FileInfo f = new FileInfo(fileNames[i]);
 				if ( f.LastAccessTime.Date < DateTime.Now.Date.Subtract (TimeSpan.FromDays (7)) )
 				{
+
 					_controller.Log (String.Format ("Found an old file: {0}, last access time: {1}, deleted", f.Name, f.LastAccessTime.ToString ("yyyy-MM-dd HH:mm:ss") ));
 					File.Delete (f.FullName);
 				}
@@ -611,6 +621,11 @@ namespace Application
 						_controller.SetExchangeActivityHidden ();
 						_controller.StopNetBrowser();
 						_controller.StartNetBrowser ();
+
+						this._controller.InvokeOnMainThread (delegate { 
+							var alert = new UIAlertView ("Data exchange incomplete.", "One or more files have not been trasferred successfully. Please try again", null, "OK");
+							alert.Show (); }
+						);
 
 						return false; 
 					}

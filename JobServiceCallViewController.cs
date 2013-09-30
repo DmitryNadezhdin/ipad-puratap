@@ -219,7 +219,7 @@ namespace Application
 			
 			// save the rendered context to disk
 			NSError err;
-			string pdfID = _navOld._tabs._jobRunTable.CurrentCustomer.CustomerNumber.ToString() + "_ServiceReportPDF"; // proper file name here, i. e. pdfID = Date + CustomerNumber + Job ID + DocumentType
+			string pdfID = String.Format ("{0}_{1}_ServiceReport", _navOld._tabs._jobRunTable.CurrentCustomer.CustomerNumber, _navOld._tabs._jobRunTable.CurrentJob.JobBookingNumber); // proper file name here, i. e. pdfID = Date + CustomerNumber + Job ID + DocumentType
 			string pdfFileName;
 			if (DocumentSigned)	{ pdfFileName = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), pdfID+"_Signed.pdf"); }
 			else pdfFileName = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), pdfID+"_Not_Signed.pdf");

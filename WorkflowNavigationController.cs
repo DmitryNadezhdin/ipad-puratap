@@ -975,6 +975,7 @@ namespace Application
 							case "UNI": { jResult = "Uninstall "; break; }
 							case "FIL": { jResult = "Changed   "; break; }
 							case "MIL": { jResult = "Changed   "; break; }
+							case "FRC": { jResult = "Changed   "; break; }
 							case "SER": { jResult = "Service Done"; break; }
 							}
 						}
@@ -1089,38 +1090,6 @@ namespace Application
 								cmd.Parameters.Add ("PlumberID", System.Data.DbType.Int32).Value = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber)? MyConstants.EmployeeID : 0;
 								cmd.Parameters.Add ("Description", System.Data.DbType.String).Value = "Deposit used on iPad";
 								cmd.Parameters.Add ("JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
-								cmd.ExecuteNonQuery ();
-							}
-
-							// generate invoice fee charge if needed
-							if (_tabs._payment.ShouldGenerateInvoiceFee ()) {
-								// delete invoice fee records for this job ID
-								sql = "DELETE FROM Charges WHERE Cust_OID = ? AND Job_OID = ?";
-								cmd.CommandText = sql;
-								cmd.Parameters.Clear ();
-								cmd.Parameters.Add ("@CustomerID", System.Data.DbType.Int64).Value = j.CustomerNumber;
-								cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
-								cmd.ExecuteNonQuery ();
-
-								// read the invoice fee amount
-								double InvoiceChargeAmount = 5.00;
-								sql = "SELECT CT_Amount as Amount FROM Charge_Types WHERE CT_ID = 1";
-								cmd.CommandText = sql;
-								using (var reader = cmd.ExecuteReader ()) {
-									while (reader.Read ())
-										InvoiceChargeAmount = (double)reader["Amount"];
-								}
-
-								// generate invoice fee records for this job ID
-								sql = "INSERT INTO Charges (Charge_ID, CT_oID, Amount, Cust_oID, Job_oID, Created_By) VALUES (?, ?, ?, ?, ?, ?)";
-								cmd.CommandText = sql;
-								cmd.Parameters.Clear ();
-								cmd.Parameters.Add ("@Charge_ID", System.Data.DbType.Int32).Value = j.JobBookingNumber;
-								cmd.Parameters.Add ("@Charge_Type", System.Data.DbType.Int32).Value = 1;
-								cmd.Parameters.Add ("@Amount", System.Data.DbType.Double).Value = InvoiceChargeAmount;
-								cmd.Parameters.Add ("@Customer_ID", System.Data.DbType.Int64).Value = j.CustomerNumber;
-								cmd.Parameters.Add ("@Job_ID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
-								cmd.Parameters.Add ("@Created_By", System.Data.DbType.String).Value = "iPad";
 								cmd.ExecuteNonQuery ();
 							}
 
@@ -1329,7 +1298,7 @@ namespace Application
 					using (var cmd = connection.CreateCommand())
 					{
 						connection.Open();
-						// reset used parts data :: to accomplish that, we delete all records from STOCKUSED, PAYMENTS and FOLLOWUPS tables for the job AND ITS CHILD JOBS
+						// reset data :: to accomplish that, we delete all records from STOCKUSED, PAYMENTS and FOLLOWUPS tables for the job AND ITS CHILD JOBS
 						string sql = "DELETE FROM Pl_recor WHERE Booknum = ?";
 						cmd.CommandText = sql;
 						cmd.Parameters.Add ("@JobID", DbType.Int64).Value = j.JobBookingNumber;
@@ -1392,13 +1361,6 @@ namespace Application
 								}
 							}
 						}
-						//reset invoice fee info
-						sql = "DELETE FROM Charges WHERE Cust_oID = ? AND Job_oID = ?";
-						cmd.CommandText = sql;
-						cmd.Parameters.Clear ();
-						cmd.Parameters.Add ("@CustomerID", System.Data.DbType.Int64).Value = j.CustomerNumber;
-						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
-						cmd.ExecuteNonQuery ();
 						// reset follow up data
 						sql = "DELETE FROM Followups WHERE Job_ID IN (SELECT Booknum FROM Pl_recor WHERE Booknum = ? OR Parentnum = ?)";
 						cmd.CommandText = sql;
@@ -1428,11 +1390,13 @@ namespace Application
 
 						// reset job results data
 						// update the record in PL_RECOR table where BOOKINGNUMBER = job.BookingNumber, setting the following values: JDONE=0, INSTALLED=""
-						sql = "UPDATE PL_RECOR SET jDone = ?, Installed = ? WHERE Booknum = ?";
+						sql = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee)? "UPDATE PL_RECOR SET jDone = ?, Installed = ?, RepNum = ? WHERE Booknum = ?" : 
+							"UPDATE PL_RECOR SET jDone = ?, Installed = ?, PlNum = ? WHERE Booknum = ?";
 						cmd.Parameters.Clear ();
 						cmd.CommandText = sql;
 						cmd.Parameters.Add ("@JobDone", System.Data.DbType.Int32).Value = 0; // set jDone = 0 (false)
 						cmd.Parameters.Add ("@JobResult", System.Data.DbType.String).Value = ""; // set installed = "" (empty string)
+						cmd.Parameters.Add ("@EmployeeID", System.Data.DbType.Int32).Value = MyConstants.EmployeeID;
 						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 
 						_tabs._scView.Log (String.Format ("SQL UPDATE statement executed: {0}", sql));

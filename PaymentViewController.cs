@@ -37,7 +37,7 @@ namespace Application
 				{
 					btnSplitPayment.Title = "Normal payment";
 					HideAllPaymentOptions ();
-					HideInvoiceFee ();
+
 					lbTip.Text = "Entered split payment mode. Please enter details of two payments received.";
 
 					if (scPaymentType != null) 
@@ -90,7 +90,7 @@ namespace Application
 					// hide top segmented control that allows the user to choose payment type in normal mode
 					// show elements corresponding to split payment mode
 					ShowNormalModeUIElements ();
-					CheckInvoiceFee ();
+
 
 					if (btnSplitPayment != null) btnSplitPayment.Title = "Split payment";
 					if (scPaymentType != null) scPaymentType.SelectedSegment = -1;
@@ -205,28 +205,10 @@ namespace Application
 					return true;
 			return false;
 		}
-
-		public bool ShouldGenerateInvoiceFee()
-		{
-			bool NoInvoiceFees = _navWorkflow._tabs._jobRunTable.CurrentCustomer.InvoiceChargesWaived;
-			if (ReceivedLessMoneyThanShould () 
-			    && (NoInvoiceFees == false) 
-			    && !(ContainsPaymentType (_payments, PaymentTypes.CCDetails) || (ContainsPaymentType (_payments, PaymentTypes.CreditCard))))
-
-				return true;
-			else
-				return false;
-		}
 		
 		public void GenerateReceiptPDFPreview()
 		{
 			Customer c = _navWorkflow._tabs._jobRunTable.CurrentCustomer;
-			// mark the deposit as "used" for the customer
-//			if (c.DepositAmount > 0) {
-//				c.DepositUsed = c.DepositAmount;
-//				c.DepositAmount = 0;
-//			}
-
 			int jobCount = this.Summary.mainJob.ChildJobs.Count + 1;
 			
 			NSArray a = NSBundle.MainBundle.LoadNib ("ReceiptPDFView", this, null);
@@ -238,11 +220,12 @@ namespace Application
 			((UILabel)GeneratedPdfView.ViewWithTag (2)).Text = "Receipt for Job # "+this.Summary.mainJob.JobBookingNumber.ToString();
 			((UILabel)GeneratedPdfView.ViewWithTag (3)).Text = "Customer # "+c.CustomerNumber.ToString();
 			((UILabel)GeneratedPdfView.ViewWithTag (4)).Text = "Jobs performed: "+(jobCount).ToString ();
-			((UILabel)GeneratedPdfView.ViewWithTag (5)).Text = (c.isCompany)? "Company name: "+c.CompanyName : "Customer name: "+" "+c.FirstName+" "+c.LastName; // +c.Title -- taken out because it was causing issues with customers & users
+			((UILabel)GeneratedPdfView.ViewWithTag (5)).Text = (c.isCompany)? "Company: "+c.CompanyName + "\n" + "Customer: "+" "+c.FirstName+" "+c.LastName : 
+																			"Customer: "+" "+c.FirstName+" "+c.LastName;
 			((UILabel)GeneratedPdfView.ViewWithTag (31)).Text = "Address: "+c.Address+", "+c.Suburb;
 			((UILabel)GeneratedPdfView.ViewWithTag (6)).Text = "Date: "+DateTime.Now.Date.ToShortDateString();
 
-			double GSTAmount = (ShouldGenerateInvoiceFee () ) ? (5 + this.CalculateMoneyToCollect ()) / 11 : this.CalculateMoneyToCollect () / 11;
+			double GSTAmount = this.CalculateMoneyToCollect () / 11;
 			((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.GSTLabel)).Text = "GST amount: " + String.Format("$ {0:0.00}", GSTAmount);
 
 			if (c.DepositAmount - c.DepositUsed > 0) {
@@ -253,16 +236,11 @@ namespace Application
 				((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.DepositLabel)).Hidden = true;
 			}
 
-			// display an invoice fee if there would be an invoice sent out
-			((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.InvoiceFeeAmount)).Hidden = ! ShouldGenerateInvoiceFee();
-			((UILabel)GeneratedPdfView.ViewWithTag (MyConstants.ReceiptPDFTemplateTags.InvoiceFeeLabel)).Hidden = ! ShouldGenerateInvoiceFee();
-
-			double displayedTotalToReceive = (ShouldGenerateInvoiceFee () ) ? 5 + this.CalculateMoneyToCollect () : this.CalculateMoneyToCollect ();
+			double displayedTotalToReceive = this.CalculateMoneyToCollect ();
 			((UILabel)GeneratedPdfView.ViewWithTag (8)).Text = "Total to receive (inc. GST): " + String.Format("$ {0:0.00}", displayedTotalToReceive); // + this.tfToBeCollected.Text;
 			((UILabel)GeneratedPdfView.ViewWithTag (9)).Text = "Received: " + String.Format("{0:0.00}", this.tfTotalMoneyReceived.Text);
 
 			double displayedBalance = (this.CalculateMoneyToCollect () - this.MoneyReceived - c.DepositAmount);
-			displayedBalance = (ShouldGenerateInvoiceFee ()) ? (5 + displayedBalance) : displayedBalance;
 			((UILabel)GeneratedPdfView.ViewWithTag (24)).Text = "Balance: " + String.Format("$ {0:0.00}", displayedBalance);
 			if (displayedBalance > 0) 
 				((UILabel)GeneratedPdfView.ViewWithTag (24)).Font = UIFont.BoldSystemFontOfSize (20);
@@ -297,6 +275,8 @@ namespace Application
 			((UILabel)GeneratedPdfView.ViewWithTag (33)).Text = String.Format("Warranty on tubing components extended for another 3 years (until {0}) due to tubing upgrade. " +
 				"Please note that this extension does not cover the purifier and the tap.", DateTime.Now.Date.AddYears(3).ToShortDateString());
 			((UILabel)GeneratedPdfView.ViewWithTag (33)).Hidden = !tuInJobCluster;
+
+
 
 			bool newtapInJobCluster = false;
 			if ((this.Summary.mainJob.Type.Code == "NEWTAP") && (this.Summary.mainJob.Warranty == false))
@@ -369,7 +349,8 @@ namespace Application
 			//	if (DocumentSigned) pdfFileName = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), c.CustomerNumber.ToString()+"_Receipt_Signed.pdf");
 			//	else pdfFileName = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), c.CustomerNumber.ToString()+"_Receipt_Not_Signed.pdf");
 
-			pdfFileName = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), c.CustomerNumber.ToString()+"_Receipt.pdf");
+			pdfFileName = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), 
+			                            String.Format ("{0}_{1}_Receipt.pdf", c.CustomerNumber, this.Summary.mainJob.JobBookingNumber));
 
 			pdfData.Save (pdfFileName, true, out err);
 			err = null; pdfData = null;
@@ -986,9 +967,6 @@ namespace Application
 				this.scPaymentType.SelectedSegment = -1;
 
 				tfToBeCollected.Hidden = false;
-
-				lbInvoiceFee.Hidden = true;
-				tfInvoiceFee.Hidden = true;
 				
 				HideAllPaymentOptions();
 				lbTip.Text = "Please choose a payment type above.";
@@ -1056,30 +1034,6 @@ namespace Application
 			return (sum % 10 == 0);			
 		}
 
-		public void ShowInvoiceFee()
-		{
-			tfInvoiceFee.Hidden = false;
-			lbInvoiceFee.Hidden = false;
-		}
-
-		public void HideInvoiceFee()
-		{
-			tfInvoiceFee.Hidden = true;
-			lbInvoiceFee.Hidden = true;
-		}
-
-		public void CheckInvoiceFee()
-		{
-			try {
-				if (ReceivedLessMoneyThanShould ()) {
-					ShowInvoiceFee ();
-				} else
-					HideInvoiceFee ();
-			} catch {
-				// HideInvoiceFee ();
-			}
-		}
-
 		public override void ViewDidAppear (bool animated)
 		{
 			if (selectedJob != null)
@@ -1108,12 +1062,6 @@ namespace Application
 				}
 			}
 			selectedJob = _navWorkflow._tabs._jobRunTable.CurrentJob;
-
-			// if paid by invoice, make the appropriate interface elements visible
-			if (ContainsPaymentType (selectedJob.Payments, PaymentTypes.Invoice))
-				ShowInvoiceFee ();
-			else
-				HideInvoiceFee ();
 
 			if (selectedJob.Payments.Count > 0)
 			{
@@ -1509,15 +1457,23 @@ namespace Application
 		{
 			base.ViewDidLoad ();
 			
-			//any additional setup after loading the view, typically from a nib.
-			
+			// if iOS 7 -- bring the toolbar down 14 pixels
+			if (UIDevice.CurrentDevice.SystemVersion.Split ('.')[0] == "7") {
+				RectangleF current = this.myToolbar.Frame;
+
+				this.myToolbar.Frame = new RectangleF (current.X, current.Y+14, current.Width, current.Height);
+				this.myToolbar.SetNeedsLayout ();
+			}
+
+
+			//any additional setup after loading the view, typically from a nib.			
 			lbExpiryDateInvalid.TextColor = UIColor.Red;
 			lbChequeNumberInvalid.TextColor = UIColor.Red;
 			lbCardOwnerNameInvalid.TextColor = UIColor.Red;
 			
 			tfCreditCardNumber.ShouldChangeCharacters = CCNShouldChangeCharacters;
 			
-			/*
+			 /*
 			 // FUCK THIS SHIT
 			 // After a MonoTouch update to 5.2.12 the interaction with XCode's interface builder has been broken (Xamarin admitted it was their fuckup), 
 			 // and I needed to get the interface working somehow, so... see below
@@ -1532,11 +1488,6 @@ namespace Application
 			scPaymentType.ValueChanged += HandlePaymentControlValueChanged;
 			scSplitPaymentMethod1.ValueChanged += HandleSplitMethod1ValueChanged;
 			scSplitPaymentMethod2.ValueChanged += HandleSplitMethod2ValueChanged;
-
-			/*
-			tfInvoicePO.TouchDown += HandletfInvoicePOTouchDown;
-			tfPaymentType.TouchDown += HandletfPaymentTypeTouchDown;
-			*/
 
 			tfCreditCardExpiry.EditingDidEndOnExit += HandleTfCreditCardExpiryEditingDidEndOnExit;
 			tfCreditCardNumber.EditingDidEndOnExit += HandleCreditCardNumberEditingDidEndOnExit;
@@ -1853,7 +1804,6 @@ namespace Application
 				else 
 				{
 					this._payments[0].Type = PaymentTypes.Invoice;
-					ShowInvoiceFee ();
 					break; 
 				}
 			case 1: 
@@ -1924,7 +1874,6 @@ namespace Application
 					lbTip.Text = "Please collect cash and tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = tfToBeCollected.Text;
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
-					CheckInvoiceFee ();
 					break;
 				case PaymentTypes.Cheque : 
 					ShowChequePaymentOptions ();
@@ -1932,14 +1881,12 @@ namespace Application
 					lbTip.Text = "Please enter the cheque number into the field. When done, tap \"Forward\" arrow to proceed."; 
 					tfTotalMoneyReceived.Text = tfToBeCollected.Text;
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
-					CheckInvoiceFee ();
 					break;
 				case PaymentTypes.EFTPOS : 
 					HideAllPaymentOptions (); 
 					lbTip.Text = "Please process the payment with the EFT POS. When done, tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = tfToBeCollected.Text;
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
-					CheckInvoiceFee ();
 					break;
 
 				// in all other valid cases, money collected should be set to 0, disallowing the user to change that
@@ -1948,7 +1895,6 @@ namespace Application
 					lbTip.Text = "No payment to be collected, customer will be invoiced. Tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
-					ShowInvoiceFee ();
 					break;
 				case PaymentTypes.CreditCard: 
 					ShowCreditCardPaymentOptions (); 
@@ -1956,7 +1902,6 @@ namespace Application
 					lbTip.Text = "Please enter credit card details into the fields. When done, tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
-					HideInvoiceFee ();
 					break;
 				case PaymentTypes.CCDetails:
 					HideAllPaymentOptions ();
@@ -1964,7 +1909,6 @@ namespace Application
 					lbTip.Text = "Credit card will be drawn by accounting department. Tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
-					HideInvoiceFee ();
 					break;
 
 				// default
@@ -2045,12 +1989,14 @@ namespace Application
 
 		bool ReceivedLessMoneyThanShould()
 		{
-			double should = double.Parse (tfToBeCollected.Text.Replace ("$", " "));
-			double received = double.Parse (tfTotalMoneyReceived.Text.Replace ("$", " "));
+			if (tfToBeCollected != null && tfTotalMoneyReceived != null) {
+				double should = double.Parse (tfToBeCollected.Text.Replace ("$", " "));
+				double received = double.Parse (tfTotalMoneyReceived.Text.Replace ("$", " "));
 
-			if (received < should) {
-				ShowInvoiceFee ();
-				return true;
+				if (received < should) {
+					return true;
+				} else
+					return false;
 			} else
 				return false;
 		}

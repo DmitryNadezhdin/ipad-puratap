@@ -791,6 +791,9 @@ namespace Application
 										string desc = getDescription.GetTextField (0).Text;
 										_navWorkflow._tabs._jobService.SaveFollowupToDatabase(jobID, reasonID, desc);
 									}
+									else {
+										pr.OfficeFollowUpRequired = Choices.No;
+									}
 								};
 								getDescription.Show ();
 							}
@@ -843,6 +846,7 @@ namespace Application
 			base.ViewDidAppear (animated);
 
 
+
 			/* OLD LOGIC
 			if (_navWorkflow.Toolbar.Hidden) { _navWorkflow.SetToolbarHidden (false, animated); }
 			_navWorkflow.SetToolbarButtons (WorkflowToolbarButtonsMode.PrePlumbingCheck);
@@ -869,9 +873,18 @@ namespace Application
 		
 		public override void ViewDidLoad ()
 		{
-			base.ViewDidLoad ();
-			
 			//any additional setup after loading the view, typically from a nib.
+			base.ViewDidLoad ();
+
+			int systemVersion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split ('.') [0]);
+			// if iOS 7 -- bring the toolbar down 14 pixels
+			if (systemVersion == 7) {
+				RectangleF current = this.ppcToolbar.Frame;
+
+				this.ppcToolbar.Frame = new RectangleF (current.X, current.Y+14, current.Width, current.Height);
+				this.ppcToolbar.SetNeedsLayout ();
+			}
+
 			this.commentsTextView.ShouldBeginEditing = delegate {
 				MovedViewY = commentsTextView.Frame.Y;
 				float offset = commentsTextView.Frame.Y - 280;
@@ -879,6 +892,7 @@ namespace Application
 				UIView.SetAnimationDuration (0.5);
 				commentsTextView.Frame = new RectangleF(commentsTextView.Frame.X, 280, commentsTextView.Frame.Size.Width, commentsTextView.Frame.Size.Height);
 				lbComments.Frame = new RectangleF(lbComments.Frame.X, lbComments.Frame.Y-offset, lbComments.Frame.Size.Width, lbComments.Frame.Size.Height);
+
 				// hide the necessary objects
 				lbExistingDamage.Alpha = 0.05f;
 				lbNotAPuratapProblem.Alpha = 0.05f;
@@ -894,6 +908,7 @@ namespace Application
 				UIView.SetAnimationDuration (0.5);
 				commentsTextView.Frame = new RectangleF(commentsTextView.Frame.X, MovedViewY, commentsTextView.Frame.Size.Width, commentsTextView.Frame.Size.Height);
 				lbComments.Frame = new RectangleF(lbComments.Frame.X, lbComments.Frame.Y+offset, lbComments.Frame.Size.Width, lbComments.Frame.Size.Height);
+
 				// Un-hide the necessary objects
 				lbExistingDamage.Alpha = 1f;
 				lbNotAPuratapProblem.Alpha = 1f;

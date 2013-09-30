@@ -1,3 +1,33 @@
+2013-09-30  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Memos.xib:
+	* Info.plist:
+	* JobSummary.cs:
+	* JobRunTable.cs:
+	* AppDelegate.cs:
+	* MyConstants.cs:
+	* Puratap.csproj:
+	* DetailedTabs.cs:
+	* NEWTESTDB.sqlite:
+	* ReceiptPDFView.xib:
+	* JobTubingUpgrade.cs:
+	* JobHDTubingUpgrade.cs:
+	* PrePlumbingCheckView.cs:
+	* PaymentViewController.cs:
+	* PrePlumbingCheckView.xib:
+	* PaymentViewController.xib:
+	* CustomersViewController.cs:
+	* ClientServerDataExchange.cs:
+	* CustomersViewController.xib:
+	* SignInvoiceViewController.cs:
+	* JobHistoryViewController.xib:
+	* NewSignatureViewController.cs:
+	* Default-Landscape.png:
+	* JobServiceCallViewController.cs:
+	* WorkflowNavigationController.cs:
+	* PrePlumbingCheckView.designer.cs:
+	* InvoiceViewController.designer.cs: 
+
 2013-06-14  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* JobSummary.cs:

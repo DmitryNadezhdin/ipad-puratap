@@ -119,7 +119,7 @@ namespace Application
 							// if option 1
 							SetPartsToStandardBuild(16);
 							// set the job price to 29.5
-							ThisJob.MoneyToCollect = 29.5;
+							ThisJob.MoneyToCollect = 32.5;
 							break;
 						case 1:
 							// if option 2

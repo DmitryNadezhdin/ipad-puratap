@@ -123,22 +123,21 @@ namespace Application
 					{
 					case 0: { 
 						int buildNumber = 18; SetPartsToBuildNumber(buildNumber); 
-						ThisJob.EmployeeFee = 10; 
+						ThisJob.EmployeeFee = 10; // FIXME :: hard-coded value for fee
 						if (ThisJob.HasParent ())
 						{
 							Job parent = this.NavWorkflow._tabs._jobRunTable.FindParentJob (ThisJob);
 							foreach (Job child in parent.ChildJobs)
 							{
 								if (child.JobBookingNumber == ThisJob.JobBookingNumber)
-									child.EmployeeFee = 10;
+									child.EmployeeFee = 10; // FIXME :: hard-coded value for fee
 							}
 						}
-						// this.NavWorkflow._tabs._jobRunTable.CurrentJob.EmployeeFee = 10;
 						break; }
 
 					case 1: { 
 						int buildNumber = 19; SetPartsToBuildNumber(buildNumber); 
-						ThisJob.EmployeeFee = 14; 
+						ThisJob.EmployeeFee = ThisJob.Type.EmployeeFee; // FIXED :: hard-coded value for fee
 
 						if (ThisJob.HasParent ()) {
 							Job parent = this.NavWorkflow._tabs._jobRunTable.FindParentJob (ThisJob);
@@ -146,7 +145,7 @@ namespace Application
 								if (main.JobBookingNumber == parent.JobBookingNumber) {
 									foreach (Job child in main.ChildJobs) {
 										if (child.JobBookingNumber == ThisJob.JobBookingNumber) {
-											child.EmployeeFee = 14;
+											child.EmployeeFee = ThisJob.Type.EmployeeFee; // FIXED :: hard-coded value for fee 
 										}
 									}
 								}
@@ -156,7 +155,7 @@ namespace Application
 								if (main.JobBookingNumber == parent.JobBookingNumber) {
 									foreach (Job child in main.ChildJobs) {
 										if (child.JobBookingNumber == ThisJob.JobBookingNumber) {
-											child.EmployeeFee = 14;
+											child.EmployeeFee = ThisJob.Type.EmployeeFee; // FIXED :: hard-coded value for fee
 										}
 									}
 								}

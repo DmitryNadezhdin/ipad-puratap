@@ -261,11 +261,13 @@ namespace Application
 					                          										_jobRunTable.CurrentCustomer.LastName);
 					_newMemoView = new UIAlertView("Create a new memo for\n"+s+
 					                               "\nCustomer #"+_jobRunTable.CurrentCustomer.CustomerNumber+"\n\n\n\n\n", "", null, "Cancel", "OK");
-					
-					UITextField memoText = new UITextField(new RectangleF(12,95,260,25));
-					memoText.BackgroundColor = UIColor.White;
-					memoText.Placeholder = "Enter memo text here";
-					_newMemoView.AddSubview (memoText);
+
+					_newMemoView.AlertViewStyle = UIAlertViewStyle.PlainTextInput;
+
+//					UITextField memoText = new UITextField(new RectangleF(12,95,260,25));
+//					memoText.BackgroundColor = UIColor.White;
+//					memoText.Placeholder = "Enter memo text here";
+//					_newMemoView.AddSubview (memoText);
 					
 					_newMemoView.Show ();
 					_newMemoView.WillDismiss += Handle_newMemoViewWillDismiss;
@@ -813,20 +815,20 @@ namespace Application
 						connection.Open();
 						
 						cmd.Parameters.Add("_cusnum", System.Data.DbType.Double).Value = _jobRunTable.CurrentCustomer.CustomerNumber;	// number of the customer selected
-						cmd.Parameters.Add("_wmdate", System.Data.DbType.String).Value = DateTime.Now.ToString ("yyyy-MM-dd");						// date entered
-						cmd.Parameters.Add("_wctime", System.Data.DbType.String).Value = DateTime.Now.ToString ("HH:mm:ss");							// time entered
-						cmd.Parameters.Add("_wmtype", System.Data.DbType.String).Value = "FRC"; 																		// stands for FRachisee Comment
-						cmd.Parameters.Add("_wmm", System.Data.DbType.String).Value = "Entered on an iPad";														// memo description
-						cmd.Parameters.Add("_wmore", System.Data.DbType.String).Value = (_newMemoView.Subviews[5] as UITextField).Text;		// memo contents
-						cmd.Parameters.Add ("_repnum", System.Data.DbType.Int64).Value = MyConstants.EmployeeID;											// employee id
-						cmd.Parameters.Add("_wmemnum", System.Data.DbType.Double).Value = MyConstants.DUMMY_MEMO_NUMBER; // arbitrary large number (twelve nines) = memo number
+						cmd.Parameters.Add("_wmdate", System.Data.DbType.String).Value = DateTime.Now.ToString ("yyyy-MM-dd");			// date entered
+						cmd.Parameters.Add("_wctime", System.Data.DbType.String).Value = DateTime.Now.ToString ("HH:mm:ss");			// time entered
+						cmd.Parameters.Add("_wmtype", System.Data.DbType.String).Value = "FRC"; 										// stands for FRachisee Comment
+						cmd.Parameters.Add("_wmm", System.Data.DbType.String).Value = "Entered on an iPad";								// memo description
+						cmd.Parameters.Add ("_wmore", System.Data.DbType.String).Value = _newMemoView.GetTextField (0).Text; 			// memo contents
+						cmd.Parameters.Add ("_repnum", System.Data.DbType.Int64).Value = MyConstants.EmployeeID;						// employee id
+						cmd.Parameters.Add("_wmemnum", System.Data.DbType.Double).Value = MyConstants.DUMMY_MEMO_NUMBER; 				// arbitrary large number to be replaced by a proper memo number when processing iPad data in FoxPro
 
 						cmd.CommandText = sql;
 						// TODO:: error handling here :: IMPORTANT since if INSERT statement won't execute for some weird reason, there will be discrepancy between database and displayed memo list (until an app restarts)
 						cmd.ExecuteNonQuery();
 						
 						// if the insert statement did execute correctly, we'll add the memo to a list customer's memos
-						Memo m = new Memo((_newMemoView.Subviews[5] as UITextField).Text);
+						Memo m = new Memo(_newMemoView.GetTextField (0).Text);
 						m.MemoCustomerNumber = _jobRunTable.CurrentCustomer.CustomerNumber;
 						m.MemoDateEntered  = DateTime.Now;
 						m.MemoTimeEntered = DateTime.Now;

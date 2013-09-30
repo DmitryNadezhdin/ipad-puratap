@@ -225,7 +225,7 @@ namespace Application
 		{
 			if (_tabs.MyNavigationBar.Hidden)
 				_tabs.MyNavigationBar.Hidden = false;
-			_tabs.MyNavigationBar.TopItem.RightBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done, delegate {			
+				_tabs.MyNavigationBar.TopItem.RightBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done, delegate {			
 				MoveViewDown();
 				// Deactivate editing
 				dvc.ReloadData();

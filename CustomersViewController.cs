@@ -344,7 +344,10 @@ namespace Application
 				lbCompanyName.Hidden = true;
 				lbContactPerson.Hidden = true;
 
-				cSpecialInstructions.Frame = new System.Drawing.RectangleF(10,45,690,352);
+				int iOSversion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split('.')[0]);
+				int newY = (iOSversion == 7)? 45+18 : 45;
+
+				cSpecialInstructions.Frame = new System.Drawing.RectangleF(10, newY, 690, 352);
 				this._tabs._jobRunTable.TableView.UserInteractionEnabled = false;
 				foreach (UIBarButtonItem btn in this._tabs.MyNavigationBar.TopItem.RightBarButtonItems)	//NavigationItem.RightBarButtonItem.Enabled = false;
 					btn.Enabled = false;
@@ -363,7 +366,10 @@ namespace Application
 				lbCompanyName.Hidden = true;
 				lbContactPerson.Hidden = true;
 
-				cAttentionReason.Frame = new System.Drawing.RectangleF(10,45,690,352);
+				int iOSversion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split('.')[0]);
+				int newY = (iOSversion == 7)? 45+18 : 45;
+
+				cAttentionReason.Frame = new System.Drawing.RectangleF(10, newY, 690, 352);
 				this._tabs._jobRunTable.TableView.UserInteractionEnabled = false;
 				foreach (UIBarButtonItem btn in this._tabs.MyNavigationBar.TopItem.RightBarButtonItems)	//NavigationItem.RightBarButtonItem.Enabled = false;
 					btn.Enabled = false;
@@ -751,6 +757,18 @@ namespace Application
 						case CustomerDetailsUpdatableField.CompanyName : {
 							cmd.CommandText = "UPDATE Wclient SET wComName = ? WHERE Cusnum = ?";
 							cmd.Parameters.Add ("@CompanyName", DbType.String).Value = NewValue;
+
+							foreach (Customer c in this._tabs._jobRunTable.Customers) {
+								if (c.CustomerNumber == CustomerNumber) {
+									c.isCompany = ! String.IsNullOrEmpty (NewValue);
+								}
+							}
+							foreach (Customer c in this._tabs._jobRunTable.UserAddedCustomers) {
+								if (c.CustomerNumber == CustomerNumber) {
+									c.isCompany = ! String.IsNullOrEmpty (NewValue);
+								}
+							}
+							
 							break;
 						}
 						case CustomerDetailsUpdatableField.FirstName : {
@@ -906,7 +924,7 @@ namespace Application
 			UIImage img = MyConstants.ImageFromPDF(pdfDoc, 1);			
 			
 			TcpPrinterConnection myConn;
-			myConn = new TcpPrinterConnection("10.11.1.3", 6101);
+			myConn = new TcpPrinterConnection("10.11.1.3", 6101, 10, 10);
 			
 			NSError err;
 

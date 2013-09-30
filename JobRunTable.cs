@@ -15,6 +15,11 @@ using MonoTouch.ObjCRuntime;
 namespace Application
 {
 	// [Adopts ("UIViewControllerRestoration")] // this attribute is needed if we are to implement state restoration through storyboard interface design
+	public class NewJobAlertViewDelegate : UIAlertViewDelegate 
+	{
+		 
+	}
+
 	public class JobRunTable : UITableViewController 
 	{
 		// IMPLEMENTED:: replace all Constants.DEBUG_TODAY strings with proper parameter (today or tomorrow or whatever)
@@ -140,7 +145,9 @@ namespace Application
 			UIAlertView newJobAlert = sender as UIAlertView;
 			if (e.ButtonIndex != newJobAlert.CancelButtonIndex)
 			{
-				string input = (newJobAlert.Subviews[6] as UITextField).Text;
+				// WAS :: string input = (newJobAlert.Subviews[6] as UITextField).Text; -- THIS LINE CAUSES A CRASH ON iOS 7
+				string input = newJobAlert.GetTextField(0).Text;
+
 				int result = -1;
 				bool ok = int.TryParse (input, out result);
 				if (! ok) {
@@ -605,7 +612,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 												" AND pl_recor.cusnum != 72077 " + // getting rid of dummy records ( Mr. Puratap )
 												" AND wclient.wcclcde != 'CREATEDONIPAD' " +
 												" AND pl_recor.parentnum < 1 AND pl_recor.parentnum != -1 " +
-											" ORDER BY pl_recor.time, pl_recor.booknum desc";		
+											" ORDER BY pl_recor.time asc, pl_recor.booknum desc";		
 
 											// " AND wsales.cusnum=pl_recor.cusnum " +
 						cmd.CommandText = sql;
@@ -656,16 +663,17 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						// This will ignore manually added jobs
 					
 						sql = " SELECT wsales.specialinstruct, wsales.wplcomment, wsales.contact_name, " +
-								" wsales.wsoldprice as sales_price, " +
+								" wsales.wsoldprice as sales_price, wcmemo.wmore as pl_memo, " +
 								" pl_recor.* " +
-								" FROM pl_recor LEFT OUTER JOIN wsales ON pl_recor.cusnum=wsales.cusnum AND pl_recor.unitnum=wsales.unitnum " +  // getting rid of multiple results from WSALES
-								" WHERE pl_recor.plAppDate = " + dbDate +		// FIXED :: was a hardcoded date, has been replaced by something a bit more flexible
+								" FROM pl_recor LEFT OUTER JOIN wsales ON pl_recor.cusnum = wsales.cusnum AND pl_recor.unitnum = wsales.unitnum " +
+											  " LEFT OUTER JOIN wcmemo ON pl_recor.booknum = wcmemo.booknum AND wcmemo.wmtype = 'PLU' " +
+								" WHERE pl_recor.plAppDate = " + dbDate +		// IMPLEMENTED :: was a hardcoded date, has been replaced by something a bit more flexible
+									// " AND wsales.unitnum != 0 " +				// getting rid of older WSALES records that cannot be used to determine the sale price
 									" AND pl_recor.cusnum != 72077 " +			// getting rid of dummy records ( Mr. Puratap )
-									" AND pl_recor.parentnum != -1 " +																																		// FIXED :: we are to get rid of user created jobs 
-									" AND (NOT EXISTS (SELECT booknum FROM pl_recor plr WHERE plr.booknum=pl_recor.parentnum AND plr.parentnum=-1)) " + 	// AND their children here!
+								" AND pl_recor.parentnum != -1 " +				// getting rid of manually created jobs 
+									" AND (NOT EXISTS (SELECT booknum FROM pl_recor plr WHERE plr.booknum=pl_recor.parentnum AND plr.parentnum=-1)) " + // getting rid of child jobs of manually created jobs
 								" ORDER BY pl_recor.time asc, booknum desc";	
-									// " AND wsales.rowid = (SELECT MAX(rowid) from wsales where cusnum = pl_recor.cusnum AND wsales.wplcomment != \"\")" +
-									// " AND wsales.cusnum=pl_recor.cusnum " +
+
 						cmd.Parameters.Clear ();
 						cmd.CommandText = sql;
 						using (var reader = cmd.ExecuteReader() )
@@ -698,7 +706,14 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								// if this is an installation type job, this should be SALES_PRICE, deposits will be considered on the payments screen
 								double money = 0;
 								if (jType == "TWI" || jType == "RAI" || jType == "ROOF")
-									money = (double)reader ["sales_price"];
+								{
+									try {
+										money = (double)reader ["sales_price"];
+									}
+									catch {
+										money = 0;
+									}
+								}
 								else
 									money = (double)reader["pay_pl"];
 
@@ -706,7 +721,10 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								long jbBy = (long)reader["repnum"];
 								bool attention = Convert.ToBoolean (reader["attention"]);									
 								string sp = (reader["specialinstruct"] == DBNull.Value) ? "" : (string)reader["specialinstruct"];
-								string plc = (reader["wplcomment"] == DBNull.Value) ? "" : (string)reader["wplcomment"];
+
+								string plc = (reader["pl_memo"] != DBNull.Value) ? (string)reader["pl_memo"] : 
+											 (reader["wplcomment"] != DBNull.Value) ? (string)reader["wplcomment"] : "" ;
+
 								string cntct = (reader["contact_name"] == DBNull.Value) ? "" : (string)reader["contact_name"];
 								string attreason = (reader["attention_reason"] == DBNull.Value) ? "" : (string)reader["attention_reason"];
 
@@ -949,52 +967,55 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				}	// END using dbConnection
 
 				this.ReadCustomerDeposits (dbDate, databasePath);
-				this.ReadCustomerCharges (dbDate, databasePath);
+
+				/* * * * THIS WAS READING INVOICE FEES * * * * NO LONGER APPLIES * * * */
+//				this.ReadCustomerCharges (dbDate, databasePath);
 
 				JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB (); // just in case the employee mode changes, they'd need to reload job types so that the fees are calculated correctly
-				// dbConnection.Close (); redundant since "using" pattern is implemented
 			}
 
-			public void ReadCustomerCharges( string dbDate, string databasePath)
-			{
-				using (var dbConnection = new SqliteConnection("Data Source="+databasePath))
-				{
-					dbConnection.Open ();
-					using (var cmd = dbConnection.CreateCommand () )
-					{
-						// Get the InvoiceFeesWaived flag for each customer
-						string sql = "Select CusNum, Coi_No_Fees FROM WCLIENT, COI WHERE COI.COI_ID = WCLIENT.COI_ID";
-						cmd.CommandText = sql;
-						using (var reader = cmd.ExecuteReader ()) {
-							while (reader.Read ()) {
-								foreach (Customer c in _table.Customers) {
-									if (c.CustomerNumber == (long)reader["CusNum"]) {
-										c.InvoiceChargesWaived = Convert.ToBoolean ((byte)reader["Coi_No_Fees"]);
-									}
-								}
-							}
-						}
-
-						// Get client charges from CHARGES table
-						sql = " SELECT Cust_OID, " +
-							" SUM(Amount) as Charges " +
-								" FROM CHARGES " +
-								" GROUP BY Cust_OID";
-						cmd.CommandText = sql;
-						using (var reader = cmd.ExecuteReader())
-						{
-							while (reader.Read () )
-							{
-								foreach(Customer c in _table.Customers){
-									if (c.CustomerNumber == (long)reader ["Cust_OID"] && !c.InvoiceChargesWaived) {
-										c.ChargeAmount = (double)reader ["Charges"];
-									}
-								}
-							}
-						}
-					} // end using dbCommand
-				} // end using dbConnection
-			}
+			/* * * * THIS WAS READING INVOICE FEES * * * * NO LONGER APPLIES * * * */
+//			public void ReadCustomerCharges( string dbDate, string databasePath)
+//			{
+//				using (var dbConnection = new SqliteConnection("Data Source="+databasePath))
+//				{
+//					dbConnection.Open ();
+//					using (var cmd = dbConnection.CreateCommand () )
+//					{
+//						// Get the InvoiceFeesWaived flag for each customer
+//						string sql = "Select CusNum, Coi_No_Fees FROM WCLIENT, COI WHERE COI.COI_ID = WCLIENT.COI_ID";
+//						cmd.CommandText = sql;
+//						using (var reader = cmd.ExecuteReader ()) {
+//							while (reader.Read ()) {
+//								foreach (Customer c in _table.Customers) {
+//									if (c.CustomerNumber == (long)reader["CusNum"]) {
+//										c.InvoiceChargesWaived = true; // Convert.ToBoolean ((byte)reader["Coi_No_Fees"]);
+//									}
+//								}
+//							}
+//						}
+//
+//						// Get client charges from CHARGES table
+//						sql = " SELECT Cust_OID, " +
+//							" SUM(Amount) as Charges " +
+//								" FROM CHARGES " +
+//								" GROUP BY Cust_OID";
+//						cmd.CommandText = sql;
+//						using (var reader = cmd.ExecuteReader())
+//						{
+//							while (reader.Read () )
+//							{
+//								foreach(Customer c in _table.Customers){
+//									if (c.CustomerNumber == (long)reader ["Cust_OID"] && !c.InvoiceChargesWaived) {
+//										c.ChargeAmount = (double)reader ["Charges"];
+//									}
+//								}
+//							}
+//						}
+//					} // end using dbCommand
+//				} // end using dbConnection
+//			}
+			/* * * * THIS WAS READING INVOICE FEES * * * * NO LONGER APPLIES * * * */
 
 			public void ReadCustomerDeposits(string dbDate, string databasePath)
 			{
@@ -1018,12 +1039,17 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							{
 								foreach(Customer c in _table.Customers){
 									if (c.CustomerNumber == (long)reader ["CusNum"]) {
-										c.DepositAmount = (double)reader ["Deposit"];
+										// A scenario could arise where deposit was credited more than 12 months ago (thus not read), and then 
+										// debited recently. This would lead to SUM(Credit)-SUM(Debit) being < 0
+										if ( (double)reader["Deposit"] > 0 ) {
+											c.DepositAmount = (double)reader ["Deposit"];
+										}
 									}
 								}
 							}
 						}
 
+						// this reads deposits used only on the current run (Journal.jDate = dbDate)
 						sql = " SELECT CusNum, " +
 							" SUM(Debit) as DepositUsed " +
 								" FROM JOURNAL " +
@@ -1063,7 +1089,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 							string sql = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee) ? 
 								"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate >= date('now', '-7 day') group by plappdate having jobs>15 order by plappdate" : 
-									"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate >= date('now', '-7 day') and plnum=" + MyConstants.EmployeeID.ToString() + " group by plappdate having jobs>2 order by plappdate";
+									"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate >= date('now', '-7 day') and plnum=" + MyConstants.EmployeeID.ToString() + " group by plappdate having jobs>0 order by plappdate";
 							cmd.CommandText = sql;
 							using (var dateReader = cmd.ExecuteReader())
 							{
@@ -1241,6 +1267,14 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
 			{
 				var cell = tableView.DequeueReusableCell(ReusableJobRunCellID) ??	new UITableViewCell(UITableViewCellStyle.Subtitle, ReusableJobRunCellID);
+				if (indexPath.Section == 3) {
+					string caption = (string.IsNullOrEmpty (MyConstants.LastDataExchangeTime)) ? "Unknown" : MyConstants.LastDataExchangeTime;
+					cell.TextLabel.Text = caption;
+					cell.DetailTextLabel.Text = "Last data exchange time";
+					cell.Accessory = UITableViewCellAccessory.None;
+					cell.BackgroundColor = UIColor.White;
+					return cell;
+				}
 				if (indexPath.Section == 2)
 				{
 					cell.TextLabel.Text = "Tap to add new job";
@@ -1326,17 +1360,24 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							break;
 						}
 					}
-					
-					if (_table._mainjoblist[indexPath.Row].JobDone) cell.Accessory = UITableViewCellAccessory.Checkmark;
-					else cell.Accessory = UITableViewCellAccessory.None;
 
-					if (_table.MainJobList[indexPath.Row].AttentionFlag)
-						cell.BackgroundColor = UIColor.Yellow;
-					else
-					{
-						if (_table.Customers[indexPath.Row].TubingUpgradeDone)
-							cell.BackgroundColor = UIColor.White;
-						else cell.BackgroundColor = UIColor.Cyan;
+					try {
+
+						if (_table._mainjoblist[indexPath.Row].JobDone) cell.Accessory = UITableViewCellAccessory.Checkmark;
+						else cell.Accessory = UITableViewCellAccessory.None;
+
+						if (_table.MainJobList[indexPath.Row].AttentionFlag)
+							cell.BackgroundColor = UIColor.Yellow;
+						else
+						{
+							if (_table.Customers[indexPath.Row].TubingUpgradeDone)
+								cell.BackgroundColor = UIColor.White;
+							else cell.BackgroundColor = UIColor.Cyan;
+						}
+					}
+					catch {
+						cell.Accessory = UITableViewCellAccessory.None;
+						cell.BackgroundColor = UIColor.White;
 					}
 
 					return cell;
@@ -1345,7 +1386,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			
 			public override int NumberOfSections (UITableView tableView)
 			{
-				return 3;
+				return 4;
 				//int jobs = (_table.MainJobList != null && _table.MainJobList.Count > 0) ? 1:0;
 				//int additions = (_table.UserCreatedJobs != null && _table.UserCreatedJobs.Count > 0) ? 1:0;
 				//return jobs+additions+1;
@@ -1805,12 +1846,13 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 		public bool CheckIfInvoiceChargesWaived()
 		{
-			// TODO :: determine if the InvoiceCharges are Waived
+			// FIXME :: this is a stub that serves no purpose now
+			// this logic layer was removed along with the invoice charges
 
 			// open database connection, read COI table with COI_ID = Customer.COI_ID
 			// get the value of InvoiceFeesWaived field
 
-			return false;
+			return true;
 		}
 	} // end class Customer
 	
@@ -2165,15 +2207,15 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		
 		public JobType(string code)
 		{
-			bool found=false;
+			bool found = false;
 			if (JobRunTable.JobTypes == null) 
 				JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB();
 
 			if (JobRunTable.JobTypes != null) {
 				foreach (JobType jt in JobRunTable.JobTypes) {
-					if (jt.Code == code || 
-						( (code == "SIN" || code == "RAI" || code == "ROOF") && jt.Code == "TWI") || 
-						(code == "MIL" && jt.Code == "FIL")) {	// the above is ugly and unacceptable, should be rewritten
+					if (jt.Code.ToUpper() == code.ToUpper() || 
+							( (code == "SIN" || code == "RAI" || code == "ROOF") && jt.Code == "TWI") || 
+							(code == "MIL" && jt.Code == "FIL")) {	// FIXME :: the above is ugly and unacceptable, should be rewritten
 						found = true;
 						this.Code = jt.Code;
 						this.Description = jt.Description;

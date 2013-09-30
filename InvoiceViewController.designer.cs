@@ -91,12 +91,6 @@ namespace Application
 
 		[Outlet]
 		MonoTouch.UIKit.UITextField tfDeposit { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UILabel lbInvoiceFee { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UITextField tfInvoiceFee { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
@@ -233,16 +227,6 @@ namespace Application
 			if (tfDeposit != null) {
 				tfDeposit.Dispose ();
 				tfDeposit = null;
-			}
-
-			if (lbInvoiceFee != null) {
-				lbInvoiceFee.Dispose ();
-				lbInvoiceFee = null;
-			}
-
-			if (tfInvoiceFee != null) {
-				tfInvoiceFee.Dispose ();
-				tfInvoiceFee = null;
 			}
 		}
 	}

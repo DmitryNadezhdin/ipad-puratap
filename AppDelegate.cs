@@ -122,6 +122,7 @@ namespace Application
 			finally 
 			{  
 				window.MakeKeyAndVisible ();
+
 			}
 			return true;
 		}
@@ -167,9 +168,19 @@ namespace Application
 				{
 					// move the file from Inbox to Documents folder
 					//// string fileName = Path.GetFileName (url.Path);
+					string fileName = Path.GetFileNameWithoutExtension (url.Path);
+					if (fileName.EndsWith ("-1"))
+						fileName = fileName.Remove (fileName.Length-2,2) + ".sqlite";
+					else
+						fileName = Path.GetFileName (url.Path);
 
-					string openedFileName = Environment.GetFolderPath (Environment.SpecialFolder.Personal) +"/"+ Path.GetFileName (url.Path);
+					string openedFileName = Environment.GetFolderPath (Environment.SpecialFolder.Personal) +"/"+ fileName; // Path.GetFileName (url.Path);
+					if (File.Exists (openedFileName)) {
+						File.Delete (openedFileName.Replace (fileName, "EXISTED_"+fileName));
+						File.Move (openedFileName, openedFileName.Replace (fileName, "EXISTED_"+fileName));
+					}
 					File.Move (url.Path, openedFileName);
+
 					// set the appropriate keys in the app so that this database becomes the current working one
 					MyConstants.DBReceivedFromServer = openedFileName;
 					// issue LoadJobRun call
@@ -181,7 +192,7 @@ namespace Application
 					File.Delete (url.Path);
 				}
 			};
-			loadRunPrompt.Show ();
+			loadRunPrompt.Show (); 
 
 			return true;
 		}

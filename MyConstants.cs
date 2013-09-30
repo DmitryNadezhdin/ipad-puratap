@@ -65,6 +65,23 @@ namespace Application
 				NSUserDefaults.StandardUserDefaults.Synchronize ();
 			}
 		}
+
+		public static string LastDataExchangeTimeKey = "PURATAP_LAST_DATA_EXCHANGE_TIME";
+		public static string LastDataExchangeTime
+		{
+			get {
+				string saved = NSUserDefaults.StandardUserDefaults.StringForKey (LastDataExchangeTimeKey);
+				if (string.IsNullOrEmpty (saved)) {
+					saved = "";
+				}
+				return saved;
+			}
+			set {
+				string newValue = value;
+				NSUserDefaults.StandardUserDefaults.SetString (newValue, LastDataExchangeTimeKey);
+				NSUserDefaults.StandardUserDefaults.Synchronize ();
+			}
+		}
 		
 		// DEPRECATED :: public static bool AUTO_CHANGE_DATES = true; // false
 		public static string DEBUG_TODAY = String.Format (" '{0}' ", DateTime.Now.Date.ToString ("yyyy-MM-dd")); // " '2012-06-28' ";
@@ -172,8 +189,6 @@ namespace Application
 			public static int Signature = 32;
 			public static int GSTLabel = 35;
 			public static int DepositLabel = 36;
-			public static int InvoiceFeeAmount = 37;
-			public static int InvoiceFeeLabel = 38;
 		}
 		 
 		public MyConstants ()
@@ -359,6 +374,7 @@ namespace Application
 			TcpPrinterConnection myConn;
 			myConn = new TcpPrinterConnection("10.11.1.3", 6101);
 
+			// myConn.Open ();
 			bool connectionOK = myConn.Open();
 
 			NSError err;
@@ -392,11 +408,12 @@ namespace Application
 					if (pdfImage != null) pdfImage.Dispose ();
 				}
 			}
+
 			else {
 				// Could not establish connection with the printer
 				// Console.WriteLine ("Could not establish connection with the printer.");
 				return false;
-			}
+			} 
 			if (pdfImage != null) pdfImage.Dispose ();
 			return true;
 		}
@@ -430,7 +447,7 @@ namespace Application
 				{
 					var cmd = connection.CreateCommand();
 					connection.Open();
-					string sql = 	"SELECT * FROM FU_REASONS";
+					string sql = 	"SELECT * FROM FU_REASONS WHERE ID > 2";
 					cmd.CommandText = sql;
 					using (var reader = cmd.ExecuteReader())
 					{
