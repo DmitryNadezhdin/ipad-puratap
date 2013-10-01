@@ -556,6 +556,7 @@ namespace Application
 			PointF vel = sender.VelocityInView (this);
 			PointF loc = sender.LocationInView (this);
 
+			// not used ?
 			// currentVelocity = this.ViewPointToGL (vel, this.Frame, GLSignatureView.StrokeColor);
 			float distance = 0.0f;
 
