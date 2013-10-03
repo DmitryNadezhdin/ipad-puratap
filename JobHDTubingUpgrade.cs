@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using MonoTouch.Dialog;
 using MonoTouch.UIKit;
 
-namespace Application
+namespace Puratap
 {
 	public class JobHDTubingUpgrade : UsedPartsViewController
 	{

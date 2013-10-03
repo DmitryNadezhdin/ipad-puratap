@@ -6,7 +6,7 @@
 //
 using MonoTouch.Foundation;
 
-namespace Application
+namespace Puratap
 {
 	[Register ("TakePhotosViewController")]
 	partial class TakePhotosViewController

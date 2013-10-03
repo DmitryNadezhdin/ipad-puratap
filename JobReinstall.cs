@@ -5,7 +5,7 @@ using MonoTouch.Dialog;
 using MonoTouch.Foundation;
 using System.Collections.Generic;
 
-namespace Application
+namespace Puratap
 {
 	public class JobReinstallViewController : JobInstallationViewController
 	{

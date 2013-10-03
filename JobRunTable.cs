@@ -12,7 +12,7 @@ using Mono.Data.Sqlite;
 using MonoTouch.Foundation;
 using MonoTouch.ObjCRuntime;
 
-namespace Application
+namespace Puratap
 {
 	// [Adopts ("UIViewControllerRestoration")] // this attribute is needed if we are to implement state restoration through storyboard interface design
 	public class NewJobAlertViewDelegate : UIAlertViewDelegate 

@@ -9,7 +9,7 @@ using MonoTouch.Dialog;
 using MonoTouch.CoreGraphics;
 using Mono.Data.Sqlite;
 
-namespace Application
+namespace Puratap
 {
 	public enum PartButtons { Left, Mid, Right }
 	

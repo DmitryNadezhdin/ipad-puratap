@@ -7,7 +7,7 @@
 using MonoTouch.Foundation;
 using System.CodeDom.Compiler;
 
-namespace Application
+namespace Puratap
 {
 	[Register ("PrePlumbingCheckView")]
 	partial class PrePlumbingCheckView

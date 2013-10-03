@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using MonoTouch.UIKit;
 
-namespace Application
+namespace Puratap
 {
 	public class Part
 	{

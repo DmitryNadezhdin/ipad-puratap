@@ -7,7 +7,7 @@ using Mono.Data.Sqlite;
 using MonoTouch.Dialog;
 using System.Collections.Generic;
 
-namespace Application
+namespace Puratap
 {
 	public class ProductsDVC : DialogViewController
 	{

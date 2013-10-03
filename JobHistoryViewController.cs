@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using MonoTouch.Foundation;
 
-namespace Application
+namespace Puratap
 {
 	public partial class JobHistoryViewController : UIViewController
 	{

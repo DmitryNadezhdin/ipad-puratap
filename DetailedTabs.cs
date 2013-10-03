@@ -14,7 +14,7 @@ using Mono.Data.Sqlite;
 using MonoTouch.Dialog;
 using MonoTouch.MapKit;
 
-namespace Application
+namespace Puratap
 {
 	public enum DetailedTabsMode { Workflow, Lookup }
 	

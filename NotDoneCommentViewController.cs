@@ -5,7 +5,7 @@ using System.Drawing;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 
-namespace Application
+namespace Puratap
 {
 	public partial class NotDoneCommentViewController : UIViewController
 	{

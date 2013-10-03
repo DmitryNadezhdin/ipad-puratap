@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using MonoTouch.Foundation;
 
-namespace Application
+namespace Puratap
 {	
 	public partial class SignatureViewController : UIViewController
 	{

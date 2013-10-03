@@ -9,8 +9,9 @@ using MonoTouch.CoreLocation;
 using Mono.Data.Sqlite;
 using System.Threading;
 using MonoTouch.TestFlight; 
+using MonoTouch.MessageUI;
 
-namespace Application
+namespace Puratap
 {
 	// The UIApplicationDelegate for the application. This class is responsible for launching the 
 	// User Interface of the application, as well as listening (and optionally responding) to 
@@ -127,16 +128,6 @@ namespace Application
 			return true;
 		}
 
-//		public override bool ShouldSaveApplicationState (UIApplication application, NSCoder coder)
-//		{
-//			return true;
-//		}
-//
-//		public override bool ShouldRestoreApplicationState (UIApplication application, NSCoder coder)
-//		{
-//			return true;
-//		}
-
 		public override void WillTerminate (UIApplication application)
 		{
 			// Console.WriteLine ("AppDelegate.WillTerminate method fired.");
@@ -162,40 +153,178 @@ namespace Application
 
 		public override bool HandleOpenURL (UIApplication application, MonoTouch.Foundation.NSUrl url)
 		{
-			var loadRunPrompt = new UIAlertView ("Are you sure?", "Run path: "+url.RelativePath, null, "No", "Yes");
-			loadRunPrompt.Dismissed += delegate (object sender, UIButtonEventArgs e) {
-				if (e.ButtonIndex != loadRunPrompt.CancelButtonIndex)
-				{
-					// move the file from Inbox to Documents folder
-					//// string fileName = Path.GetFileName (url.Path);
-					string fileName = Path.GetFileNameWithoutExtension (url.Path);
-					if (fileName.EndsWith ("-1"))
-						fileName = fileName.Remove (fileName.Length-2,2) + ".sqlite";
-					else
-						fileName = Path.GetFileName (url.Path);
+			// if in workflow, show a message that workflow has to be finished
+			if (_tabs.Mode == DetailedTabsMode.Workflow) {
+				var cannotUpdateDuringWorkflow = new UIAlertView ("Cannot add data during workflow.", "Please finish entering data for current job and try again.", null, "OK");
+				cannotUpdateDuringWorkflow.Show ();
+			} else {
+				// brach: extra job or full run replacing current database
+				if (url.Path.Contains ("Extra_Job")) {  // adding extra job
+					string[] temp = url.Path.Split ('/');
+					string fname = temp [temp.Length - 1];
+					var addJobPrompt = new UIAlertView ("Are you sure?", "Adding job data from file: " + fname, null, "No", "Yes");
+					addJobPrompt.Dismissed += delegate(object sender, UIButtonEventArgs e) {
+						if (e.ButtonIndex != addJobPrompt.CancelButtonIndex) {
+							// copy database entries from the extra db file to current database
+							bool copyResult = SqliteCopyDataToDB(url.Path, MyConstants.DBReceivedFromServer);
 
-					string openedFileName = Environment.GetFolderPath (Environment.SpecialFolder.Personal) +"/"+ fileName; // Path.GetFileName (url.Path);
-					if (File.Exists (openedFileName)) {
-						File.Delete (openedFileName.Replace (fileName, "EXISTED_"+fileName));
-						File.Move (openedFileName, openedFileName.Replace (fileName, "EXISTED_"+fileName));
-					}
-					File.Move (url.Path, openedFileName);
+							if (copyResult == true) {
+								// reload the run so that the added job is displayed
+								_tabs._jobRunTable._ds.LoadJobRun(false);
 
-					// set the appropriate keys in the app so that this database becomes the current working one
-					MyConstants.DBReceivedFromServer = openedFileName;
-					// issue LoadJobRun call
-					_tabs._jobRunTable._ds.LoadJobRun (true);
-				}
-				else
-				{
-					// delete the file that has been copied to Inbox folder of the app
-					File.Delete (url.Path);
-				}
-			};
-			loadRunPrompt.Show (); 
+								// if data copying is successful, send the e-mail confirmation
+								if (MFMailComposeViewController.CanSendMail)
+									SendEmailConfirmationJobAccepted( url.Path.Substring(url.Path.LastIndexOf('/')+1) );
+								else 
+								{
+									var notEmailAble = new UIAlertView("iPad cannot send e-mails at this time.", "Please send the confirmation when able.", null, "OK");
+									notEmailAble.Show();
+								}			
+							}
+						}
+					};
+					addJobPrompt.Show ();
 
+				} else { // full run data replacement
+					var loadRunPrompt = new UIAlertView ("Are you sure?", "Run path: " + url.RelativePath, null, "No", "Yes");
+					loadRunPrompt.Dismissed += delegate (object sender, UIButtonEventArgs e) {
+						if (e.ButtonIndex != loadRunPrompt.CancelButtonIndex) {
+							// move the file from Inbox to Documents folder
+							//// string fileName = Path.GetFileName (url.Path);
+							string fileName = Path.GetFileNameWithoutExtension (url.Path);
+							if (fileName.EndsWith ("-1"))
+								fileName = fileName.Remove (fileName.Length - 2, 2) + ".sqlite";
+							else
+								fileName = Path.GetFileName (url.Path);
+
+							// if file with that <name> existed, rename it to EXISTED_<name>
+							string openedFileName = Environment.GetFolderPath (Environment.SpecialFolder.Personal) + "/" + fileName; // Path.GetFileName (url.Path);
+							if (File.Exists (openedFileName)) {
+								// if file with EXISTED_<name> exists, delete it
+								File.Delete (openedFileName.Replace (fileName, "EXISTED_" + fileName));
+								File.Move (openedFileName, openedFileName.Replace (fileName, "EXISTED_" + fileName));
+							}
+							File.Move (url.Path, openedFileName);
+
+							// set the appropriate keys in the app so that this database becomes the current working one
+							MyConstants.DBReceivedFromServer = openedFileName;
+
+							// call LoadJobRun to reload the run
+							_tabs._jobRunTable._ds.LoadJobRun (false);
+						} else {
+							// delete the file that has been copied to Inbox folder of the app
+							File.Delete (url.Path);
+						}
+					};
+					loadRunPrompt.Show ();
+				} // endif -- check if it is one extra job or a full run replacement
+			} // endif -- check if in workflow
 			return true;
 		}
+
+		private bool SqliteCopyDataToDB(string fromDB, string toDB) {
+			bool result = false;
+
+			using (var toDbConnection = new SqliteConnection("Data Source="+toDB)) {
+				toDbConnection.Open ();
+
+				using (var toCmd = toDbConnection.CreateCommand()) {
+					using (var transIndexes = toDbConnection.BeginTransaction()) {
+						try {
+							// set up constraints so that nothing can be added twice
+							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_CUSNUM ON WCLIENT(CusNum)";
+							toCmd.ExecuteNonQuery ();
+							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_BOOKNUM ON PL_RECOR(BookNum)";
+							toCmd.ExecuteNonQuery ();
+							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_UNITNUM ON WSALES(UnitNum)";
+							toCmd.ExecuteNonQuery ();
+							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_MEMNUM ON WCMEMO(WMemNum)";
+							toCmd.ExecuteNonQuery ();
+							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_JOURNAL ON JOURNAL(JDate,AccNum,JNum,CusNum,Debit,Credit)";
+
+							transIndexes.Commit ();
+						} catch {
+							transIndexes.Rollback ();
+						}
+					}
+
+					try {
+						// attach the database with extra data to the current DB connection
+						toCmd.CommandText = "ATTACH DATABASE '" + fromDB + "' AS ExtraDb;";
+						toCmd.ExecuteNonQuery ();
+					} catch (Exception e) {
+						using (var errorAlert = new UIAlertView("Error adding data", e.Message, null, "OK")) {
+							errorAlert.Show ();
+						}
+						// failed to attach database -- return
+						return false;
+					}
+
+					try {
+						// copy records over from extra db into the main
+						toCmd.CommandText = "INSERT INTO Main.WCLIENT SELECT * FROM ExtraDb.WCLIENT";
+						toCmd.ExecuteNonQuery ();
+						toCmd.CommandText = "INSERT INTO Main.PL_RECOR SELECT * FROM ExtraDb.PL_RECOR";
+						toCmd.ExecuteNonQuery ();
+						toCmd.CommandText = "INSERT INTO Main.WSALES SELECT * FROM ExtraDb.WSALES";
+						toCmd.ExecuteNonQuery ();
+						toCmd.CommandText = "INSERT INTO Main.WCMEMO SELECT * FROM ExtraDb.WCMEMO";
+						toCmd.ExecuteNonQuery ();
+						toCmd.CommandText = "INSERT INTO Main.Journal SELECT * FROM ExtraDb.JOURNAL";
+
+						result = true;
+
+					} catch (Exception e) {
+						using (var errorAlert = new UIAlertView("Error adding data", e.Message, null, "OK")) {
+							errorAlert.Show ();
+						}
+						result = false;
+
+					} finally {
+						// detach the database
+						toCmd.CommandText = "DETACH DATABASE ExtraDb;";
+						toCmd.ExecuteNonQuery();
+					}
+
+					// if successfully added, delete the extra job db file
+					if (result == true)
+						File.Delete (fromDB);
+
+					return result;
+				}
+			}
+		}
+
+		private void SendEmailConfirmationJobAccepted(string dbFileName)
+		{
+			string[] tst = dbFileName.Split (' ');
+
+			long customerNumber = Convert.ToInt64(tst[1]);
+			long jobID = Convert.ToInt64 (tst [2]);
+
+			Customer c = _jobs.Customers.Find (customer => customer.CustomerNumber == customerNumber);
+			if (c != null) {
+				var mail = new MFMailComposeViewController();
+
+				NSAction act = delegate {	};
+
+				mail.SetSubject (String.Format ("RE: Job accepted -- CN# {0} {1} {2}, job ID {3}", c.CustomerNumber, c.FirstName, c.LastName, jobID ));
+				mail.SetToRecipients (new string[] { "admin@puratap.com" });
+
+				mail.Finished += delegate(object sender, MFComposeResultEventArgs e) {
+					if (e.Result == MFMailComposeResult.Sent)
+					{
+						var alert = new UIAlertView("", "Mail sent", null, "OK");
+						alert.Show();				
+					}
+
+					mail.DismissViewController (true, act);				
+				};
+
+				_tabs.PresentViewController (mail, true, act);
+			}	
+		}
+
 
 		/*
 		public override void WillEnterForeground (UIApplication application)
@@ -257,44 +386,7 @@ namespace Application
 			}
 	    }
 
-		// THE CODE BELOW IS TO PREVENT TESTFLIGHT FRAMEWORK FROM CRASHING THE APP
-		[DllImport ("libc")]
-		private static extern int sigaction (Signal sig, IntPtr act, IntPtr oact);
-		
-		enum Signal {
-			SIGBUS = 10,
-			SIGSEGV = 11
-		}
-		
-		static void EnableCrashReporting ()
-		{
-			IntPtr sigbus = Marshal.AllocHGlobal (512);
-			IntPtr sigsegv = Marshal.AllocHGlobal (512);
-			
-			// Store Mono SIGSEGV and SIGBUS handlers
-			sigaction (Signal.SIGBUS, IntPtr.Zero, sigbus);
-			sigaction (Signal.SIGSEGV, IntPtr.Zero, sigsegv);
-			
-			// Enable crash reporting libraries
-			EnableCrashReportingUnsafe ();
-			
-			// Restore Mono SIGSEGV and SIGBUS handlers            
-			sigaction (Signal.SIGBUS, sigbus, IntPtr.Zero);
-			sigaction (Signal.SIGSEGV, sigsegv, IntPtr.Zero);
-			
-			Marshal.FreeHGlobal (sigbus);
-			Marshal.FreeHGlobal (sigsegv);
-		}
-		
-		static void EnableCrashReportingUnsafe ()
-		{
-			// Finally, we can engage this again
-			// Had to remove the whole thing previously as the TestFlight.TakeOff call would crash the app during the launch attempt
-			if ( Application.RunningOnDevice() )
 
-				TestFlight.TakeOff ("d8d373f84f2089a4f245614aecb024fd_MTMwMDU1MjAxMi0wOS0wOSAxNzoxMDoxMy4xMjA3MjI"); // this is the Puratap team token
-				// TestFlight.TakeOff ("f1e1ead5-5ee8-4a3c-a52b-a18e7919b06d"); this is the app token
-		}
 
 		void InitializeLocationObjects()
 		{

@@ -1,7 +1,7 @@
 using MonoTouch.UIKit;
 using System;
 
-namespace Application
+namespace Puratap
 {
 	public class UsedPartsNavigationController : UINavigationController
 	{

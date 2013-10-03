@@ -9,7 +9,7 @@ using MonoTouch.CoreGraphics;
 using Mono.Data.Sqlite;
 using ZSDK_Binding;
 
-namespace Application
+namespace Puratap
 {
 	public partial class PaymentViewController : UIViewController
 	{

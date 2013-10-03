@@ -5,7 +5,7 @@ using MonoTouch.Foundation;
 using System.IO;
 using System.Threading;
 
-namespace Application
+namespace Puratap
 {
 	public class SignInvoiceViewController : NewSignatureViewController
 	{

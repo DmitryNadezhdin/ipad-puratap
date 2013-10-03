@@ -5,7 +5,7 @@ using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using MonoTouch.ObjCRuntime;
 
-namespace Application
+namespace Puratap
 {
 
 	public class Application

@@ -3,7 +3,7 @@ using MonoTouch.Dialog;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 
-namespace Application
+namespace Puratap
 {
 	public class JobStringElement : StringElement
 	{

@@ -4,7 +4,7 @@ using MonoTouch.UIKit;
 using MonoTouch.Foundation;
 using System.Drawing;
 
-namespace Application
+namespace Puratap
 {
 	public class SignServiceReportViewController : NewSignatureViewController
 	{

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using MonoTouch.Dialog;
 using Mono.Data.Sqlite;
 
-namespace Application
+namespace Puratap
 {
 	public class ProblemAndAction { // rewritten to use classes that allow to get proper string representations of choices made by user
 		public /* ProblemPointsEnum */ ProblemPoints ProblemPoint { get; set; }

@@ -1,7 +1,7 @@
 using System;
 using MonoTouch.UIKit;
 
-namespace Application
+namespace Puratap
 {
 	public class ServiceNavigationController : UINavigationController
 	{

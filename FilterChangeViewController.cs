@@ -7,7 +7,7 @@ using MonoTouch.Foundation;
 using MonoTouch.Dialog;
 using MonoTouch.CoreGraphics;
 
-namespace Application
+namespace Puratap
 {
 	public class FilterChangeViewController : UsedPartsViewController
 	{	

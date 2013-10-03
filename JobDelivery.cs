@@ -4,7 +4,7 @@ using MonoTouch.UIKit;
 using MonoTouch.Dialog;
 using System.Collections.Generic;
 
-namespace Application
+namespace Puratap
 {
 	public class JobDeliveryViewController : UsedPartsViewController
 	{

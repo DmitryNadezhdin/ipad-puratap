@@ -9,7 +9,7 @@ using System.Drawing;
 using Mono.Data.Sqlite;
 using MonoTouch.Dialog;
 
-namespace Application
+namespace Puratap
 {
 	public enum WorkflowToolbarButtonsMode { 
 		PrePlumbingCheck, SigningPrePlumbingCheck,

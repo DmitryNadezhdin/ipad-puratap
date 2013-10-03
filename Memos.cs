@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using MonoTouch.Foundation;
 using Mono.Data.Sqlite;
 
-namespace Application
+namespace Puratap
 {
 	public partial class Memos : UIViewController
 	{

@@ -8,7 +8,7 @@ using Mono.Data.Sqlite;
 using MonoTouch.CoreGraphics;
 using ZSDK_Binding;
 
-namespace Application
+namespace Puratap
 {
 	public partial class CustomersViewController : UIViewController
 	{

@@ -2,7 +2,7 @@ using System;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 
-namespace Application
+namespace Puratap
 {
 	public class CustomerNavigationController : UINavigationController
 	{

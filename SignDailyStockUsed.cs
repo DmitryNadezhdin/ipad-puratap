@@ -7,7 +7,7 @@ using MonoTouch.UIKit;
 using MonoTouch.Dialog;
 using MonoTouch.Foundation;
 
-namespace Application
+namespace Puratap
 {
 	public class SignDailyStockUsed : NewSignatureViewController
 	{

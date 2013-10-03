@@ -3,7 +3,7 @@ using MonoTouch.Dialog;
 using System.Collections.Generic;
 using MonoTouch.UIKit;
 
-namespace Application
+namespace Puratap
 {
 	public class JobUnitUpgrade : UsedPartsViewController
 	{

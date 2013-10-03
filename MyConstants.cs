@@ -12,7 +12,7 @@ using Mono.Data.Sqlite;
 using MonoTouch.SystemConfiguration;
 using ZSDK_Binding;
 
-namespace Application
+namespace Puratap
 {
 	public enum NavigationButtonsMode { CustomerDetails, CustomerMemos, JobHistory, PrePlumbing, ServerClient, None }
 	public enum FileTypes { SQLiteDatabase, PDFDocument, Photo, Summary, None }
@@ -49,7 +49,7 @@ namespace Application
 				// if nothing is in the user settings database, there is little we can do, the app was installed on a new device most likely
 				if (string.IsNullOrEmpty (result))
 					result = String.Empty;
-				else if (! File.Exists (result))		// if database file does not exist, this could be a new version of the app installed (thus changing the bundle's directory name), we should attempt to find the file
+				else if (! File.Exists (result))	// if database file does not exist, this could be a new version of the app installed (thus changing the bundle's directory name), we should attempt to find the file
 				{
 					// save just the filename to the result string
 					result = result.Substring (result.LastIndexOf ('/')+1);

@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using MonoTouch.UIKit;
 using MonoTouch.Foundation;
 
-namespace Application
+namespace Puratap
 {
 	public class ClientServerDataExchange
 	{	
@@ -94,23 +94,26 @@ namespace Application
 
 							const int maxSize = 1024;
 
-							TcpClient tcpClient = new TcpClient(hostName, port);
-							tcpClient.ReceiveTimeout = 10000;
-							tcpClient.SendTimeout = 10000; // these timeouts only apply to sync read and write operations
-
+							TcpClient tcpClient = null;
 							try {
+								tcpClient = new TcpClient(hostName, port);
+								tcpClient.ReceiveTimeout = 10000;
+								tcpClient.SendTimeout = 10000; // these timeouts only apply to sync read and write operations
+								
 								_controller.Log ("Data exchange thread started: " + Thread.CurrentThread.ManagedThreadId.ToString ());
 
 								using (NetworkStream netStream = tcpClient.GetStream() )
 								{
 									/*		A couple potential issues here:
+									 * 
 									 * 		1. We should never assume that data piece, however small it may be, will come through the network synchronously
 									 * 			Therefore, every send or receive operation should be performed in async mode (!not the case currently!).
 									 * 		2. Device identification. We DO NOT rely on devices' serial numbers or ECIDs, we create a GUID on the device and 
 									 * 			tie those GUIDs to employee number (REPNUM in WREP or PLNUM in PLUMB) in FoxPro database.
 									 * 			When the device initiates the data exchange, it sends over its GUID. 
 									 * 			The server then checks the database to decide which file(s) should be transferred to the device.
-									*/		
+									*/	
+
 									receiveDone.Reset();
 									sendDone.Reset();
 

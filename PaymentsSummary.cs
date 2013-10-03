@@ -11,7 +11,7 @@ using MonoTouch.Foundation;
 using Mono.Data.Sqlite;
 using ZSDK_Binding;
 
-namespace Application
+namespace Puratap
 {
 	public enum SummaryModes { Money, Stock }
 
