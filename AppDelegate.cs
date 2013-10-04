@@ -165,7 +165,7 @@ namespace Puratap
 					var addJobPrompt = new UIAlertView ("Are you sure?", "Adding job data from file: " + fname, null, "No", "Yes");
 					addJobPrompt.Dismissed += delegate(object sender, UIButtonEventArgs e) {
 						if (e.ButtonIndex != addJobPrompt.CancelButtonIndex) {
-							// copy database entries from the extra db file to current database
+							// copy database entries from the extra db file to current database and delete the source
 							bool copyResult = SqliteCopyDataToDB(url.Path, MyConstants.DBReceivedFromServer);
 
 							if (copyResult == true) {
@@ -186,7 +186,8 @@ namespace Puratap
 					addJobPrompt.Show ();
 
 				} else { // full run data replacement
-					var loadRunPrompt = new UIAlertView ("Are you sure?", "Run path: " + url.RelativePath, null, "No", "Yes");
+					string file = Path.GetFileNameWithoutExtension (url.Path);
+					var loadRunPrompt = new UIAlertView ("Are you sure?", "Load runs from file: " + file, null, "No", "Yes");
 					loadRunPrompt.Dismissed += delegate (object sender, UIButtonEventArgs e) {
 						if (e.ButtonIndex != loadRunPrompt.CancelButtonIndex) {
 							// move the file from Inbox to Documents folder
@@ -244,6 +245,7 @@ namespace Puratap
 
 							transIndexes.Commit ();
 						} catch {
+							// if indexes already exist, an exception will be thrown, no big deal here
 							transIndexes.Rollback ();
 						}
 					}
@@ -256,7 +258,7 @@ namespace Puratap
 						using (var errorAlert = new UIAlertView("Error adding data", e.Message, null, "OK")) {
 							errorAlert.Show ();
 						}
-						// failed to attach database -- return
+						// failed to attach database -- cannot continue -- source file will linger!
 						return false;
 					}
 
@@ -299,23 +301,37 @@ namespace Puratap
 		{
 			string[] tst = dbFileName.Split (' ');
 
-			long customerNumber = Convert.ToInt64(tst[1]);
-			long jobID = Convert.ToInt64 (tst [2]);
+			long customerNumber = 0;
+			long jobID = 0;
+			string emailSender = "";
 
+			try {
+				customerNumber = Convert.ToInt64(tst[1]);
+				jobID = Convert.ToInt64 (tst [2]);
+				emailSender = tst[4] + "@puratap.com";
+			} catch {
+			}
 			Customer c = _jobs.Customers.Find (customer => customer.CustomerNumber == customerNumber);
 			if (c != null) {
 				var mail = new MFMailComposeViewController();
 
 				NSAction act = delegate {	};
 
+				string msg = String.Format ("Dear office,\r\n\r\n I hereby inform you that job {0} for customer {1} has been accepted.", jobID, c.CustomerNumber);
+
 				mail.SetSubject (String.Format ("RE: Job accepted -- CN# {0} {1} {2}, job ID {3}", c.CustomerNumber, c.FirstName, c.LastName, jobID ));
-				mail.SetToRecipients (new string[] { "admin@puratap.com" });
+				mail.SetToRecipients (new string[] { emailSender });
+				mail.SetCcRecipients (new string[] { "admin@puratap.com" });
+				mail.SetMessageBody (msg, false);
 
 				mail.Finished += delegate(object sender, MFComposeResultEventArgs e) {
 					if (e.Result == MFMailComposeResult.Sent)
 					{
-						var alert = new UIAlertView("", "Mail sent", null, "OK");
-						alert.Show();				
+						var sendSuccess = new UIAlertView("", "Mail sent", null, "OK");
+						sendSuccess.Show();				
+					} else if (e.Result == MFMailComposeResult.Failed) {
+							var sendFailed = new UIAlertView("Error", "Failed to send message: "+e.Error.Description, null, "OK");
+							sendFailed.Show();				
 					}
 
 					mail.DismissViewController (true, act);				
@@ -324,30 +340,6 @@ namespace Puratap
 				_tabs.PresentViewController (mail, true, act);
 			}	
 		}
-
-
-		/*
-		public override void WillEnterForeground (UIApplication application)
-		{
-			// this should allow to change the dates automatically
-			if (MyConstants.AUTO_CHANGE_DATES == true)
-			{
-				string currentDate = String.Format (" '{0}' ", DateTime.Now.Date.ToString ("yyyy-MM-dd"));
-				MyConstants.DEBUG_TODAY = currentDate;
-
-				if (_tabs.Mode == DetailedTabsMode.Lookup)
-				{
-					try 
-					{	
-						_tabs._scView.Log ("AppDelegate.WillEnterForeground : Reloading database...");
-						_tabs._jobRunTable._ds.GetCustomersFromDB ();
-						_tabs._scView.Log ("AppDelegate.WillEnterForeground : Database reloaded.");
-					} 
-					finally {  	}
-				}
-			}
-		} */
-
 	
 		public class SplitDelegate : UISplitViewControllerDelegate
 	    {		// this defines split controller behavior in case of device orientation changes
@@ -385,8 +377,6 @@ namespace Puratap
 	            }
 			}
 	    }
-
-
 
 		void InitializeLocationObjects()
 		{
@@ -485,12 +475,6 @@ namespace Puratap
 				}
 
 				LastCoordsRecordedTimeStamp = DateTime.Now;
-				try {
-					// Console.WriteLine (String.Format ("Location added to buffer: {0}, {1}, {2}, \"{3}\"", loc.Lat, loc.Lng, loc.CustomerID, loc.Address));
-				} catch 
-				{
-					// do nothing
-				}
 			}
 		}
 
@@ -507,9 +491,9 @@ namespace Puratap
 			thisDeviceLat = lastLocation.Coordinate.Latitude;
 			thisDeviceLng = lastLocation.Coordinate.Longitude;
 
+			// saving no more often than once per minute
 			if ( (DateTime.Now - LastCoordsRecordedTimeStamp).TotalMinutes >= 1 )
 			{
-				// string time = (DateTime.SpecifyKind (lastLocation.Timestamp, DateTimeKind.Unspecified)).ToString("yyyy-MM-dd HH:mm:ss"); // DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 				string anotherTime = (new DateTime(2001,1,1,0,0,0)).AddSeconds(lastLocation.Timestamp.SecondsSinceReferenceDate).ToLocalTime().ToString ("yyyy-MM-dd HH:mm:ss");
 				AddLocationToBuffer (thisDeviceLng, thisDeviceLat, anotherTime, thisDeviceAddress, -1, -1);
 				LastCoordsRecordedTimeStamp = DateTime.Now;
@@ -581,7 +565,6 @@ namespace Puratap
 //					// nothing to be done about this one
 //					// this should be removed in release builds
 //				}
-
 				newAddress = String.Format ("Geocoding error: {0}", error.Code);
 				Interlocked.Exchange<string>(ref thisDeviceAddress, newAddress);
 			}
