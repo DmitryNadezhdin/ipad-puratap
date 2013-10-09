@@ -11,8 +11,16 @@ namespace Puratap
 		{
 			Tabs = tabs;
 			
-			this.View.AutosizesSubviews = true;
-			this.View.AutoresizingMask = UIViewAutoresizing.FlexibleWidth;
+			this.NavigationBar.BarStyle = UIBarStyle.Black;
+
+			if (MyConstants.iOSVersion >= 7) {
+				this.NavigationBar.TintColor = UIColor.Blue;
+				this.NavigationBar.BarTintColor = UIColor.FromRGBA (0, 0, 0, 25); 
+				this.NavigationBar.SetTitleTextAttributes (new UITextAttributes () {
+					TextColor = UIColor.Black,
+					TextShadowColor = UIColor.Clear
+				});
+			}
 		}
 	}
 }

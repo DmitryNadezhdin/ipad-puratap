@@ -12,9 +12,9 @@ namespace Puratap
 			Tabs = tabs;
 		}
 
-		public override void ViewDidAppear (bool animated)
+		public override void ViewWillAppear (bool animated)
 		{
-			base.ViewDidAppear (animated);
+			base.ViewWillAppear (animated);
 			if (this.ViewControllers.Length < 2) this.NavigationBar.Hidden = true;
 			this.Tabs.MyNavigationBar.Hidden = false;
 			this.Tabs.SetNavigationButtons (NavigationButtonsMode.CustomerDetails);

@@ -102,6 +102,8 @@ namespace Puratap
 		{
 			return true; // (toInterfaceOrientation == UIInterfaceOrientation.LandscapeLeft || toInterfaceOrientation == UIInterfaceOrientation.LandscapeRight);
 		}
+
+
 		
 		public Job FindParentJob(Job j)
 		{
@@ -1266,122 +1268,106 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									
 			public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
 			{
-				var cell = tableView.DequeueReusableCell(ReusableJobRunCellID) ??	new UITableViewCell(UITableViewCellStyle.Subtitle, ReusableJobRunCellID);
-				if (indexPath.Section == 3) {
-					string caption = (string.IsNullOrEmpty (MyConstants.LastDataExchangeTime)) ? "Unknown" : MyConstants.LastDataExchangeTime;
-					cell.TextLabel.Text = caption;
-					cell.DetailTextLabel.Text = "Last data exchange time";
-					cell.Accessory = UITableViewCellAccessory.None;
-					cell.BackgroundColor = UIColor.White;
-					return cell;
-				}
-				if (indexPath.Section == 2)
-				{
-					cell.TextLabel.Text = "Tap to add new job";
-					cell.DetailTextLabel.Text = "Use with caution :-)";
-					cell.Accessory = UITableViewCellAccessory.None;
-					cell.BackgroundColor = UIColor.White;
-					return cell;
-				}
-				if (indexPath.Section == 1 && (_table.UserCreatedJobs != null && _table.UserCreatedJobs.Count != 0) 
-				    && (_table.UserAddedCustomers != null && _table.UserAddedCustomers.Count !=0) )
-				{
-					// this should do almost the same stuff that is done for section 0, just looking up customers and jobs in other lists
-					Customer c = _table.UserAddedCustomers[indexPath.Row];
-					cell.TextLabel.Text = (! c.isCompany) ? String.Format("{0} {1}",	// FIXED :: was only checking UserCreatedJobs for being not null, but used to draw data from other objects as well (UserAddedCustomers) 
-					                                                      /*c.Title,*/ c.FirstName, c.LastName) : c.CompanyName;
-					
-					cell.DetailTextLabel.Text = 	_table.UserCreatedJobs [indexPath.Row].JobTime.ToString("h:mm tt") + "   " + c.Suburb + "\n" + 
-						c.Address ; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
-					cell.DetailTextLabel.Lines = 2;
-															
-					_table.UserAddedCustomers[indexPath.Row].HighLighted = false;
-					if (_table.UserCreatedJobs[indexPath.Row].JobDone) cell.Accessory = UITableViewCellAccessory.Checkmark;
-					else cell.Accessory = UITableViewCellAccessory.None;
+				var cell = tableView.DequeueReusableCell(ReusableJobRunCellID) ?? new UITableViewCell(UITableViewCellStyle.Subtitle, ReusableJobRunCellID);
 
-					if (_table.UserCreatedJobs[indexPath.Row].AttentionFlag)
-						cell.BackgroundColor = UIColor.Yellow;
-					else
+				// cell.SelectionStyle = UITableViewCellSelectionStyle.Blue; -- DOES NOT WORK in iOS 7 -- it is supposed to do what code below does (sort of)
+				if (MyConstants.iOSVersion >= 7) {
+					using (var back = new UIView() { BackgroundColor = UIColor.FromRGBA(0,50,220,200) }) {
+						back.Layer.MasksToBounds = true;
+						cell.SelectedBackgroundView = back;
+					}
+				}
+				cell.TextLabel.Font = UIFont.BoldSystemFontOfSize (20);
+				cell.DetailTextLabel.Font = UIFont.SystemFontOfSize (15);
+				cell.TextLabel.HighlightedTextColor = UIColor.White;
+				cell.DetailTextLabel.HighlightedTextColor = UIColor.White;
+
+				switch (indexPath.Section) {
+				
+				case 3:
 					{
-						if (_table.UserAddedCustomers[indexPath.Row].TubingUpgradeDone)
-							cell.BackgroundColor = UIColor.White;
-						else cell.BackgroundColor = UIColor.Cyan;
-					}
-
-					return cell;
-				}
-				else // indexPath.Section == 0
-				{
-					Customer c = _table._customers[indexPath.Row];
-					cell.TextLabel.Text = (c.isCompany) ? c.CompanyName : String.Format("{0} {1}", /*c.Title,*/ c.FirstName, c.LastName);
-					
-					if (_table.MainJobList.Count > 0)
-					{
-						cell.DetailTextLabel.Text = 	_table.MainJobList[indexPath.Row].JobTime.ToString("h:mm tt") + "   " + c.Suburb + "\n" +
-							c.Address; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
-					}
-					else cell.DetailTextLabel.Text = "Nothing to see here, move along";
-					cell.DetailTextLabel.Lines = 2;
-
-					// _table.Customers[indexPath.Row].Address + ", " + _table.Customers[indexPath.Row].Suburb;
-					
-					if (_table._highlightedMode) {
-						int r = _table.LastSelectedRowPath.Row;
-						string street;
-						switch (_table.LastSelectedRowPath.Section)
-						{
-						case 0:
-							street = _table.Customers[r].GetStreet();
-							if (_table._customers[indexPath.Row].GetStreet() == street && 
-							    _table._customers[indexPath.Row].Suburb == _table._customers[r].Suburb)
-							{
-								
-								_table._customers[indexPath.Row].HighLighted = true;		// distincts this cell's displayed view from others
-								// cell.Accessory = UITableViewCellAccessory.DetailDisclosureButton;
-							}
-							else {
-								
-								_table._customers[indexPath.Row].HighLighted = false;	// defaults cell's display
-							}																				
-							break;
-						case 1:
-							street = _table.UserAddedCustomers[r].GetStreet();
-							if (_table.UserAddedCustomers[indexPath.Row].GetStreet() == street && 
-							    _table.UserAddedCustomers[indexPath.Row].Suburb == _table.UserAddedCustomers[r].Suburb)
-							{
-								_table.UserAddedCustomers[indexPath.Row].HighLighted = true;		// distincts this cell's displayed view from others
-								// cell.Accessory = UITableViewCellAccessory.DetailDisclosureButton;
-							}
-							else {								
-								_table.UserAddedCustomers[indexPath.Row].HighLighted = false;	// defaults cell's display
-							}																											
-							break;
-						default:
-							break;
-						}
-					}
-
-					try {
-
-						if (_table._mainjoblist[indexPath.Row].JobDone) cell.Accessory = UITableViewCellAccessory.Checkmark;
-						else cell.Accessory = UITableViewCellAccessory.None;
-
-						if (_table.MainJobList[indexPath.Row].AttentionFlag)
-							cell.BackgroundColor = UIColor.Yellow;
-						else
-						{
-							if (_table.Customers[indexPath.Row].TubingUpgradeDone)
-								cell.BackgroundColor = UIColor.White;
-							else cell.BackgroundColor = UIColor.Cyan;
-						}
-					}
-					catch {
+						string caption = (string.IsNullOrEmpty (MyConstants.LastDataExchangeTime)) ? "Unknown" : MyConstants.LastDataExchangeTime;
+						cell.TextLabel.Text = caption;
+						cell.DetailTextLabel.Text = "Last data exchange time";
 						cell.Accessory = UITableViewCellAccessory.None;
 						cell.BackgroundColor = UIColor.White;
+						break;
 					}
+				case 2:
+					{
+						cell.TextLabel.Text = "Tap to add new job";
+						cell.DetailTextLabel.Text = "Use with caution :-)";
+						cell.Accessory = UITableViewCellAccessory.None;
+						cell.BackgroundColor = UIColor.White;
+						break;
+					}
+				case 1:
+					{
+						if (_table.UserCreatedJobs != null && _table.UserCreatedJobs.Count != 0 
+							&& (_table.UserAddedCustomers != null && _table.UserAddedCustomers.Count != 0)) {
+							// this should do almost the same stuff that is done for section 0, just looking up customers and jobs in other lists
+							Customer c = _table.UserAddedCustomers [indexPath.Row];
+							cell.TextLabel.Text = (! c.isCompany) ? String.Format ("{0} {1}",	// FIXED :: was only checking UserCreatedJobs for being not null, but used to draw data from other objects as well (UserAddedCustomers) 
+						                                                      /*c.Title,*/c.FirstName, c.LastName) : c.CompanyName;
 
-					return cell;
+							cell.DetailTextLabel.Text = _table.UserCreatedJobs [indexPath.Row].JobTime.ToString ("h:mm tt") + "   " + c.Suburb + "\n" + 
+								c.Address; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
+							cell.DetailTextLabel.Lines = 2;
+
+							_table.UserAddedCustomers [indexPath.Row].HighLighted = false;
+							if (_table.UserCreatedJobs [indexPath.Row].JobDone)
+								cell.Accessory = UITableViewCellAccessory.Checkmark;
+							else
+								cell.Accessory = UITableViewCellAccessory.None;
+
+							if (_table.UserCreatedJobs [indexPath.Row].AttentionFlag)
+								cell.BackgroundColor = UIColor.Yellow;
+							else {
+								if (_table.UserAddedCustomers [indexPath.Row].TubingUpgradeDone)
+									cell.BackgroundColor = UIColor.White;
+								else
+									cell.BackgroundColor = UIColor.Cyan;
+							}
+
+						}
+						break;
+					}
+				case 0:
+					{
+						Customer c = _table._customers [indexPath.Row];
+						cell.TextLabel.Text = (c.isCompany) ? c.CompanyName : String.Format ("{0} {1}", /*c.Title,*/c.FirstName, c.LastName);
+
+						if (_table.MainJobList.Count > 0) {
+							cell.DetailTextLabel.Text = _table.MainJobList [indexPath.Row].JobTime.ToString ("h:mm tt") + "   " + c.Suburb + "\n" +
+								c.Address; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
+						} else
+							cell.DetailTextLabel.Text = "Nothing to see here, move along";
+						cell.DetailTextLabel.Lines = 2;
+
+						try {
+
+							if (_table._mainjoblist [indexPath.Row].JobDone)
+								cell.Accessory = UITableViewCellAccessory.Checkmark;
+							else
+								cell.Accessory = UITableViewCellAccessory.None;
+
+							if (_table.MainJobList [indexPath.Row].AttentionFlag)
+								cell.BackgroundColor = UIColor.Yellow;
+							else {
+								if (_table.Customers [indexPath.Row].TubingUpgradeDone)
+									cell.BackgroundColor = UIColor.White;
+								else
+									cell.BackgroundColor = UIColor.Cyan;
+							}
+						} catch {
+							cell.Accessory = UITableViewCellAccessory.None;
+							cell.BackgroundColor = UIColor.White;
+						}
+						break;
+					}
 				}
+
+				return cell;
 			}
 			
 			public override int NumberOfSections (UITableView tableView)
@@ -1519,11 +1505,13 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					_table.CurrentCustomer = _table.Customers[row];
 					_table.CurrentJob = _table.MainJobList[row];
 					_table.LastSelectedRowPath = indexPath;
+
 					if (_table.HighlightedMode) { 
 						_table.HighlightedMode = false;
 						_table.TableView.SelectRow (indexPath, true, UITableViewScrollPosition.None);
 						_table.TableView.ReloadData ();
 					}
+
 					try {						
 						// Update the field values in _table._tabs._customersView which will get them updated in the view
 						_table._tabs._customersView.SetJobTimeDisabled ();
@@ -1570,13 +1558,12 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					HighlightCustomerRecordsInSummary ();
 				}
 				if (indexPath.Section == 2) 
-				{
-					/*
-					var alert = new UIAlertView("", "Not fully implemented yet :-)", null, "OK");
-					alert.Show (); */
-					
+				{	
 					_table.TableView.DeselectRow (indexPath, true); 
 					_table.CreateNewJob ();
+				}
+				if (indexPath.Section == 3) {
+					_table.TableView.DeselectRow (indexPath, true);
 				}
 
 
@@ -1607,12 +1594,12 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
             Title = "Job Run";
 
 			for (int i = 0; i < _tabs.ViewControllers.Count(); i++) {		// DEBUG:: here we loop through all tabs to get the objects instances up
-				_tabs.SelectedViewController = _tabs.ViewControllers[i];
+				_tabs.SelectedViewController = _tabs.ViewControllers[i];	// highlighting customer/stock rows in payments/stock summary will not work if this is commented out
 			}
-			_tabs.SelectedViewController = _tabs.ViewControllers[0];				// Back to the customers view		
+			_tabs.SelectedViewController = _tabs.ViewControllers[0];		// Back to the customers view		
 
             TableView.Delegate = new JobRunTableDelegate (this);		// set up a table delegate that handles the choosing of rows in the table on the left
-            TableView.DataSource = _ds;												// set up a data source for the table;
+            TableView.DataSource = _ds;									// set up a data source for the table;
 			TableView.RowHeight = 64;
 			JobTypes = MyConstants.GetJobTypesFromDB ();
         }

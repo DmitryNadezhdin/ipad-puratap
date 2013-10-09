@@ -39,6 +39,22 @@ namespace Puratap
 	
 	public class MyConstants
 	{
+		private static int _iOSVersion;
+		public static int iOSVersion {
+			get {
+				if (_iOSVersion > 0)
+					return _iOSVersion;
+				else {
+					try { _iOSVersion = Convert.ToInt32 (UIDevice.CurrentDevice.SystemVersion.Split ('.') [0]); }
+					catch { _iOSVersion = -1; }
+
+					return _iOSVersion;
+				}
+			}
+		}
+
+		public static string AppVersion = NSBundle.MainBundle.ObjectForInfoDictionary("CFBundleVersion").ToString();
+
 		public static JobRunTable _jrt;
 
 		public static string DB_RECEIVED_FROM_SERVER = "PuratapLastDBReceivedFromServer";
@@ -193,7 +209,6 @@ namespace Puratap
 		 
 		public MyConstants ()
 		{
-
 		}
 
 		public static List<JobType> GetJobTypesFromDB() 

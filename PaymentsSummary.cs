@@ -79,7 +79,7 @@ namespace Puratap
 					NSAction act = delegate {	};
 					
 					mail.SetSubject (String.Format ("My Daily summary {0}", DateTime.Now.Date.ToString ("yyyy-MM-dd") ));
-					mail.SetToRecipients (new string[] { "myemail@somewhere.com" });
+					mail.SetToRecipients (new string[] { "myemail@puratap.com" });
 					
 					mail.Finished += delegate(object sender, MFComposeResultEventArgs e) {
 						if (e.Result == MFMailComposeResult.Sent)

@@ -236,12 +236,15 @@ namespace Puratap
 			this.Title = NSBundle.MainBundle.LocalizedString ("Workflow", "Workflow");
 			//this.TabBarItem.Image = _tabBarImage;
 			using (var image = UIImage.FromBundle ("Images/103-map") ) this.TabBarItem.Image = image;
-			this.ToolbarHidden = false;
+
 			this.NavigationBar.BarStyle = UIBarStyle.Black;
-			this.Toolbar.BarStyle = UIBarStyle.Black;
 			this.NavigationBar.Translucent = true;
+			this.NavigationBar.Hidden = true; // this controller is deprecated and should never be shown
+
+			this.Toolbar.BarStyle = UIBarStyle.Black;
 			this.Toolbar.Translucent = true;
-			
+			this.ToolbarHidden = false;
+
 			_refusedToPay = delegate{
 				UIAlertView alert = new UIAlertView("Did the customer refuse to pay for the job?", "", null, "Yes", "No, never mind");
 				alert.WillDismiss += HandleRefusedToPayWillDismiss;

@@ -1,3 +1,20 @@
+2013-10-09  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Info.plist:
+	* AppDelegate.cs:
+	* MyConstants.cs:
+	* JobRunTable.cs:
+	* Puratap.csproj:
+	* DetailedTabs.cs:
+	* PaymentsSummary.cs:
+	* PrePlumbingCheckView.xib:
+	* PaymentViewController.cs:
+	* NewSignatureViewController.cs:
+	* SigningNavigationController.cs:
+	* CustomerNavigationController.cs:
+	* WorkflowNavigationController.cs:
+	* UsedPartsNavigationController.cs: 
+
 2013-10-04  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Info.plist:

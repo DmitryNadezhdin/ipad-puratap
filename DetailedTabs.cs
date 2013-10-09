@@ -410,7 +410,7 @@ namespace Puratap
 			SigningNav.Toolbar.Translucent = true;
 			SigningNav.Toolbar.Hidden = false;
 			SigningNav.View.AutosizesSubviews = true;
-			
+
 			SummaryNav = new PaymentsSummaryNavigationController(this);
 			SummaryNav.TabBarItem.Title = "Summary";
 			using(var image = UIImage.FromBundle ("/Images/162-receipt") ) SummaryNav.TabBarItem.Image = image;
@@ -619,6 +619,7 @@ namespace Puratap
 
 		public string BuildHTML()
 		{
+			// %%1%% char sequences are replaced with "-s after building, otherwise it's too hard to read with all \" and 
 			string speechmark = ((char)(34)).ToString();
 			StringBuilder buildHTML = new StringBuilder();
 			buildHTML.AppendLine("<!DOCTYPE html>");
@@ -649,13 +650,12 @@ namespace Puratap
 			        buildHTML.AppendLine("geocoder = new google.maps.Geocoder();");
 			        buildHTML.AppendLine("var latlng = new google.maps.LatLng(51.507526, -0.12795);");
 			        buildHTML.AppendLine("var myOptions = {");
-			            buildHTML.AppendLine("zoom: 18,"); // 18
+			            buildHTML.AppendLine("zoom: 18,"); 
 			            buildHTML.AppendLine("center: latlng,");
 			            buildHTML.AppendLine("mapTypeId: google.maps.MapTypeId.ROADMAP");
 			        buildHTML.AppendLine("}");
 			        buildHTML.AppendLine("map = new google.maps.Map(document.getElementById(%%1%%map_canvas%%1%%), myOptions);");    
 			        buildHTML.AppendLine("panorama = new google.maps.StreetViewPanorama(document.getElementById(%%1%%panorama%%1%%),panoramaOptions);");
-			        // buildHTML.AppendLine("map.setStreetView(panorama);");
 					buildHTML.AppendLine("returnMapLocation();");
 			    buildHTML.AppendLine("}");
 
@@ -684,7 +684,6 @@ namespace Puratap
 			    buildHTML.AppendLine("<input type=%%1%%button%%1%% style=%%1%%height:25px;width:100px;font-size:14pt;%%1%% value=%%1%%Search%%1%% onclick=%%1%%returnMapLocation()%%1%%>");
 			  buildHTML.AppendLine("</div>");
 			        buildHTML.AppendLine("<div id=%%1%%map_canvas%%1%% style=%%1%%width:600px; height:600px%%1%%></div>");
-			        // buildHTML.AppendLine("<div id=%%1%%panorama%%1%%   style=%%1%%width: 320px; height: 300px%%1%%></div>");
 			buildHTML.AppendLine("</body>");
 
 			buildHTML.AppendLine("</html>");
@@ -706,8 +705,7 @@ namespace Puratap
 				item.Enabled = false;
 			}
 			MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem[] { _btnEdit }, true);		// pushes new button objects into navigation bar
-			UIView.CommitAnimations ();
-			
+			UIView.CommitAnimations ();			
 		}
 		
 		void DoResetToDefault()
@@ -720,36 +718,30 @@ namespace Puratap
 		{
 			switch (e.ButtonIndex)
 			{
-			case 1: { // user clicked "Start over"
-				Job selectedJob = _jobRunTable.CurrentJob;
+				case 1: { // user clicked "Start over"
+					Job selectedJob = _jobRunTable.CurrentJob;
 
-				_navWorkflow.ResetWorkflowForJob (selectedJob);
-				
-				MyNavigationBar.Hidden = true;
-				_jobRunTable.TableView.UserInteractionEnabled = false;	
-				_navWorkflow.SetToolbarHidden (false, true);
-				UIView.BeginAnimations (null);
-				UIView.SetAnimationDuration (0.3f);
-				this.Mode = DetailedTabsMode.Workflow;
-				// this.SelectedViewController = this.ViewControllers[3];
-				UIView.CommitAnimations ();
+					_navWorkflow.ResetWorkflowForJob (selectedJob);
+					
+					MyNavigationBar.Hidden = true;
+					_jobRunTable.TableView.UserInteractionEnabled = false;	
+					_navWorkflow.SetToolbarHidden (false, true);
 
-				this._app.myLocationManager.StartUpdatingLocation ();
-				this._app.myLocationManager.StartMonitoringSignificantLocationChanges ();
+					UIView.BeginAnimations (null);
+					UIView.SetAnimationDuration (0.3f);
+					this.Mode = DetailedTabsMode.Workflow;
+					UIView.CommitAnimations ();
 
-				/* OLD LOGIC -- NAVWORKFLOW pushing viewcontrollers
-				if (_navWorkflow.ViewControllers.Length == 0) 
-					_navWorkflow.PushViewController (_prePlumbView, true);
-				SetNavigationButtons (NavigationButtonsMode.PrePlumbing);
-				this.SelectedViewController = this.ViewControllers[3];
-				*/
-				
-				break;
-			}
-			case 0: {
-				break;
-			}
-			}
+					this._app.myLocationManager.StartUpdatingLocation ();
+					this._app.myLocationManager.StartMonitoringSignificantLocationChanges ();
+
+					break;
+				}
+				case 0: {
+					// user cancelled
+					break;
+				}
+			} // switch
 		}
 
 		void Handle_deleteMemoAlertWillDismiss (object sender, UIButtonEventArgs e)
@@ -860,14 +852,29 @@ namespace Puratap
 		
 		public void SetNavigationButtons(NavigationButtonsMode mode)
 		{
+			this.MyNavigationBar.BarStyle = UIBarStyle.Black;
+
+			if (MyConstants.iOSVersion >= 7) {
+				this.MyNavigationBar.TintColor = UIColor.Blue;
+				this.MyNavigationBar.BarTintColor = UIColor.FromRGBA (0, 0, 0, 25);
+				this.MyNavigationBar.SetTitleTextAttributes (new UITextAttributes () {
+					TextColor = UIColor.Black,
+					TextShadowColor = UIColor.Clear
+				});
+			}
+
 			switch(mode) {
 				case NavigationButtonsMode.CustomerDetails: {
 					BtnEdit = new UIBarButtonItem("More actions", UIBarButtonItemStyle.Bordered, _editJobList);		// this button allows to rearrange cells in the table on the left
 					BtnStuff = new UIBarButtonItem("On same street", UIBarButtonItemStyle.Bordered, _searchCustomersByStreet);	// allows to look up customers on the same street
-					if (_jobRunTable.CurrentJob == null) {
-						BtnStuff.Enabled = false;
-						// BtnEdit.Enabled = false;
-					}
+
+//	* * * DEPRECATED
+//					if (_jobRunTable.CurrentJob == null) {
+//						BtnStuff.Enabled = false;
+//						// BtnEdit.Enabled = false;
+//					}
+//	* * * DEPRECATED
+
 					// if (NavigationBar.TopItem.LeftBarButtonItem == null) NavigationBar.TopItem.SetLeftBarButtonItem (BtnStartWorkflow, true); // .LeftBarButtonItem = BtnStartWorkflow;
 					BtnStartWorkflow = new UIBarButtonItem ("Start workflow", UIBarButtonItemStyle.Done, _startWorkflow); 
 					MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem [] { BtnStartWorkflow, /*BtnStuff,*/ BtnEdit }, true);		// adds the buttons to navigation bar			
@@ -894,7 +901,8 @@ namespace Puratap
 				case NavigationButtonsMode.ServerClient: {
 					BtnStuff = _navWorkflow.FlexibleButtonSpace;
 					BtnEdit = _navWorkflow.FlexibleButtonSpace;					
-					MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem[] { BtnStuff, BtnEdit }, true);				
+					MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem[] { BtnStuff, BtnEdit }, true);
+					MyNavigationBar.Hidden = false;
 					break;
 				}
 			}
@@ -922,28 +930,10 @@ namespace Puratap
 			MyNavigationBar.TopItem.SetLeftBarButtonItem (button, false);	// this adds the butoon on a toolbar which allows to select a customer in portrait orientation
         }
 
-        public void RemoveLeftNavBarButton ()									// called when device enters landscape mode
+        public void RemoveLeftNavBarButton ()								// called when device enters landscape mode
         {
 			MyNavigationBar.TopItem.SetLeftBarButtonItem (null, false);		// this removes the toolbar button that serves no purpose in landscape orientation
         }
 	}
-/*	
-	public class TabsDelegate : UITabBarControllerDelegate
-	{
-		public TabsDelegate(DetailedTabs tabs) 
-		{
-			// this._tabs = tabs;
-		}
-		public override bool ShouldSelectViewController (UITabBarController tabBarController, UIViewController viewController)
-		{
-			// Console.WriteLine ("TabsDelegate: should select "+viewController.GetType ().ToString ());
-			return true;
-		}
-		public override void ViewControllerSelected (UITabBarController tabBarController, UIViewController viewController)
-		{
-			
-		}
-	}
-	*/
 }
 

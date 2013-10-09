@@ -45,10 +45,8 @@
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="72">
                     <rect key="frame" x="511" y="606" width="172" height="37"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="italicSystem" pointSize="16"/>
-                    <state key="normal" title="Job WAS NOT DONE">
-                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                    </state>
+                    <fontDescription key="fontDescription" name="HelveticaNeue-Italic" family="Helvetica Neue" pointSize="16"/>
+                    <state key="normal" title="Job WAS NOT DONE"/>
                     <connections>
                         <action selector="btnNotDoneClicked:" destination="-1" eventType="touchUpInside" id="74"/>
                     </connections>
@@ -61,7 +59,7 @@
                     <nil key="highlightedColor"/>
                 </label>
                 <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="No" borderStyle="roundedRect" minimumFontSize="17" id="8">
-                    <rect key="frame" x="446" y="51" width="237" height="31"/>
+                    <rect key="frame" x="446" y="51" width="237" height="30"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="16"/>
                     <textInputTraits key="textInputTraits"/>

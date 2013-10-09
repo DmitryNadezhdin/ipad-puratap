@@ -43,8 +43,9 @@ namespace Puratap
 		// You have approximately 17 seconds to return from this method, or iOS will terminate your application.
 		public override bool FinishedLaunching (UIApplication app, NSDictionary options)
 		{	
-			// EnableCrashReporting ();
+			// this still does not allow TestFlight website to identify devices properly
 			MonoTouch.TestFlight.TestFlight.SetDeviceIdentifier (MyConstants.DeviceID);
+
 			MonoTouch.TestFlight.TestFlight.TakeOffThreadSafe("f1e1ead5-5ee8-4a3c-a52b-a18e7919b06d");
 			InitializeLocationObjects();
 
@@ -65,7 +66,7 @@ namespace Puratap
 
 			// create the tabcontroller that defines and handles the tabs (rightside)  
 			_tabs = new DetailedTabs (_jobs, this);
-			_tabs.Title = "Puratap";
+			_tabs.Title = "Puratap " + MyConstants.AppVersion;
 
 			// link the two above controllers
 			_jobs._tabs = _tabs;

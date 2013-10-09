@@ -48,14 +48,15 @@ namespace Puratap
 		public NewSignatureViewController (DetailedTabs tabs) : base ()
 		{
 			this.Tabs = tabs;			
-			PDFView = new UIWebView(new RectangleF(0,20,703,748));
+			// PDFView = new UIWebView(new RectangleF(0,20,703,748));
+			pdfView = new UIWebView (new RectangleF(0, 44, 703, 448)); //(20,40,663,448));
+
 			Signature = new GLSignatureView(new RectangleF(0,496,743,150), this); // new BezierSignatureView
 		}
 		
 		public override void ViewDidLoad ()
 		{
 			base.ViewDidLoad ();
-			pdfView = new UIWebView(new RectangleF(0,40,703,448)); //(20,40,663,448));
 			this.View.Add (pdfView);
 			this.View.Add (Signature);
 		}

@@ -246,7 +246,7 @@ namespace Puratap
 				((UILabel)GeneratedPdfView.ViewWithTag (24)).Font = UIFont.BoldSystemFontOfSize (20);
 			else ((UILabel)GeneratedPdfView.ViewWithTag (24)).Font = UIFont.SystemFontOfSize (20);
 
-			((UILabel)GeneratedPdfView.ViewWithTag (27)).Text = String.Format ("App version: {0}", NSBundle.MainBundle.ObjectForInfoDictionary("CFBundleVersion").ToString());
+			((UILabel)GeneratedPdfView.ViewWithTag (27)).Text = String.Format ("App version: {0}", MyConstants.AppVersion);
 
 			((UILabel)GeneratedPdfView.ViewWithTag (25)).Text = "Puratap representative: "+MyConstants.EmployeeName;
 			if (! this.SplitPaymentMode)
