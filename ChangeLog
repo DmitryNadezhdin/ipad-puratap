@@ -1,5 +1,23 @@
 2013-10-09  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
+	* Puratap.pidb:
+	* libZSDK_API.a:
+	* libTestFlight.a:
+	* ZSDK_Binding.dll:
+	* 130-dice.png:
+	* 169-8ball.png:
+	* Puratap logo.jpg:
+	* GI-2600Black.png:
+	* FilterScheme.png:
+	* monotouch-testflight.dll:
+	* checkbox_selected@2x.png:
+	* uicheckbox_checked@2x.png:
+	* checkbox_unselected@2x.png:
+	* uicheckbox_unchecked@2x.png:
+	* SplashScreen.PuratapLogo.png: 
+
+2013-10-09  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
 	* Info.plist:
 	* AppDelegate.cs:
 	* MyConstants.cs:
