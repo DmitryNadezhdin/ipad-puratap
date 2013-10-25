@@ -1,10 +1,11 @@
 // WARNING
 //
-// This file has been generated automatically by MonoDevelop to store outlets and
-// actions made in the Xcode designer. If it is removed, they will be lost.
+// This file has been generated automatically by Xamarin Studio to store outlets and
+// actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
 using MonoTouch.Foundation;
+using System.CodeDom.Compiler;
 
 namespace Puratap
 {
@@ -12,29 +13,29 @@ namespace Puratap
 	partial class NotDoneCommentViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem btnCancel { get; set; }
+		MonoTouch.UIKit.UIBarButtonItem tbtnCancel { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem btnDone { get; set; }
+		MonoTouch.UIKit.UIBarButtonItem tbtnDone { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UITextView tvComment { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (btnCancel != null) {
-				btnCancel.Dispose ();
-				btnCancel = null;
-			}
-
-			if (btnDone != null) {
-				btnDone.Dispose ();
-				btnDone = null;
-			}
-
 			if (tvComment != null) {
 				tvComment.Dispose ();
 				tvComment = null;
+			}
+
+			if (tbtnDone != null) {
+				tbtnDone.Dispose ();
+				tbtnDone = null;
+			}
+
+			if (tbtnCancel != null) {
+				tbtnCancel.Dispose ();
+				tbtnCancel = null;
 			}
 		}
 	}

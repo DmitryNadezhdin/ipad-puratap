@@ -9,24 +9,18 @@ namespace Puratap
 {
 	public partial class NotDoneCommentViewController : UIViewController
 	{
-		EventHandler CancelClicked;
-		EventHandler DoneClicked;
+		EventHandler tCancelClicked;
+		EventHandler tDoneClicked;
 
 		PrePlumbingCheckView _parent;
+		UINavigationController _nav;
 		string NotDoneReason;
 
-		public NotDoneCommentViewController (PrePlumbingCheckView parent, string notDoneReason) : base ("NotDoneCommentViewController", null)
+		public NotDoneCommentViewController (PrePlumbingCheckView parent, UINavigationController nav, string notDoneReason) : base ("NotDoneCommentViewController", null)
 		{
 			_parent = parent;
+			_nav = nav;
 			NotDoneReason = notDoneReason;
-		}
-		
-		public override void DidReceiveMemoryWarning ()
-		{
-			// Releases the view if it doesn't have a superview.
-			base.DidReceiveMemoryWarning ();
-			
-			// Release any cached data, images, etc that aren't in use.
 		}
 		
 		public override void ViewDidLoad ()
@@ -35,21 +29,22 @@ namespace Puratap
 			
 			// Perform any additional setup after loading the view, typically from a nib.
 
-			CancelClicked = delegate(object sender, EventArgs e) {
-				_parent.NavigationController.PopToViewController ( _parent.NavigationController.ViewControllers[0], true);
+			tCancelClicked = delegate(object sender, EventArgs e) {
+				_nav.PopToRootViewController (true);
+			};
+			tDoneClicked = delegate(object sender, EventArgs e) {
+				_parent.SaveInfo_JobNotDone (NotDoneReason, this.tvComment.Text);
 			};
 
-			DoneClicked = delegate(object sender, EventArgs e) {
-				_parent.NavigationController.PopToRootViewController (true);
-				_parent.SaveInfo_JobNotDone(NotDoneReason, this.tvComment.Text);
-			};
-
-			btnCancel.Clicked += CancelClicked;
-			btnDone.Clicked += DoneClicked;
+			tbtnCancel.Clicked += tCancelClicked;
+			tbtnDone.Clicked += tDoneClicked;
 		}
 
 		public override void ViewDidAppear (bool animated)
 		{
+			foreach (UITabBarItem tbi in this.TabBarController.TabBar.Items)
+				tbi.Enabled = false;			
+
 			tvComment.BecomeFirstResponder ();
 			base.ViewDidAppear (animated);
 		}

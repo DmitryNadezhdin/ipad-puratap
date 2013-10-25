@@ -9,7 +9,7 @@
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Puratap</RootNamespace>
-    <ReleaseVersion>1.3a</ReleaseVersion>
+    <ReleaseVersion>1.3b</ReleaseVersion>
     <SynchReleaseVersion>False</SynchReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
@@ -23,7 +23,8 @@
     <ConsolePause>False</ConsolePause>
     <MtouchDebug>True</MtouchDebug>
     <MtouchLink>None</MtouchLink>
-    <MtouchI18n />
+    <MtouchI18n>
+    </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <AssemblyName>3</AssemblyName>
@@ -39,7 +40,8 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <AssemblyName>3</AssemblyName>
     <MtouchArch>ARMv7</MtouchArch>
-    <MtouchI18n />
+    <MtouchI18n>
+    </MtouchI18n>
     <MtouchUseLlvm>True</MtouchUseLlvm>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
@@ -53,8 +55,10 @@
     <ConsolePause>False</ConsolePause>
     <CodesignKey>iPhone Developer</CodesignKey>
     <MtouchDebug>True</MtouchDebug>
-    <MtouchI18n />
-    <IpaPackageName />
+    <MtouchI18n>
+    </MtouchI18n>
+    <IpaPackageName>
+    </IpaPackageName>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <AssemblyName>Puratap</AssemblyName>
@@ -74,8 +78,10 @@
     <MtouchArch>ARMv7</MtouchArch>
     <BuildIpa>True</BuildIpa>
     <AssemblyName>Puratap</AssemblyName>
-    <IpaPackageName />
-    <MtouchI18n />
+    <IpaPackageName>
+    </IpaPackageName>
+    <MtouchI18n>
+    </MtouchI18n>
     <MtouchExtraArgs>-nosymbolstrip -nostrip -cxx</MtouchExtraArgs>
     <MtouchUseLlvm>True</MtouchUseLlvm>
   </PropertyGroup>
@@ -172,6 +178,7 @@
       <DependentUpon>NotDoneCommentViewController.cs</DependentUpon>
     </Compile>
     <Compile Include="JobDelivery.cs" />
+    <Compile Include="PrePlumbingCheckNavigationController.cs" />
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Memos.xib" />

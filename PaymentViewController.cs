@@ -265,17 +265,16 @@ namespace Puratap
 			else ((UILabel)GeneratedPdfView.ViewWithTag (30)).Hidden = true;
 
 			bool tuInJobCluster = false;
-			if ((this.Summary.mainJob.Type.Code == "TUBINGUPGR") && (this.Summary.mainJob.Warranty == false))
+			if ((this.Summary.mainJob.Type.Code == "TUBINGUPGR" || this.Summary.mainJob.Type.Code == "HDTUBING") && (this.Summary.mainJob.Warranty == false))
 				tuInJobCluster = true;
 			else
 				foreach (Job child in this.Summary.mainJob.ChildJobs)
-					if ((child.Type.Code == "TUBINGUPGR") && (child.Warranty == false))
+					if ((child.Type.Code == "TUBINGUPGR" || child.Type.Code == "HDTUBING") && (child.Warranty == false))
 						{	tuInJobCluster = true; break; }
 
 			((UILabel)GeneratedPdfView.ViewWithTag (33)).Text = String.Format("Warranty on tubing components extended for another 3 years (until {0}) due to tubing upgrade. " +
 				"Please note that this extension does not cover the purifier and the tap.", DateTime.Now.Date.AddYears(3).ToShortDateString());
 			((UILabel)GeneratedPdfView.ViewWithTag (33)).Hidden = !tuInJobCluster;
-
 
 
 			bool newtapInJobCluster = false;

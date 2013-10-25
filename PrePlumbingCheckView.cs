@@ -14,7 +14,11 @@ namespace Puratap
 		UIActionSheet ac;
 		
 		float MovedViewY;
-		
+
+		public UINavigationController Nav {
+			get { return this.NavigationController; }
+		}
+
 		public enum Choices { YesPuratap, YesNonPuratap, Yes, No, Option1, Option2 }
 		public static string OutputStringForChoice(Choices c)
 			{
@@ -206,81 +210,17 @@ namespace Puratap
 					                              "Other");
 					_jobNotDone.Dismissed += delegate(object _sender, UIButtonEventArgs e) 
 					{
-						bool reload = true;
 						Job selectedJob = _navWorkflow._tabs._jobRunTable.CurrentJob;
 						switch (e.ButtonIndex) {
 							// IMPLEMENTED :: added an object to the customer that holds the result of this dialog
 							// IMPLEMENTED :: set up job results according to user choice here
 							case 0: { // user pressed "Cancel"
-								reload = false;
 								break;
 							}
-							/*
-							case 1: { // answered "Not at home" -- act accordingly (job is to be rebooked)
-								_navWorkflow._tabs._jobService.SaveFollowupToDatabase (selectedJob.JobBookingNumber, 10, "Job not done: Not home");
-								selectedJob.Started = MyConstants.JobStarted.CustomerNotAtHome;
-								selectedJob.ShouldPayFee = false;
-								_navWorkflow.SaveJobResultsToDatabase (selectedJob, false);
-								_navWorkflow.ResetWorkflow(this, null);
-								break; 
-							}
-							case 2: { // answered "Rebooked the job" -- act accordingly (job has been rebooked, create a followup just to be safe)
-								_navWorkflow._tabs._jobService.SaveFollowupToDatabase (selectedJob.JobBookingNumber, 10, "Job not done: Customer rebooked");
-								selectedJob.Started = MyConstants.JobStarted.CustomerRebooked;
-								selectedJob.ShouldPayFee = false;
-								_navWorkflow.SaveJobResultsToDatabase (selectedJob, false);
-								_navWorkflow.ResetWorkflow(this, null);
-								break; 
-							}
-							case 3: { // answered "I was late" -- act accordingly (job is to be rebooked)
-								_navWorkflow._tabs._jobService.SaveFollowupToDatabase (selectedJob.JobBookingNumber, 10, "Job not done: Late");
-								selectedJob.Started = MyConstants.JobStarted.PuratapLate;
-								selectedJob.ShouldPayFee = false;
-								_navWorkflow.SaveJobResultsToDatabase (selectedJob, false);
-								_navWorkflow.ResetWorkflow(this, null);
-								break; 
-							}
-							case 4: { // answered "Address was wrong" -- act accordingly (job is to be rebooked)
-								_navWorkflow._tabs._jobService.SaveFollowupToDatabase (selectedJob.JobBookingNumber, 10, "Job not done: Wrong address");
-								selectedJob.Started = MyConstants.JobStarted.AddressWrong;
-								selectedJob.ShouldPayFee = false;
-								_navWorkflow.SaveJobResultsToDatabase (selectedJob, false);
-								_navWorkflow.ResetWorkflow(this, null);
-								break;
-							} */
 							default: 
 							{ 	
-								// all the answers
+								// all the other answers
 								string chosenOption = "";
-								var alert = new UIAlertView("", "Please enter a comment", null, "Cancel", "OK"); 	// NotDoneCommentAlert();
-								alert.AlertViewStyle = UIAlertViewStyle.PlainTextInput;
-								alert.Dismissed += delegate(object sender, UIButtonEventArgs ea) 
-								{
-									if (ea.ButtonIndex != alert.CancelButtonIndex)
-									{
-										// save the text that the user has entered (in FOLLOWUPS)
-										if (selectedJob.HasParent())
-										{
-											Job main = _navWorkflow._tabs._jobRunTable.FindParentJob (selectedJob);
-											selectedJob = main;
-										}
-
-										_navWorkflow._tabs._jobService.SaveFollowupToDatabase (selectedJob.JobBookingNumber, 10, String.Format ("Job not done: {0}: {1}", chosenOption, alert.GetTextField (0).Text));
-										selectedJob.ShouldPayFee = false;
-										selectedJob.JobDone = true;
-										selectedJob.ChildJobs.Clear ();
-										selectedJob.UsedParts.Clear ();
-										_navWorkflow._tabs._jobRunTable.CurrentJob = selectedJob;
-										_navWorkflow._finishWorkflow(this, null);
-
-										// _navWorkflow.SaveJobResultsToDatabase (selectedJob, false);
-										// _navWorkflow.ResetWorkflow(this, null);
-										_navWorkflow._tabs._jobRunTable.TableView.ReloadRows ( new NSIndexPath[] { _navWorkflow._tabs._jobRunTable.LastSelectedRowPath }, UITableViewRowAnimation.Automatic );
-									}
-								};
-
-
-								// alert.Show ();
 								
 								switch (e.ButtonIndex)
 								{
@@ -292,24 +232,11 @@ namespace Puratap
 								default:	chosenOption = "Unknown?"; break;
 								}
 
-								var test = new NotDoneCommentViewController(this, chosenOption);
-								this.NavigationController.PushViewController (test, true);
-
+								var ndcView = new NotDoneCommentViewController(this, this.NavigationController, chosenOption);
+								this.NavigationController.PushViewController (ndcView, true);
+								this.NavigationController.TabBarController.TabBar.UserInteractionEnabled = false;								
 								break;								
 							}
-						}
-						if (reload) {
-							_navWorkflow._tabs._jobRunTable.TableView.ReloadData ();
-							_navWorkflow._tabs._jobRunTable.TableView.SelectRow(_navWorkflow._tabs._jobRunTable.LastSelectedRowPath, true, UITableViewScrollPosition.None);
-							
-							// check if all jobs have been done
-							bool allDone = true;
-							foreach (Job j in _navWorkflow._tabs._jobRunTable.MainJobList)
-							{
-								if (j.JobDone == false) allDone = false;
-							}
-							// all jobs have been done, grats
-							if (allDone) _navWorkflow._tabs._jobRunTable.AllJobsDone = true;
 						}
 					};
 				}
@@ -327,17 +254,22 @@ namespace Puratap
 				Job main = _navWorkflow._tabs._jobRunTable.FindParentJob (selectedJob);
 				selectedJob = main;
 			}
-			
-			// save the text that the user has entered (in FOLLOWUPS)
 
+			this.NavigationController.PopToRootViewController (false);
+
+			// save the text that the user has entered (in FOLLOWUPS)
 			_navWorkflow._tabs._jobService.SaveFollowupToDatabase (selectedJob.JobBookingNumber, 10, String.Format ("Job not done: {0}: {1}", notDoneReason, notDoneComment));
-			selectedJob.ShouldPayFee = false;
-			selectedJob.JobDone = true;
-			selectedJob.ChildJobs.Clear ();
-			selectedJob.UsedParts.Clear ();
-			_navWorkflow._tabs._jobRunTable.CurrentJob = selectedJob;
+
+			selectedJob.ShouldPayFee = false;	// fee is not paid since job was not done
+			selectedJob.JobDone = true;			// job data entering is finished
+			selectedJob.ChildJobs.Clear ();		// child job data is cleared since the main one was not done
+			selectedJob.UsedParts.Clear ();		// no parts have been used
+			_navWorkflow._tabs._jobRunTable.CurrentJob = selectedJob;	// TODO :: this should probably be removed
+
 			_navWorkflow._finishWorkflow(this, null);
+
 			_navWorkflow._tabs._jobRunTable.TableView.ReloadRows ( new NSIndexPath[] { _navWorkflow._tabs._jobRunTable.LastSelectedRowPath }, UITableViewRowAnimation.Automatic );
+//			_navWorkflow._tabs.TabBar.UserInteractionEnabled = true;								
 		}
 		
 		public void ProceedToSign()

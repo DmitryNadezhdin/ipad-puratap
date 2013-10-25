@@ -265,15 +265,15 @@ namespace Puratap
 
 					try {
 						// copy records over from extra db into the main
-						toCmd.CommandText = "INSERT INTO Main.WCLIENT SELECT * FROM ExtraDb.WCLIENT";
+						toCmd.CommandText = "INSERT OR REPLACE INTO Main.WCLIENT SELECT * FROM ExtraDb.WCLIENT";
 						toCmd.ExecuteNonQuery ();
 						toCmd.CommandText = "INSERT INTO Main.PL_RECOR SELECT * FROM ExtraDb.PL_RECOR";
 						toCmd.ExecuteNonQuery ();
-						toCmd.CommandText = "INSERT INTO Main.WSALES SELECT * FROM ExtraDb.WSALES";
+						toCmd.CommandText = "INSERT OR REPLACE INTO Main.WSALES SELECT * FROM ExtraDb.WSALES";
 						toCmd.ExecuteNonQuery ();
-						toCmd.CommandText = "INSERT INTO Main.WCMEMO SELECT * FROM ExtraDb.WCMEMO";
+						toCmd.CommandText = "INSERT OR REPLACE INTO Main.WCMEMO SELECT * FROM ExtraDb.WCMEMO";
 						toCmd.ExecuteNonQuery ();
-						toCmd.CommandText = "INSERT INTO Main.Journal SELECT * FROM ExtraDb.JOURNAL";
+						toCmd.CommandText = "INSERT OR REPLACE INTO Main.Journal SELECT * FROM ExtraDb.JOURNAL";
 
 						result = true;
 
@@ -595,7 +595,6 @@ namespace Puratap
 		{
 			if (File.Exists (ServerClientViewController.dbFilePath) )
 			{
-				// connect to database
 				using (var connection = new SqliteConnection("Data Source="+ServerClientViewController.dbFilePath) )
 				{
 					using (var cmd = connection.CreateCommand())

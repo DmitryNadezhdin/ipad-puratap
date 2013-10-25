@@ -476,6 +476,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			_tabs._customersView.JobType = j.Type.Description;
 			_tabs._customersView.JobDate = j.JobDate;
 			_tabs._customersView.JobTime = j.JobTime;
+			_tabs._customersView.DisplayJobTimeFrame (j);
+
 			_tabs._customersView.JobBookingNumber = j.JobBookingNumber;
 			_tabs._customersView.MoneyToCollect = j.MoneyToCollect;
 			_tabs._customersView.JobSpecialInstructions = j.JobSpecialInstructions;
@@ -494,8 +496,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			{
 				_tabs._customersView.SetBtnAttentionState (false);
 				_tabs._customersView.SetAttentionReasonHidden ();
-			}
-			
+			}			
 			
 			_tabs._customersView.NumberOfMemos = (c.CustomerMemos != null) ? c.CustomerMemos.Count() : 0;
 			
@@ -614,7 +615,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 												" AND pl_recor.cusnum != 72077 " + // getting rid of dummy records ( Mr. Puratap )
 												" AND wclient.wcclcde != 'CREATEDONIPAD' " +
 												" AND pl_recor.parentnum < 1 AND pl_recor.parentnum != -1 " +
-											" ORDER BY pl_recor.time asc, pl_recor.booknum desc";		
+										" ORDER BY PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";		
 
 											// " AND wsales.cusnum=pl_recor.cusnum " +
 						cmd.CommandText = sql;
@@ -674,7 +675,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									" AND pl_recor.cusnum != 72077 " +			// getting rid of dummy records ( Mr. Puratap )
 								" AND pl_recor.parentnum != -1 " +				// getting rid of manually created jobs 
 									" AND (NOT EXISTS (SELECT booknum FROM pl_recor plr WHERE plr.booknum=pl_recor.parentnum AND plr.parentnum=-1)) " + // getting rid of child jobs of manually created jobs
-								" ORDER BY pl_recor.time asc, booknum desc";	
+								" ORDER BY PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";	
 
 						cmd.Parameters.Clear ();
 						cmd.CommandText = sql;
@@ -689,18 +690,22 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								long unitnum = (reader["unitnum"] == DBNull.Value) ? 0 : Convert.ToInt64 (reader["unitnum"]);
 								bool warranty = (reader["warranty"] == DBNull.Value) ? false : Convert.ToBoolean (reader["warranty"]);
 
-								DateTime jTime;
+								DateTime jTime, jtStart, jtEnd;
 								DateTime jDate;
 
 								try {
 									jTime = (reader["time"] == DBNull.Value) ? new DateTime(1990, 1, 1) : (DateTime)reader["time"];
 									jDate = (reader["plappdate"] == DBNull.Value) ? new DateTime(1990, 1, 1) : (DateTime)reader["plappdate"];
+									jtStart = (reader["time_start"] == DBNull.Value) ? new DateTime(1990, 1, 1) : (DateTime)reader["time_start"];
+									jtEnd = (reader["time_end"] == DBNull.Value) ? new DateTime(1990, 1, 1) : (DateTime)reader["time_end"];
 								} 
 								catch
 								{
 									// Console.WriteLine (e.Message);
 									jTime = new DateTime(1990, 1, 1);
 									jDate = new DateTime(1990, 1, 1);
+									jtStart = new DateTime(1990, 1, 1);
+									jtEnd = new DateTime(1990, 1, 1);
 								}
 
 								string jType = (string)reader["type"];
@@ -734,6 +739,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								long parentnum = Convert.ToInt64(reader["parentnum"]);
 																	
 								j = new Job(cusnum, jnum, unitnum, jTime, jDate, money, jbOn, jbBy, sp, plc, jType, parentnum, warranty, attention, cntct, attreason);
+								j.JobTimeStart = jtStart;
+								j.JobTimeEnd = jtEnd;
 							
 								// getting job status values from database
 								try
@@ -1868,16 +1875,20 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public long JobBookingNumber { get; set; }	
 		public long CustomerNumber { get; set; }
 		public long UnitNumber { get; set; }
-		public DateTime JobTime { get; set; }
+
+		public DateTime JobTime { get; set; } 			// this is getting replaced by JobTimeStart and JobTimeEnd
+		public DateTime JobTimeStart { get; set; }
+		public DateTime JobTimeEnd { get; set; }
+
 		public DateTime JobDate { get; set; }
 		public double MoneyToCollect { get; set; }
 		public double EmployeeFee { get; set; }			// IMPLEMENTED :: this is calculated depending on a myriad of factors
-																		// the base value is sitting in the JOB_TYPES table
+														// the base value is sitting in the JOB_TYPES table
 
 		public bool AttentionFlag { get; set; }
 		public string AttentionReason { get; set; }
 		
-		public bool ShouldPayFee { get; set; }				// just for convenience, we could probably live without this just by setting the EmployeeFee to 0.00
+		public bool ShouldPayFee { get; set; }			// just for convenience, we could probably live without this just by setting the EmployeeFee to 0.00
 		public bool Warranty { get; set; }
 		public bool JobReportAttached { get; set; }
 		

@@ -225,7 +225,7 @@ namespace Puratap
 			get { return _JobTime; }
 			set { 
 				_JobTime = value;
-				this.cJobTime.Text = _JobTime.ToString("dd/MM/yyyy hh:mm tt");
+				// this.cJobTime.Text = _JobTime.ToString ("dd/MM/yyyy hh:mm tt");
 			}
 		}
 		public DateTime JobDate
@@ -422,6 +422,12 @@ namespace Puratap
 				var alertNoCustomerSelected = new UIAlertView ("Please", "Select a customer", null, "OK");
 				alertNoCustomerSelected.Show ();
 			}
+		}
+
+		public void DisplayJobTimeFrame(Job j)
+		{
+			this.cJobTime.Text = j.JobTimeStart.ToString ("dd/MM/yyyy hh:mm tt") + " " +
+									j.JobTimeEnd.ToString ("hh:mm tt");
 		}
 
 		public void SetBtnTUDoneState(bool tuState)

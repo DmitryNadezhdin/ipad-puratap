@@ -1,3 +1,38 @@
+2013-10-25  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Info.plist:
+	* Puratap.csproj:
+	* WorkflowNavigationController.cs:
+	* PrePlumbingCheckNavigationController.cs: updated to 1.3b
+
+	* AppDelegate.cs: Updated to 1.3b: can now import multiple
+	extra jobs for the same customer through e-mail
+
+	* CustomersViewController.cs:
+	* CustomersViewController.xib: Updated to 1.3b
+
+	* DetailedTabs.cs: Updated to 1.3b: fixed bugs
+
+	* JobRunTable.cs: Updated to 1.3b: sorting of job records has
+	been changed to use the time frames
+
+
+	* NotDoneCommentViewController.cs: Updated to 1.3b: fixed a
+	crash
+
+	* NotDoneCommentViewController.xib:
+	* NotDoneCommentViewController.designer.cs: Updated to 1.3b:
+	fixed a crash
+
+
+	* PaymentViewController.cs: Updated to 1.3b: added warranty
+	text for HD tubing upgrades
+
+
+	* PrePlumbingCheckView.cs: Updated to 1.3b: fixed a crash
+	related to "Job not done" button
+
+
 2013-10-10  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* NEWTESTDB.sqlite: 

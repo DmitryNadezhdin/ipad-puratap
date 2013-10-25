@@ -831,12 +831,6 @@ namespace Puratap
 			}
 
 			UIView.CommitAnimations ();
-
-			this.PopToRootViewController (false);
-			// this.SetToolbarButtons (WorkflowToolbarButtonsMode.Default);
-			// this.EnableTabsAtWorkflowEnd ();	
-			// this.Title = NSBundle.MainBundle.LocalizedString ("Workflow", "Workflow");
-			// using (var image = UIImage.FromBundle ("Images/103-map") ) this.TabBarItem.Image = image;
 		}
 		
 		public void SetToolbarButtons(WorkflowToolbarButtonsMode mode)

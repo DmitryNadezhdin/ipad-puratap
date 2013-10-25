@@ -28,33 +28,38 @@ namespace Puratap
 				_mode = value;
 				switch (_mode)
 				{
-					case DetailedTabsMode.Workflow: {
-							this.ViewControllers = new UIViewController[] { 	
-								_prePlumbView,
-								ServiceNav,
-								UsedPartsNav,
-								_payment,
-								SigningNav
-							};
+				case DetailedTabsMode.Workflow: {
+					this.ViewControllers = new UIViewController[] { 	
+						PrePlumbNav, // _prePlumbView,
+						ServiceNav,
+						UsedPartsNav,
+						_payment,
+						SigningNav
+					};
 
-						this.TabBar.UserInteractionEnabled = false;
-						break;
-					}
-					case DetailedTabsMode.Lookup: {
-						this.ViewControllers = new UIViewController[] {
-							CustomerNav, // _customersView,
-							_jobHistoryView,
-							_memosView,
-							_photosView,
-							SummaryNav,
-							ServerNav // _scView					
-						};
-						
-						this.SelectedViewController = this.ViewControllers[0];
-						this.TabBar.UserInteractionEnabled = true;
-						break;
-					}
-					default: return;
+					this.TabBar.UserInteractionEnabled = false;
+					foreach(UITabBarItem tbi in this.TabBar.Items)
+						tbi.Enabled = false;
+					
+					break;
+				}
+				case DetailedTabsMode.Lookup: {
+					this.ViewControllers = new UIViewController[] {
+						CustomerNav, // _customersView,
+						_jobHistoryView,
+						_memosView,
+						_photosView,
+						SummaryNav,
+						ServerNav // _scView					
+					};
+					
+					this.SelectedViewController = this.ViewControllers[0];
+					this.TabBar.UserInteractionEnabled = true;
+					foreach(UITabBarItem tbi in this.TabBar.Items)
+						tbi.Enabled = true;
+					break;
+				}
+				default: return;
 				}
 			} 
 		}
@@ -110,7 +115,8 @@ namespace Puratap
 		
 		// OLD :: NOT TO BE USED public SignatureViewController _signView { get; set; }				// signature screen
 		public PaymentViewController _payment { get; set; }					// payment screen
-		
+
+		public PrePlumbingCheckNavigationController PrePlumbNav { get; set; }
 		public ServiceNavigationController ServiceNav { get; set; }
 		public UsedPartsNavigationController UsedPartsNav { get; set;}
 		public SigningNavigationController SigningNav { get; set; }
@@ -126,8 +132,8 @@ namespace Puratap
 
 		
 		// public StockControlViewController _stockControl { get; set; } 	REPLACED BY UsedPartsViewControllers: ServiceUsedPartsViewController, FilterChangeViewController, JobInstallationViewController
-		// public UsedPartsViewController _jobFilter { get; set; }				REPLACED BY derived classes: ServiceUsedPartsViewController, FilterChangeViewController, JobInstallationViewController
-		// public InvoiceViewController _invoiceView { get; set; }				REPLACED BY PaymentViewController
+		// public UsedPartsViewController _jobFilter { get; set; }			REPLACED BY derived classes: ServiceUsedPartsViewController, FilterChangeViewController, JobInstallationViewController
+		// public InvoiceViewController _invoiceView { get; set; }			REPLACED BY PaymentViewController
 		
 		// private UINavigationBar _navBar;		// the upper stripe on the tabs' half of the screen
 		UIPopoverController _pc;					// this controller is JobRunTable, it's in portrait mode
@@ -357,7 +363,7 @@ namespace Puratap
 			};
 			
 			 _editJobList = delegate {			// event handler for a button that allows rearranging of customers in the jobs table on the left-hand side of the screen
-															// this handler is used when the table is in NOT editing mode
+												// this handler is used when the table is in NOT editing mode
 				
 				var ac = new UIActionSheet("", null, null, null, "Rearrange jobs", "Reset jobs to default order", "Show in Apple maps", "Show on Google maps", "Reprint docs for customer") { 
 					Style = UIActionSheetStyle.BlackTranslucent
@@ -368,20 +374,34 @@ namespace Puratap
 					{
 					case 4: { DoReprintDocsForCustomer (); break; }
 					case 3: { DoShowCustomerGoogleMaps(); break; }
-					case 2: { DoShowCustomerAppleMaps(); break; } //  SearchCustomersByStreet(null, null); break; }
+					case 2: { DoShowCustomerAppleMaps(); break; } // not used anymore -- SearchCustomersByStreet(null, null); break; }
 					case 1: { DoResetToDefault (); break; }
 					case 0: { DoRearrange (); break; }
 					}
 					BtnEdit.Enabled = true;
 				};
-				ac.ShowFrom (BtnEdit, true);	
+
+				try {
+					ac.ShowFrom (BtnEdit, true);	
+				}
+				catch {
+					ac.ShowInView(_jobRunTable._tabs.View);
+				}
+
 				BtnEdit.Enabled = false;
 			};
 
 
 			// Create navigation controllers for the tabs
 			_navWorkflow = new WorkflowNavigationController(this);
-			
+
+			PrePlumbNav = new PrePlumbingCheckNavigationController (this);
+			PrePlumbNav.Title = NSBundle.MainBundle.LocalizedString ("Pre-plumbing check", "Pre-plumbing check");
+			using (var image = UIImage.FromBundle("/Images/117-todo")) PrePlumbNav.TabBarItem.Image = image;
+			PrePlumbNav.NavigationBar.BarStyle = UIBarStyle.Black;
+			PrePlumbNav.NavigationBar.Translucent = true;
+			PrePlumbNav.NavigationBar.Hidden = true;
+
 			ServiceNav = new ServiceNavigationController(this);
 			ServiceNav.Title = NSBundle.MainBundle.LocalizedString ("Service", "Service");
 			using(var image = UIImage.FromBundle ("/Images/157-wrench") ) ServiceNav.TabBarItem.Image = image;
@@ -487,6 +507,7 @@ namespace Puratap
 			
 			_payment = new PaymentViewController(_navWorkflow);
 
+			PrePlumbNav.PushViewController (_prePlumbView, false);
 			SummaryNav.PushViewController (_paySummaryView, false);
 			ServerNav.PushViewController (_scView, false);
 			CustomerNav.PushViewController (_customersView, false);
