@@ -1,3 +1,9 @@
+2013-10-28  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* WorkflowNavigationController.cs: Updated to 1.3c: fixed an
+	issue where child jobs would not be read correctly by
+	ReadRunData() method
+
 2013-10-25  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Info.plist:

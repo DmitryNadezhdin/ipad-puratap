@@ -562,8 +562,8 @@ namespace Puratap
 				var cmd = connection.CreateCommand();
 				
 				cmd.CommandText = "INSERT INTO Pl_recor (CUSNUM, PLAPPDATE, TYPE, PAY_PL, SHEETTYPE, SHEETT, SUBURB, TIME, PLNUM, TIMEENTERED, BOOKNUM, REPNUM, " +
-					"JDONE, UNITNUM, INSTALLED, CODE, RUN, REBOOKED, OCODE, WARRANTY, NOSEARCH, PARENTNUM, ATTENTION) " +
-					"Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+					"JDONE, UNITNUM, INSTALLED, CODE, RUN, REBOOKED, OCODE, WARRANTY, NOSEARCH, PARENTNUM, ATTENTION, TIME_START, TIME_END) " +
+					"Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 				cmd.Parameters.Add ("CUSNUM", DbType.Int32).Value = j.CustomerNumber;
 				cmd.Parameters.Add ("PLAPPDATE", DbType.String).Value = j.JobDate.ToString ("yyyy-MM-dd");
 				cmd.Parameters.Add ("TYPE", DbType.String).Value = j.Type.Code;
@@ -587,7 +587,9 @@ namespace Puratap
 				cmd.Parameters.Add ("NOSEARCH", DbType.Int32).Value = 0;
 				cmd.Parameters.Add ("PARENTNUM", DbType.Int64).Value = j.ParentJobBookingNumber;
 				cmd.Parameters.Add ("ATTENTION", DbType.Byte).Value = 0;
-				
+				cmd.Parameters.Add ("TIME_START", DbType.String).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+				cmd.Parameters.Add ("TIME_END", DbType.String).Value = DateTime.Now.AddMinutes(15).ToString("yyyy-MM-dd HH:mm:ss");
+
 				cmd.ExecuteNonQuery ();
 			}
 			_tabs._scView.Log (string.Format("Saved child job: ID = {0}", j.JobBookingNumber));
