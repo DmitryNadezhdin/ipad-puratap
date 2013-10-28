@@ -1,5 +1,19 @@
 2013-10-28  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
+	* NewSignatureViewController.cs: Updated to 1.3c: fixed
+	signing screens not being displayed properly on iPads running
+	iOS 7, fixed signature field responding to touches before
+	"Start signing" button was not clicked
+
+
+	* Info.plist:
+	* Puratap.csproj: Updated to 1.3c
+
+
+	* ServerClientViewController.cs: Updated to 1.3c
+
+2013-10-28  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
 	* ServerClientViewController.cs: Updated to 1.3c: fixed an
 	issue where "Data for some jobs has not been entered" warning
 	message was displayed incorrectly

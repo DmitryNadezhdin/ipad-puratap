@@ -49,9 +49,9 @@ namespace Puratap
 		{
 			this.Tabs = tabs;			
 			// PDFView = new UIWebView(new RectangleF(0,20,703,748));
-			pdfView = new UIWebView (new RectangleF(0, 44, 703, 448)); //(20,40,663,448));
+			pdfView = new UIWebView (new RectangleF(0, 64, 703, 448)); //(20,40,663,448));
 
-			Signature = new GLSignatureView(new RectangleF(0,496,743,150), this); // new BezierSignatureView
+			Signature = new GLSignatureView(new RectangleF(0,516,743,150), this); // new BezierSignatureView
 		}
 		
 		public override void ViewDidLoad ()
@@ -59,6 +59,7 @@ namespace Puratap
 			base.ViewDidLoad ();
 			this.View.Add (pdfView);
 			this.View.Add (Signature);
+			this.SigningMode = false;
 		}
 
 		[Obsolete]
@@ -495,158 +496,163 @@ namespace Puratap
 		[Export ("GLSignatureViewTap")]
 		unsafe protected void tap(UITapGestureRecognizer sender)
 		{
-			PointF l = sender.LocationInView(this);
-			if (sender.State == UIGestureRecognizerState.Recognized) {
+			if (nsvc.SigningMode) {
+				PointF l = sender.LocationInView (this);
+				if (sender.State == UIGestureRecognizerState.Recognized) {
 
-				this.nsvc.hasBeenSigned = true;
+					this.nsvc.hasBeenSigned = true;
 
-				GL.BindBuffer (BufferTarget.ArrayBuffer, dotsBuffer);
-				NICSignaturePoint touchPoint = this.ViewPointToGL (l, this.Frame, new Vector3 { X = 1.0f, Y = 1.0f, Z = 1.0f });
-
-				fixed(uint* pdl = &dotsLength) {
-					this.AddVertex (pdl, touchPoint);
-				}
-
-				NICSignaturePoint centerPoint = touchPoint;
-				centerPoint.Color = GLSignatureView.StrokeColor;
-
-				fixed(uint* pdl = &dotsLength) {
-					this.AddVertex (pdl, centerPoint);
-				}
-
-				const int segments = 20;
-				Vector2 radius = new Vector2 {
-					X = penThickness * this.GenerateRandom (0.5f, 1.0f),
-					Y = penThickness * this.GenerateRandom (0.5f, 1.0f)
-				};
-				Vector2 velocityRadius = radius;
-				double angle = 0;
-
-				// Our view height is much less than width, for them dots to be more roundy
-				float uncompressY = this.Frame.Width / this.Frame.Height;
-
-				for (int i = 0; i <= segments; i++) {
-					NICSignaturePoint p = centerPoint;
-					p.Vertex.X += velocityRadius.X * ((float) Math.Cos (angle));
-					p.Vertex.Y += velocityRadius.Y * ((float)Math.Sin (angle)) * uncompressY;
+					GL.BindBuffer (BufferTarget.ArrayBuffer, dotsBuffer);
+					NICSignaturePoint touchPoint = this.ViewPointToGL (l, this.Frame, new Vector3 { X = 1.0f, Y = 1.0f, Z = 1.0f });
 
 					fixed(uint* pdl = &dotsLength) {
-						this.AddVertex (pdl, p);
+						this.AddVertex (pdl, touchPoint);
 					}
+
+					NICSignaturePoint centerPoint = touchPoint;
+					centerPoint.Color = GLSignatureView.StrokeColor;
+
 					fixed(uint* pdl = &dotsLength) {
 						this.AddVertex (pdl, centerPoint);
 					}
 
-					angle += Math.PI * 2.0f / segments;
-				}
+					const int segments = 20;
+					Vector2 radius = new Vector2 {
+						X = penThickness * this.GenerateRandom (0.5f, 1.0f),
+						Y = penThickness * this.GenerateRandom (0.5f, 1.0f)
+					};
+					Vector2 velocityRadius = radius;
+					double angle = 0;
 
-				fixed(uint* pdl = &dotsLength) {
-					this.AddVertex (pdl, touchPoint);
+					// Our view height is much less than width, for them dots to be more roundy
+					float uncompressY = this.Frame.Width / this.Frame.Height;
+
+					for (int i = 0; i <= segments; i++) {
+						NICSignaturePoint p = centerPoint;
+						p.Vertex.X += velocityRadius.X * ((float)Math.Cos (angle));
+						p.Vertex.Y += velocityRadius.Y * ((float)Math.Sin (angle)) * uncompressY;
+
+						fixed(uint* pdl = &dotsLength) {
+							this.AddVertex (pdl, p);
+						}
+						fixed(uint* pdl = &dotsLength) {
+							this.AddVertex (pdl, centerPoint);
+						}
+
+						angle += Math.PI * 2.0f / segments;
+					}
+
+					fixed(uint* pdl = &dotsLength) {
+						this.AddVertex (pdl, touchPoint);
+					}
+					GL.BindBuffer (BufferTarget.ArrayBuffer, 0);
 				}
-				GL.BindBuffer (BufferTarget.ArrayBuffer, 0);
-			}
-			
-			this.SetNeedsDisplay ();
+				
+				this.SetNeedsDisplay ();
+			} // end if the corresponding ciew controller is in Signing mode
 		}
 
 		[Export ("GLSignatureViewPan")]
 		unsafe protected void pan(UIPanGestureRecognizer sender)
 		{
-			GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBuffer);
+			if (nsvc.SigningMode) {
+				GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBuffer);
 
-			PointF vel = sender.VelocityInView (this);
-			PointF loc = sender.LocationInView (this);
+				PointF vel = sender.VelocityInView (this);
+				PointF loc = sender.LocationInView (this);
 
-			// currentVelocity = this.ViewPointToGL (vel, this.Frame, GLSignatureView.StrokeColor);
-			float distance = 0.0f;
+				// currentVelocity = this.ViewPointToGL (vel, this.Frame, GLSignatureView.StrokeColor);
+				float distance = 0.0f;
 
-			if (previousPoint.X > 0) {
-				distance = (float) Math.Sqrt ( Math.Pow(loc.X-previousPoint.X, 2) + Math.Pow(loc.Y-previousPoint.Y, 2) );
-			}
-
-			float velocityMagnitude = (float) Math.Sqrt (vel.X*vel.X + vel.Y*vel.Y);
-			float clampedVelocityMagnitude = this.Clamp (VELOCITY_CLAMP_MIN, VELOCITY_CLAMP_MAX, velocityMagnitude);
-			float normalizedVelocity = (clampedVelocityMagnitude - VELOCITY_CLAMP_MIN) / (VELOCITY_CLAMP_MAX - VELOCITY_CLAMP_MIN);
-			float lowPassFilterAlpha = (float) STROKE_WIDTH_SMOOTHING;
-			float newThickness = (float) ((STROKE_WIDTH_MAX - STROKE_WIDTH_MIN) * (1 - normalizedVelocity) + STROKE_WIDTH_MIN);
-			this.penThickness = this.penThickness * lowPassFilterAlpha + newThickness * (1 - lowPassFilterAlpha);
-
-			switch (sender.State) {
-			case UIGestureRecognizerState.Began: {
-					this.previousPoint = loc;
-					this.previousMidPoint = loc;
-
-					NICSignaturePoint startPoint = this.ViewPointToGL (loc, this.Frame, new Vector3 { X = 1, Y = 1, Z = 1 });
-					this.previousVertex = startPoint;
-					this.previousThickness = penThickness;
-
-					fixed(uint* pvl = &vertexLength) {
-						this.AddVertex (pvl, startPoint);
-					}
-					fixed(uint* pvl = &vertexLength) {
-						this.AddVertex (pvl, previousVertex);
-					}
-	
-					this.nsvc.hasBeenSigned = true;
-
-					break;
+				if (previousPoint.X > 0) {
+					distance = (float) Math.Sqrt ( Math.Pow(loc.X-previousPoint.X, 2) + Math.Pow(loc.Y-previousPoint.Y, 2) );
 				}
-			case UIGestureRecognizerState.Changed: {
-					PointF mid = new PointF ((loc.X + previousPoint.X) / 2.0f, (loc.Y + previousPoint.Y) / 2.0f);
 
-					if (distance > QUADRATIC_DISTANCE_TOLERANCE) {
-						// Plot quadratic Bezier line instead of a straight
-						uint i;
-						int segments = (int)(distance / 1.5f);
-						float startPenThickness = this.previousThickness;
-						float endPenThickness = this.penThickness;
-						this.previousThickness = this.penThickness;
+				float velocityMagnitude = (float) Math.Sqrt (vel.X*vel.X + vel.Y*vel.Y);
+				float clampedVelocityMagnitude = this.Clamp (VELOCITY_CLAMP_MIN, VELOCITY_CLAMP_MAX, velocityMagnitude);
+				float normalizedVelocity = (clampedVelocityMagnitude - VELOCITY_CLAMP_MIN) / (VELOCITY_CLAMP_MAX - VELOCITY_CLAMP_MIN);
+				float lowPassFilterAlpha = (float) STROKE_WIDTH_SMOOTHING;
+				float newThickness = (float) ((STROKE_WIDTH_MAX - STROKE_WIDTH_MIN) * (1 - normalizedVelocity) + STROKE_WIDTH_MIN);
+				this.penThickness = this.penThickness * lowPassFilterAlpha + newThickness * (1 - lowPassFilterAlpha);
 
-						for (i = 0; i < segments; i++) {
-							this.penThickness = startPenThickness + ((endPenThickness - startPenThickness) / segments) * i;
+				switch (sender.State) {
+				case UIGestureRecognizerState.Began: {
+						this.previousPoint = loc;
+						this.previousMidPoint = loc;
 
-							PointF quadPoint = QuadraticPointInCurve (previousMidPoint, mid, previousPoint, (float)i / (float)segments);
-							NICSignaturePoint v = this.ViewPointToGL (quadPoint, this.Frame, GLSignatureView.StrokeColor);
+						NICSignaturePoint startPoint = this.ViewPointToGL (loc, this.Frame, new Vector3 { X = 1, Y = 1, Z = 1 });
+						this.previousVertex = startPoint;
+						this.previousThickness = penThickness;
+
+						fixed(uint* pvl = &vertexLength) {
+							this.AddVertex (pvl, startPoint);
+						}
+						fixed(uint* pvl = &vertexLength) {
+							this.AddVertex (pvl, previousVertex);
+						}
+		
+						this.nsvc.hasBeenSigned = true;
+
+						break;
+					}
+				case UIGestureRecognizerState.Changed: {
+						PointF mid = new PointF ((loc.X + previousPoint.X) / 2.0f, (loc.Y + previousPoint.Y) / 2.0f);
+
+						if (distance > QUADRATIC_DISTANCE_TOLERANCE) {
+							// Plot quadratic Bezier line instead of a straight
+							uint i;
+							int segments = (int)(distance / 1.5f);
+							float startPenThickness = this.previousThickness;
+							float endPenThickness = this.penThickness;
+							this.previousThickness = this.penThickness;
+
+							for (i = 0; i < segments; i++) {
+								this.penThickness = startPenThickness + ((endPenThickness - startPenThickness) / segments) * i;
+
+								PointF quadPoint = QuadraticPointInCurve (previousMidPoint, mid, previousPoint, (float)i / (float)segments);
+								NICSignaturePoint v = this.ViewPointToGL (quadPoint, this.Frame, GLSignatureView.StrokeColor);
+								this.AddTriangleStripPointsForPreviousPoint (this.previousVertex, v);
+								this.previousVertex = v;
+							}
+						} else if (distance > 1.0f) {
+							NICSignaturePoint v = this.ViewPointToGL (loc, this.Frame, GLSignatureView.StrokeColor);
 							this.AddTriangleStripPointsForPreviousPoint (this.previousVertex, v);
 							this.previousVertex = v;
+							this.previousThickness = this.penThickness;
 						}
-					} else if (distance > 1.0f) {
-						NICSignaturePoint v = this.ViewPointToGL (loc, this.Frame, GLSignatureView.StrokeColor);
-						this.AddTriangleStripPointsForPreviousPoint (this.previousVertex, v);
+						this.previousPoint = loc;
+						this.previousMidPoint = mid;
+
+						break;
+					}
+				case UIGestureRecognizerState.Ended: {
+						NICSignaturePoint v = this.ViewPointToGL (loc, this.Frame, new Vector3 { X = 1, Y = 1, Z = 1 });
+						fixed (uint* pvl = &vertexLength) {
+							this.AddVertex (pvl, v);
+						}
 						this.previousVertex = v;
-						this.previousThickness = this.penThickness;
-					}
-					this.previousPoint = loc;
-					this.previousMidPoint = mid;
+						fixed (uint* pvl = &vertexLength) {
+							this.AddVertex (pvl, v);
+						}
 
-					break;
-				}
-			case UIGestureRecognizerState.Ended: {
-					NICSignaturePoint v = this.ViewPointToGL (loc, this.Frame, new Vector3 { X = 1, Y = 1, Z = 1 });
-					fixed (uint* pvl = &vertexLength) {
-						this.AddVertex (pvl, v);
+						break;
 					}
-					this.previousVertex = v;
-					fixed (uint* pvl = &vertexLength) {
-						this.AddVertex (pvl, v);
-					}
+				case UIGestureRecognizerState.Cancelled: {
+						NICSignaturePoint v = this.ViewPointToGL (loc, this.Frame, new Vector3 { X = 1, Y = 1, Z = 1 });
+						fixed (uint* pvl = &vertexLength) {
+							this.AddVertex (pvl, v);
+						}
+						this.previousVertex = v;
+						fixed (uint* pvl = &vertexLength) {
+							this.AddVertex (pvl, v);
+						}
 
-					break;
+						break;
+					}
 				}
-			case UIGestureRecognizerState.Cancelled: {
-					NICSignaturePoint v = this.ViewPointToGL (loc, this.Frame, new Vector3 { X = 1, Y = 1, Z = 1 });
-					fixed (uint* pvl = &vertexLength) {
-						this.AddVertex (pvl, v);
-					}
-					this.previousVertex = v;
-					fixed (uint* pvl = &vertexLength) {
-						this.AddVertex (pvl, v);
-					}
+				this.SetNeedsDisplay ();
+			} // end if the corresponding ciew controller is in Signing mode
 
-					break;
-				}
-			}
-			this.SetNeedsDisplay ();
 		}
 
 		// Destructor(s)

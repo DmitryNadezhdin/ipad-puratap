@@ -353,7 +353,7 @@ namespace Puratap
 				bool DataInputCompletedForRun;
 				if ( string.IsNullOrEmpty(MyConstants.DBReceivedFromServer) || (!File.Exists(Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), MyConstants.DBReceivedFromServer))) ) 
 				{
-					DataInputCompletedForRun = true;
+					DataInputCompletedForRun = true; // it is not, but we don't want the warning message to pop up
 				}
 				else DataInputCompletedForRun = this._tabs._jobRunTable.AllJobsDone;
 
