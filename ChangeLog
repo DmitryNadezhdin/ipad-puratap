@@ -1,5 +1,11 @@
 2013-10-28  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
+	* ServerClientViewController.cs: Updated to 1.3c: fixed an
+	issue where "Data for some jobs has not been entered" warning
+	message was displayed incorrectly
+
+2013-10-28  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
 	* WorkflowNavigationController.cs: Updated to 1.3c: fixed an
 	issue where child jobs would not be read correctly by
 	ReadRunData() method

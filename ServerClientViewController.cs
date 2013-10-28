@@ -182,7 +182,7 @@ namespace Puratap
 		{ 
 			get {
 				string result = MyConstants.DBReceivedFromServer;
-				if (string.IsNullOrEmpty (result) || (! File.Exists (result) ))
+				if (string.IsNullOrEmpty (result) || (! File.Exists (Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), result)) ))
 				{
 					result = Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), "NEWTESTDB.sqlite");
 					if (! File.Exists (result))		// if database file does not exist, this could be a new version of the app installed (thus changing the bundle's directory name), we should attempt to find the file
@@ -289,14 +289,15 @@ namespace Puratap
 			Log (String.Format ("Employee Name: {0}", MyConstants.EmployeeName));
 			Log (String.Format ("Current run date: {0}", MyConstants.DEBUG_TODAY));
 
-			if (string.IsNullOrEmpty (MyConstants.DBReceivedFromServer) || (! File.Exists (MyConstants.DBReceivedFromServer)))
+			if (string.IsNullOrEmpty (MyConstants.DBReceivedFromServer) || 
+			    (! File.Exists (Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), MyConstants.DBReceivedFromServer))))
 			{
-				Log (String.Format ("Last DB received from server was {0}, but it was not found.", MyConstants.DBReceivedFromServer));
-				Log (String.Format ("Current working database: {0}",  dbFilePath));
+				Log (String.Format ("Last DB received from server was '{0}', but it was not found.", MyConstants.DBReceivedFromServer));
+				Log (String.Format ("Current working database: '{0}'", Path.GetFileName(dbFilePath)));
 			}
 			else
 			{
-				Log (String.Format ("Current working database: {0}",  MyConstants.DBReceivedFromServer));
+				Log (String.Format ("Current working database: '{0}'",  MyConstants.DBReceivedFromServer));
 			}
 		}
 
@@ -349,7 +350,12 @@ namespace Puratap
 				this._tabs.MyNavigationBar.Hidden = true;
 				this.NavigationController.NavigationBarHidden = false;
 
-				bool DataInputCompletedForRun = this._tabs._jobRunTable.AllJobsDone;
+				bool DataInputCompletedForRun;
+				if ( string.IsNullOrEmpty(MyConstants.DBReceivedFromServer) || (!File.Exists(Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), MyConstants.DBReceivedFromServer))) ) 
+				{
+					DataInputCompletedForRun = true;
+				}
+				else DataInputCompletedForRun = this._tabs._jobRunTable.AllJobsDone;
 
 				if (! DataInputCompletedForRun)
 				{
