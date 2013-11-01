@@ -20,35 +20,10 @@ namespace Puratap
 		
 		private ManualResetEvent EmployeeHasBeenChosen = new ManualResetEvent(false);
 		private ManualResetEvent DatabaseFileHasBeenReceived = new ManualResetEvent(false);
-		
-		// private NSNetServiceBrowser _netBrowser;
+
 		public ClientServerDataExchange (ServerClientViewController controller)
 		{
 			_controller = controller;
-			// InitNetBrowser();
-		}
-		
-		internal void InitNetBrowser() 
-		{
-			_serviceList = new List<NSNetService> ();
-			// _netBrowser = new NSNetServiceBrowser ();
-			/*
-			_netBrowser.FoundService += delegate (object sender, NSNetServiceEventArgs e) 
-			{
-				_controller.Log(String.Format("Service added: {0}", e.Service.Name));
-				_serviceList.Add(e.Service);
-				e.Service.AddressResolved += ServiceAddressResolved;
-			};
-			
-			_netBrowser.ServiceRemoved += delegate(object sender, NSNetServiceEventArgs e) 
-			{
-				_controller.Log(String.Format("Service removed: {0}", e.Service.Name));
-				var nsService = _serviceList.FindLast(s => s.Name.Equals (e.Service.Name));
-				_serviceList.Remove(nsService);
-			};
-
-			_netBrowser.SearchForServices("_ipadService._tcp", "");		// a service created by Windows Forms App (rewritten it to be a console application)
-			*/
 		}
 
 		delegate void AppendTextLineCallback(string text);
@@ -56,21 +31,13 @@ namespace Puratap
 		public static ManualResetEvent sendDone = new ManualResetEvent(false);
 		public static ManualResetEvent fileExchangeDone = new ManualResetEvent(false);
 		
-		/*
-		public static UIImage GetImagefromByteArray (byte[] imageBuffer)					// This function is implemented for testing purposes, to be removed
-		{
-		    NSData imageData = NSData.FromArray(imageBuffer);
-		    return UIImage.LoadFromData(imageData);
-		}
-		*/
-		
-		public class StateObject {																					// This class is used in file transfers from iPads to Windows-based server
+		public class StateObject {														// This class is used in file transfers from iPads to Windows-based server
 			
 			public NetworkStream workStream = null;					// client's NetworkStream
-			public const int bufferSize = 1024;							// size of the receiving buffer
-			public byte[] buffer = new byte[bufferSize];				// receiving buffer
-			public int bytesReceived = 0;										// number of bytes received so far
-			public int fileSize = 0;												// size of file to be transferred
+			public const int bufferSize = 1024;						// size of the receiving buffer
+			public byte[] buffer = new byte[bufferSize];			// receiving buffer
+			public int bytesReceived = 0;							// number of bytes received so far
+			public int fileSize = 0;								// size of file to be transferred
 			public FileTypes fileType;
 
 		}
@@ -142,8 +109,8 @@ namespace Puratap
 										// user makes his choice, the app sends it back to the server along with a device GUID
 										// the client then receives a database file
 											
-											tcpClient.ReceiveTimeout = 100000;
-											tcpClient.SendTimeout = 100000;
+											tcpClient.ReceiveTimeout = 60000;
+											tcpClient.SendTimeout = 60000;
 
 											EmployeeHasBeenChosen.Reset ();
 
@@ -167,7 +134,7 @@ namespace Puratap
 													// DISPLAY RECEIVED DATA
 													_controller.InvokeOnMainThread ( delegate() {
 														DatabaseFileHasBeenReceived.WaitOne ();
-														_controller._tabs._jobRunTable._ds.LoadJobRun(false); 
+														_controller._tabs._jobRunTable._ds.LoadJobRun(2); 
 														_controller.Log ("Data exhange with the server completed.");
 													});
 												}
@@ -207,14 +174,14 @@ namespace Puratap
 														
 														if (_controller._tabs._jobRunTable._ds.TestDBIntegrity () == true)
 														{
-															_controller._tabs._jobRunTable._ds.LoadJobRun(false); // reload the run
+															_controller._tabs._jobRunTable._ds.LoadJobRun(2); // reload the run
 															_controller.Log ("Data exhange with the server completed successfully.");
 															// PURGE old files (older than a week)
 															PurgeOldFiles();
 														}
 														else {
 															var dataIntegrityError = new UIAlertView("Database integrity error", 
-														                                         "Please try downloading the data from the server again. If problem persists, call the ambulance!", null, "OK");
+														                                         "Please try downloading the data from the server again. If problem persists, contact Puratap database administrator!", null, "OK");
 															dataIntegrityError.Show ();
 															_controller.Log ("Database integrity error. The database file may have been corrupted during the data transfer.");
 														}
@@ -222,11 +189,11 @@ namespace Puratap
 												}
 												else {
 													// Could not receive database file
-													_controller.Log ("Database transfer failed.");
+													_controller.Log ("Could not receive database file.");
 												}
 											}
 											else {
-												_controller.Log ("Sending data failed.");
+												_controller.Log ("1 or more files have not been transferred.");
 											}
 
 											break; 
@@ -244,9 +211,10 @@ namespace Puratap
 										}
 									} // end switch(r)
 
-									_controller.SetDataExchangeButtonEnabled ();
-									_controller.SetExchangeActivityHidden ();			
+									// _controller.SetDataExchangeButtonEnabled ();
 									tcpClient.Close();
+									_controller.SetExchangeActivityHidden ();			
+									_controller.UpdateDataExchangeButtonWithCurrentStatus();
 									_controller.Log ("Data exchange thread finished: "+ Thread.CurrentThread.ManagedThreadId.ToString () );
 									return;		// this line will close the data exchanging thread
 								}
@@ -258,7 +226,8 @@ namespace Puratap
 
 								_controller.Log(String.Format("Exception when calling server: {0} \r\n Message: {0}", ex, ex.Message));
 								_controller.SetExchangeActivityHidden ();
-								_controller.SetDataExchangeButtonDisabled ();
+								_controller.UpdateDataExchangeButtonWithCurrentStatus();
+								// _controller.SetDataExchangeButtonDisabled ();
 
 								_controller.InvokeOnMainThread (delegate {
 									using (var dataExchangeUnsuccessful = new UIAlertView("Data exchange unsuccessful", "Please try again", null, "OK")) 
@@ -285,7 +254,235 @@ namespace Puratap
 			{
 			}
 		}
-		
+
+		private sealed class RegisteredWaitHandleHolder
+		{
+			public RegisteredWaitHandle Handle { get; set; }
+		}
+
+		public int CallServer(string hostName, int port) 
+		{			// this procedure handles the data transfer between the app server and our client application
+			try 
+			{
+				ThreadStart ts = new ThreadStart ( delegate {
+					using (var pool = new NSAutoreleasePool() ) {
+
+						const int maxSize = 1024;
+
+						TcpClient tcpClient = null;
+						try {
+							_controller.Log ("Creating new TcpClient instance...");
+
+							// tcpClient = new TcpClient(hostName, port);
+							tcpClient = new TcpClient();
+							tcpClient.LingerState = new System.Net.Sockets.LingerOption(false, 0);
+							IAsyncResult connectResult = tcpClient.BeginConnect( IPAddress.Parse(hostName), port, null, null);
+							if ( !connectResult.AsyncWaitHandle.WaitOne(10000, true)) {
+								_controller.Log("TcpClient connection timed out.");
+
+								// Have the ThreadPool clean up all resources when the connect completes
+								RegisteredWaitHandleHolder holder = new RegisteredWaitHandleHolder();
+								holder.Handle = ThreadPool.RegisterWaitForSingleObject(connectResult.AsyncWaitHandle,
+								   (state, timedout) => {
+									try { tcpClient.EndConnect(connectResult); } catch { }
+									tcpClient.Close();
+									((RegisteredWaitHandleHolder)state).Handle.Unregister(null);
+								}, holder, -1, true);
+
+								throw new SocketException( (int)SocketError.TimedOut);
+							} else {
+								tcpClient.EndConnect(connectResult);
+								_controller.Log("TcpClient connected successfully.");
+							}
+
+							tcpClient.ReceiveTimeout = 60000;
+							tcpClient.SendTimeout = 60000; // these timeouts only apply to sync read and write operations
+
+							_controller.Log ("Data exchange thread started: " + Thread.CurrentThread.ManagedThreadId.ToString ());
+
+							using (NetworkStream netStream = tcpClient.GetStream() )
+							{
+								/*		A couple potential issues here:
+								 * 
+								 * 		1. We should never assume that data piece, however small it may be, will come through the network synchronously
+								 * 			Therefore, every send or receive operation should be performed in async mode (!not the case currently!).
+								 * 		2. Device identification. We DO NOT rely on devices' serial numbers or ECIDs, we create a GUID on the device and 
+								 * 			tie those GUIDs to employee number (REPNUM in WREP or PLNUM in PLUMB) in FoxPro database.
+								 * 			When the device initiates the data exchange, it sends over its GUID. 
+								 * 			The server then checks the database to decide which file(s) should be transferred to the device.
+								*/	
+
+								receiveDone.Reset();
+								sendDone.Reset();
+
+								nst = netStream;
+								// DEBUG :: NEW DEVICE :: 
+								//string msg = MyConstants.NEW_DEVICE_GUID_STRING; // "aaaabbbb-cccc-dddd-eeee-ffff00001111";
+								string msg = MyConstants.DeviceID;
+
+								byte[] sendBuffer = Encoding.ASCII.GetBytes(msg);
+								netStream.Write(sendBuffer, 0, sendBuffer.Length);
+								_controller.Log("We told the server: "+msg);
+
+								// get the server response for the user ID sent and act accordingly
+								byte[] receiveBuffer = new byte[1];
+								netStream.Read (receiveBuffer, 0 , 1);
+								var r = MyConstants.GetServerResponse(receiveBuffer[0]);
+
+								switch(r)
+								{
+									case MyConstants.ServerResponsesForUserID.UserIDNewUser:
+								{
+									// this starts a process handling a new device
+									// 1st we should determine the employee who is the device's owner
+									// to do that, the server sends out a list of employees that do not have a mobile device linked to them
+									// the client accepts the list and presents it to the user
+									// user makes his choice, the app sends it back to the server along with a device GUID
+									// the client then receives a database file
+
+									tcpClient.ReceiveTimeout = 60000;
+									tcpClient.SendTimeout = 60000;
+
+									EmployeeHasBeenChosen.Reset ();
+
+									// RECEIVE list of employess without a device linked to them
+									List<Employee> AvailableEmployees = ReceiveEmployees ();
+
+									// DISPLAY the list to the user and get him to choose one
+									Employee chosen = new Employee();
+									chosen = ChooseEmployee (AvailableEmployees);
+
+									if (chosen != null) {
+										MyConstants.DeviceID = ( Guid.NewGuid () ).ToString();
+										chosen.DeviceGuid = new Guid( MyConstants.DeviceID );
+
+										// SEND the chosen employee to server
+										SendEmployee (chosen);
+
+										// RECEIVE database file
+										DatabaseFileHasBeenReceived.Reset ();
+										if ( ReceiveDatabaseFile () ) {
+											// DISPLAY RECEIVED DATA
+											_controller.InvokeOnMainThread ( delegate() {
+												DatabaseFileHasBeenReceived.WaitOne ();
+												_controller._tabs._jobRunTable._ds.LoadJobRun(2); 
+												_controller.Log ("Data exhange with the server completed.");
+											});
+										}
+										// NEW USER, NOTHING TO SEND
+										// SendFilesToServer (netStream);							
+									}
+									break;
+								}
+
+									case MyConstants.ServerResponsesForUserID.UserIDFound:
+								{
+									_controller.Log(String.Format ("We received code: {0}", MyConstants.ServerResponsesForUserID.UserIDFound.ToString() ));
+
+									// IMPLEMENTED :: sending files does happen BEFORE receiving now (or not at all in case of new users)
+
+									//	now we must transfer data from iPad to server: database itself (IMPLEMENTED), all signed .pdf documents, all taken photos (IMPLEMENTED)
+									//	after the data has been successfully transferred, we must consider purging it from the device (perhaps keeping last 7 days worth of data) (IMPLEMENTED)
+									// 	then we receive the database file for current date(s) and disconnect gracefully, leaving the server open to accept other clients		
+									bool sendSuccess = false;
+									try {
+										sendSuccess = SendFilesToServer (netStream);
+									}
+									catch (Exception e)
+									{												
+										_controller.Log (e.Message);
+										sendSuccess = false;
+									}
+
+									if (sendSuccess)
+									{
+										if ( ReceiveDatabaseFile () ) {
+											// DISPLAY contents of received database
+											_controller.InvokeOnMainThread ( delegate() {
+												DatabaseFileHasBeenReceived.WaitOne ();	// wait for database file to be received before proceeding further
+												// TODO :: 	now we should send server an acknowledgement that the database file has been successfully saved 
+												// (why? server doesn't care. Actually, it DOES CARE, and it could re-send the data if not received successfully and the connection is still alive)
+
+												if (_controller._tabs._jobRunTable._ds.TestDBIntegrity () == true)
+												{
+													_controller._tabs._jobRunTable._ds.LoadJobRun(2); // load the run
+													_controller.Log ("Data exhange with the server completed successfully.");
+													// PURGE old files (older than a week)
+													PurgeOldFiles();
+												}
+												else {
+													var dataIntegrityError = new UIAlertView("Database integrity error", 
+													                                         "Please try downloading the data from the server again. If problem persists, contact Puratap database administrator!", null, "OK");
+													dataIntegrityError.Show ();
+													_controller.Log ("Database integrity error. The database file may have been corrupted during the data transfer.");
+												}
+											});
+										}
+										else {
+											// Could not receive database file
+											_controller.Log ("Could not receive database file.");
+										}
+									}
+									else {
+										_controller.Log ("1 or more files have not been transferred.");
+									}
+
+									break; 
+								}
+									case MyConstants.ServerResponsesForUserID.UserIDNotFound:
+								{ 
+									_controller.Log (String.Format ("Cannot proceed: Device ID not found on the server: {0}.", MyConstants.DeviceID)); 
+
+									_controller.InvokeOnMainThread (delegate {
+										using (var a = new UIAlertView("Data exchange failed", String.Format ("Device ID not found on the server: ", MyConstants.DeviceID), null, "Too bad") ) { a.Show (); }
+									});
+
+									fileExchangeDone.Set (); 
+									break; 
+								}
+								} // end switch(r)
+
+								// _controller.SetDataExchangeButtonEnabled ();
+								_controller.UpdateDataExchangeButtonWithCurrentStatus();
+								_controller.SetExchangeActivityHidden ();			
+								tcpClient.Close();
+								_controller.Log ("Data exchange thread finished: "+ Thread.CurrentThread.ManagedThreadId.ToString () );
+								return;		// this line will close the data exchanging thread
+							}
+						} 
+						catch (Exception ex) 
+						{
+							if (tcpClient != null) 
+								tcpClient.Close();
+
+							_controller.Log(String.Format("Exception when calling server: {0} \r\n Message: {0}", ex, ex.Message));
+							_controller.SetExchangeActivityHidden ();
+							_controller.UpdateDataExchangeButtonWithCurrentStatus();
+							// _controller.SetDataExchangeButtonDisabled ();
+
+							_controller.InvokeOnMainThread (delegate {
+								using (var dataExchangeUnsuccessful = new UIAlertView("Data exchange unsuccessful", "Please try again", null, "OK")) 
+								{
+									dataExchangeUnsuccessful.Show (); 
+								}
+							});
+							return;
+						}
+					}
+				} );
+				Thread t = new Thread(ts);
+				t.Start();
+				return 1;
+			}
+			catch (Exception e)
+			{
+				_controller.Log (e.Message);
+				return 0;
+			}
+			finally 
+			{
+			}
+		}				
 		public void SendByte(byte val) {
 			nst.WriteByte (val);
 		}
@@ -299,9 +496,9 @@ namespace Puratap
 			SendInteger (val.Length);
 			nst.Write ( Encoding.ASCII.GetBytes (val), 0, val.Length);
 
-			/* Needs more testing
+			/* FIXME
 			sendDone.Reset ();
-			nst.BeginRead ( Encoding.ASCII.GetBytes (val), 0, val.Length, SendCallback, new StateObject { workStream = nst } );
+			nst.BeginWrite ( Encoding.ASCII.GetBytes (val), 0, val.Length, SendCallback, new StateObject { workStream = nst } );
 			sendDone.WaitOne (); */
 		}
 		
@@ -614,7 +811,7 @@ namespace Puratap
 						// async send file contents
 						sendDone.Reset ();
 						netStream.BeginWrite(state.buffer, 0, state.fileSize, SendCallback, state);
-						bool socketTimedOut = !sendDone.WaitOne(new TimeSpan(0,0,0,10));
+						bool socketTimedOut = !sendDone.WaitOne(new TimeSpan(0,0,0,30));
 						if (socketTimedOut)
 							throw new SocketException((int)SocketError.TimedOut);
 						_controller.Log (String.Format ("Sent file contents to server: {0} bytes", state.fileSize));
@@ -622,8 +819,9 @@ namespace Puratap
 					catch (Exception e) { 
 						_controller.Log ( String.Format ("Exception when transferring file to server: \nFile name: {0} \nMessage: {1}\nStack trace: {2}", fileName, e.Message, e.StackTrace) );
 						_controller.SetExchangeActivityHidden ();
-						_controller.StopNetBrowser();
-						_controller.StartNetBrowser ();
+						_controller.UpdateDataExchangeButtonWithCurrentStatus ();
+						// _controller.StopNetBrowser();
+						// _controller.StartNetBrowser ();
 
 						this._controller.InvokeOnMainThread (delegate { 
 							var alert = new UIAlertView ("Data exchange incomplete.", "One or more files have not been trasferred successfully. Please try again", null, "OK");
@@ -655,18 +853,18 @@ namespace Puratap
 		
 		public void ReceiveCallback(IAsyncResult ar) 
 		{ 	
-			StateObject state = (StateObject) ar.AsyncState;	// get the state of the opertation
+			StateObject state = (StateObject) ar.AsyncState;	// get the state of the operation
 			try 
 			{
 				NetworkStream stream = state.workStream;		// get the client's net stream from the state
 
 				int bytesRead = stream.EndRead(ar);					// get the amount of bytes read from a socket
-				state.bytesReceived += bytesRead;						// save it to the state object
+				state.bytesReceived += bytesRead;					// save it to the state object
 				
 				if (state.bytesReceived == state.fileSize) {
 					receiveDone.Set();											// when state.fileSize bytes have been received, notify the receiving thread to continue execution
 				}
-				else {																// if not, continue reading from socket
+				else {															// if not, continue reading from socket
 					stream.BeginRead(state.buffer, state.bytesReceived, state.fileSize-state.bytesReceived, ReceiveCallback, state);
 				} 
 			}
@@ -686,16 +884,17 @@ namespace Puratap
 			// try {
 			StateObject state = (StateObject)ar.AsyncState;		// extracting state of the async operation
 			try {
-				state.workStream.EndWrite(ar);								// this call ends the writing operation (if this is not called, the socket remains in writing state and is not able to send or receive data)													
+				state.workStream.EndWrite(ar);					// this call ends the writing operation (if this is not called, the socket remains in writing state and is not able to send or receive data)													
 				_controller.Log (String.Format("SendCallback : {0} bytes sent to server.", state.fileSize));
 			}
 
 			catch (Exception e) {
 				// state.workStream.Close ();
+				// _controller.SetDataExchangeButtonDisabled ();
+				// _controller.StopNetBrowser ();
+				// _controller.StartNetBrowser ();
 				_controller.SetExchangeActivityHidden ();
-				_controller.SetDataExchangeButtonDisabled ();
-				_controller.StopNetBrowser ();
-				_controller.StartNetBrowser ();
+				_controller.UpdateDataExchangeButtonWithCurrentStatus ();
 				_controller.Log (String.Format ("Exception: {0}, stack trace: {1}", e.Message, e.StackTrace));
 			}
 			finally {

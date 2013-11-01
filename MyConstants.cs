@@ -99,7 +99,9 @@ namespace Puratap
 			}
 		}
 		
-		// DEPRECATED :: public static bool AUTO_CHANGE_DATES = true; // false
+		public static string DEFAULT_IPAD_SERVER_IP = "192.168.0.9";
+		public static string DEFAULT_IPAD_SERVER_PORT = "53213";
+
 		public static string DEBUG_TODAY = String.Format (" '{0}' ", DateTime.Now.Date.ToString ("yyyy-MM-dd")); // " '2012-06-28' ";
 		public static long DUMMY_MEMO_NUMBER = 999999999999;
 		public enum JobStarted { Yes, CustomerNotAtHome, CustomerRebooked, PuratapLate, AddressWrong, Other, None }
@@ -478,6 +480,31 @@ namespace Puratap
 				return result;
 			}
 			else return null;
+		}
+
+		public static void RegisterDefaultsFromSettingsBundle()
+		{
+			string settingsBundle = NSBundle.MainBundle.PathForResource("Settings", @"bundle");
+			if(settingsBundle == null) {
+				System.Console.WriteLine(@"Could not find Settings.bundle");
+				return;
+			}
+			NSString keyString = new NSString(@"Key");
+			NSString defaultString = new NSString(@"DefaultValue");
+			NSDictionary settings = NSDictionary.FromFile(Path.Combine(settingsBundle,@"Root.plist"));
+			NSArray preferences = (NSArray) settings.ValueForKey(new NSString(@"PreferenceSpecifiers"));
+			NSMutableDictionary defaultsToRegister = new NSMutableDictionary();
+			for (uint i=0; i<preferences.Count; i++) {
+				NSDictionary prefSpecification = new NSDictionary(preferences.ValueAt(i));
+				NSString key = (NSString) prefSpecification.ValueForKey(keyString);
+				if(key != null) {
+					NSObject def = prefSpecification.ValueForKey(defaultString);
+					if (def != null) {
+						defaultsToRegister.SetValueForKey(def, key);
+					}
+				}
+			}
+			NSUserDefaults.StandardUserDefaults.RegisterDefaults(defaultsToRegister);
 		}
 		
 		public static string OutputStringForValue(PaymentTypes pay)

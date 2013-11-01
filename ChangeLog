@@ -1,3 +1,79 @@
+2013-11-01  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Reachability.cs: 1.3d: Reachability class is used to
+	determine if starting data exchange with iPad data dispatcher
+	server makes sense (checks if server IP address is reachable
+	via WiFi or WWAN). It has replaced NetBrowser that was based
+	on Apple's Bonjour SDK.
+
+	* Root.plist: 1.3d: this defines Puratap app settings
+	available in the iPad's Settings app
+
+	* test.plist: Test
+
+	* AppDelegate.cs: 1.3d: LoadRun() in JobRunTableSource now
+	accepts int parameter instead of bool
+
+
+	* ClientServerDataExchange.cs: 1.3d: data exchange code
+	improved, TcpClient.EndConnect is now called in all cases
+	(when connection fails, ThreadPool is tasked with calling
+	EndConnect asynchronously), code cleaned up, legacy methods
+	removed, timeouts on network sync read/write operations
+	decreased from 100 seconds to 60, timeout on file transfer
+	increased from 10 seconds to 30, updated log messages, removed
+	NetBrowser object and dependancy on Bonjour (server IP and
+	port are now stored in application settings on the iPad)
+
+
+	* DetailedTabs.cs: 1.3d: job order is now saved into
+	PL_RECOR.IPAD_ORDERING field in the database each time "Done"
+	button is clicked after rearranging them. "Reset jobs to
+	default order" button still resets the order. If PL_RECOR in
+	the database does not have an IPAD_ORDERING field, integrity
+	check will fail and data cannot be loaded since ReadRunData()
+	method uses IPAD_ORDERING in ORDER BY clauses of its SQLs.
+
+	* Info.plist:
+	* ServerClient.xib: Updated to 1.3d
+
+	* JobRunTable.cs: 1.3d: LoadJobRun() method now accepts int
+	parameter instead of bool, ReadRunData() now uses
+	IPAD_ORDERING field in SQL queries to have job cell order save
+	between application sessions.
+
+	* MyConstants.cs: 1.3d: now includes default values for iPad
+	data dispatcher server (IP address and port).
+
+	* NEWTESTDB.sqlite: 1.3d: altered PL_RECOR table to include
+	IPAD_ORDERING field
+
+	* PaymentsSummary.cs: 1.3d: fixed a bug where customer records
+	were sometimes highlighted incorrectly in the payment summary
+
+	* Puratap.csproj: Updated to 1.3d: includes Settings.bundle
+	folder now that defines Puratap app settings
+
+	* ServerClient.designer.cs: Updated to 1.3d: the old data
+	exchange button is now hidden, some elements has shifted
+	around and renamed
+
+
+	* ServerClientViewController.cs: 1.3d: new implementation of
+	data exchange process does away with Bonjour and uses default
+	settings (NSUSerDefaults.StandardUserDefaults) to determine
+	iPad data server IP and port. Reachability class is now used
+	to determine if that IP is reachable via WiFi or WWAN
+	(allowing to use 3G or 4G if iPad data dispatcher is run on an
+	Internet server). A lot of legacy code commented out. Starting
+	data exchange is now reported as a TestFlight checkpoint
+	again.
+
+	* SignDailyStockUsed.cs: Updated to 1.3d: fixed a bug where
+	two navigation bars were visible and overlapped each other
+	(one that belonged to ServerClientNavigationController, the
+	other to DetailedTabs).
+
 2013-10-28  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* NewSignatureViewController.cs: Updated to 1.3c: fixed

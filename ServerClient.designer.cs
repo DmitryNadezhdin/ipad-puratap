@@ -1,10 +1,11 @@
 // WARNING
 //
-// This file has been generated automatically by MonoDevelop to store outlets and
-// actions made in the Xcode designer. If it is removed, they will be lost.
+// This file has been generated automatically by Xamarin Studio to store outlets and
+// actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
 using MonoTouch.Foundation;
+using System.CodeDom.Compiler;
 
 namespace Puratap
 {
@@ -12,28 +13,28 @@ namespace Puratap
 	partial class ServerClientViewController
 	{
 		[Outlet]
+		MonoTouch.UIKit.UIActivityIndicatorView aivActivity { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIActivityIndicatorView aivConnectingToService { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton btnChangeDate { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UIButton btnDownload { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton btnResetDeviceID { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton btnStartDataExchange { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UIButton btnUpload { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UITextView tvLog { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UIButton btnResetDeviceID { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UIActivityIndicatorView aivActivity { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UIButton btnChangeDate { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UIActivityIndicatorView aivConnectingToService { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UIButton btnSubmitFeedback { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
@@ -72,9 +73,9 @@ namespace Puratap
 				aivConnectingToService = null;
 			}
 
-			if (btnSubmitFeedback != null) {
-				btnSubmitFeedback.Dispose ();
-				btnSubmitFeedback = null;
+			if (btnStartDataExchange != null) {
+				btnStartDataExchange.Dispose ();
+				btnStartDataExchange = null;
 			}
 		}
 	}

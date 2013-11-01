@@ -359,6 +359,10 @@ namespace Puratap
 				MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem[] { BtnStartWorkflow, BtnEdit}, true);		// pushes new button objects into navigation bar
 				this.SelectedViewController.View.Alpha = 1;
 				this.SelectedViewController.View.UserInteractionEnabled = true;
+
+				// save the new order to PL_RECOR using a loop through _jobRunTable.MainJobList
+				SaveNewJobOrder();
+
 				UIView.CommitAnimations ();
 			};
 			
@@ -554,6 +558,39 @@ namespace Puratap
 			this.Mode = DetailedTabsMode.Lookup;
 		}
 
+		private void SaveNewJobOrder()
+		{
+			if (File.Exists (ServerClientViewController.dbFilePath)) {
+				try {
+					string sql = "UPDATE PL_RECOR SET iPad_Ordering = :new_order WHERE BookNum = :job_id";	// 
+
+					// create SQLite connection to file and write the data
+					SqliteConnection connection = new SqliteConnection ("Data Source=" + ServerClientViewController.dbFilePath);
+					using (SqliteCommand cmd = connection.CreateCommand()) {
+						connection.Open ();
+						cmd.CommandText = sql;
+
+						long jobOrder = 0;
+						foreach (Job j in _jobRunTable.MainJobList) {
+							jobOrder += 1;
+							cmd.Parameters.Clear ();
+							cmd.Parameters.Add ("new_order", System.Data.DbType.Int64).Value = jobOrder;	// order number of the job
+							cmd.Parameters.Add ("job_id", System.Data.DbType.Int64).Value = j.JobBookingNumber;	// id of the job
+							cmd.ExecuteNonQuery ();
+						}
+					}
+				} catch {
+					// exception when writing to database
+					var failedToSave = new UIAlertView ("Error", "Failed to save job order...", null, "OK");
+					failedToSave.Show ();
+				}
+			} else {
+				// database file not found
+				var dbNotFound = new UIAlertView ("Error", "Database file not found...", null, "OK");
+				dbNotFound.Show ();
+			}
+		}
+
 		void DoReprintDocsForCustomer()
 		{
 			if (_jobRunTable.CurrentCustomer != null)
@@ -731,7 +768,62 @@ namespace Puratap
 		
 		void DoResetToDefault()
 		{
-			_jobRunTable._ds.LoadJobRun (false);
+			// since resetting only applies to currently loaded run, rundate equals currently loaded date
+			string runDate = MyConstants.DEBUG_TODAY;
+			string sql = "";
+			// create SQLite connection to file and extract data
+			List<long> jobIDs = new List<long>();
+			using (var dbConnection = new SqliteConnection("Data Source=" + ServerClientViewController.dbFilePath)) {
+				using (var cmd = dbConnection.CreateCommand()) {	
+					try {
+						dbConnection.Open ();
+						sql = " SELECT BookNum, iPad_Ordering, Time_Start, Time FROM PL_RECOR " +
+										" WHERE PlAppDate = " + runDate +
+											" AND ParentNum != -1 " + 
+											" AND ParentNum < 1 " +
+											" AND (NOT EXISTS (SELECT booknum FROM pl_recor plr WHERE plr.booknum=pl_recor.parentnum AND plr.parentnum=-1)) " +
+									" ORDER BY Time_Start ASC, Time ASC, BookNum DESC";
+						cmd.CommandText = sql;
+						using (var jobReader = cmd.ExecuteReader()) {
+							if (!jobReader.HasRows) {	// no jobs in that database file for the date selected
+							} else {
+								while (jobReader.Read()) {
+									jobIDs.Add( Convert.ToInt64(jobReader["booknum"]) );
+								}
+							}
+							if (!jobReader.IsClosed)
+								jobReader.Close();
+						}
+					} catch {
+						// failed to read jobs from database file
+					}
+				} // end using dbcommand
+			} // end using dbconnection
+
+			// for each job in the list, update PL_RECOR, setting IPAD_ORDERING to the index in that list
+			using (var dbConnection = new SqliteConnection("Data Source=" + ServerClientViewController.dbFilePath)) {
+				using (var cmd = dbConnection.CreateCommand()) {	
+					try {
+						dbConnection.Open ();
+						sql = "UPDATE PL_RECOR SET iPad_Ordering = :counter WHERE BookNum = :job_ID";
+						cmd.CommandText = sql;
+						int i = 0;
+						foreach (long jobID in jobIDs) {
+							i += 1;
+							cmd.Parameters.Clear();
+							cmd.Parameters.Add("counter", System.Data.DbType.Int32).Value = i;
+							cmd.Parameters.Add("job_ID", System.Data.DbType.Int64).Value = jobID;
+							cmd.ExecuteNonQuery();
+						} // end foreach job
+					} catch {
+						// failed to update job records in the database file
+						var failedToReset = new UIAlertView ("Error", "Failed to update job records in the database file...", null, "OK");
+						failedToReset.Show ();
+					}
+				} // end using dbCommand
+			} // end using dbConnection
+
+			_jobRunTable._ds.LoadJobRun (0);
 			_jobRunTable.TableView.ReloadData ();
 		}
 			

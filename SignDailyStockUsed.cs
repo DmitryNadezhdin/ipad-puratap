@@ -83,8 +83,11 @@ namespace Puratap
 			GoForward = delegate {
 				if (this.hasBeenSigned)
 				{
+					this.NavigationController.SetNavigationBarHidden(true, false);
 					this.NavigationController.PopToRootViewController (true);
-					this.Tabs._scView.InitDataExchange ();
+
+					this.Tabs._scView.StartNewDataExchange();
+					// this.Tabs._scView.InitDataExchange ();
 				}
 				else
 				{

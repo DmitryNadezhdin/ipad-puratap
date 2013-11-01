@@ -615,7 +615,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 												" AND pl_recor.cusnum != 72077 " + // getting rid of dummy records ( Mr. Puratap )
 												" AND wclient.wcclcde != 'CREATEDONIPAD' " +
 												" AND pl_recor.parentnum < 1 AND pl_recor.parentnum != -1 " +
-										" ORDER BY PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";		
+										" ORDER BY PL_RECOR.iPad_Ordering, PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";		
 
 											// " AND wsales.cusnum=pl_recor.cusnum " +
 						cmd.CommandText = sql;
@@ -675,7 +675,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									" AND pl_recor.cusnum != 72077 " +			// getting rid of dummy records ( Mr. Puratap )
 								" AND pl_recor.parentnum != -1 " +				// getting rid of manually created jobs 
 									" AND (NOT EXISTS (SELECT booknum FROM pl_recor plr WHERE plr.booknum=pl_recor.parentnum AND plr.parentnum=-1)) " + // getting rid of child jobs of manually created jobs
-								" ORDER BY PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";	
+								" ORDER BY PL_RECOR.iPad_Ordering, PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";	
 
 						cmd.Parameters.Clear ();
 						cmd.CommandText = sql;
@@ -741,6 +741,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								j = new Job(cusnum, jnum, unitnum, jTime, jDate, money, jbOn, jbBy, sp, plc, jType, parentnum, warranty, attention, cntct, attreason);
 								j.JobTimeStart = jtStart;
 								j.JobTimeEnd = jtEnd;
+								j.OrderInRun = Convert.ToInt32 (reader ["ipad_ordering"]);
 							
 								// getting job status values from database
 								try
@@ -1123,7 +1124,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				}
 			}
 			
-			public void LoadJobRun(bool isStarting)
+			public void LoadJobRun(int isStarting)
 			{
 				// checks if database file exists, if it does, gets customer data into _table._customers
 				string dbPath = MyConstants.DBReceivedFromServer;
@@ -1199,8 +1200,15 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 											}
 											else 
 											{
-												if (isStarting)
+												if (isStarting == 0)
 												{
+													// if passed 0 (null), reload run for currently selected date  
+													ReadRunData(MyConstants.DEBUG_TODAY, dbPath);
+												}
+												else if (isStarting == 1)
+												{
+													// if passed 1 (true), do not display a dialog to pick a date as it will lead to a crash
+													// instead try to find today's date and load it
 													bool foundToday = false;
 													for (int btnIndex = 0; btnIndex < chooseRunDate.ButtonCount; btnIndex++)
 													{
@@ -1219,8 +1227,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 													MyConstants.DEBUG_TODAY = dbDate;
 													ReadRunData (dbDate, dbPath);
 												}
-												else
+												else // isStarting == 2 (false)
 												{
+													// if passed false, display an action sheet with available dates
 													chooseRunDate.Dismissed += HandleChooseRunDateDismissed;
 													chooseRunDate.ShowInView (this._table._tabs.View);
 												}
@@ -1876,6 +1885,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public long CustomerNumber { get; set; }
 		public long UnitNumber { get; set; }
 
+		public int OrderInRun { get; set; }				// read from PL_RECOR.iPad_Ordering field initially
+														// this is updated when job cells are rearranged in JobRunTable
+
 		public DateTime JobTime { get; set; } 			// this is getting replaced by JobTimeStart and JobTimeEnd
 		public DateTime JobTimeStart { get; set; }
 		public DateTime JobTimeEnd { get; set; }
@@ -1884,7 +1896,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public double MoneyToCollect { get; set; }
 		public double EmployeeFee { get; set; }			// IMPLEMENTED :: this is calculated depending on a myriad of factors
 														// the base value is sitting in the JOB_TYPES table
-
 		public bool AttentionFlag { get; set; }
 		public string AttentionReason { get; set; }
 		

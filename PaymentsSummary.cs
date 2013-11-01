@@ -279,6 +279,7 @@ namespace Puratap
 				var dbDates = this.jrt._ds.GetRunDatesFromDB (dbPath);
 				if (dbDates != null)
 				{
+					this.jrt._tabs._scView.Log("Generating daily payments summary files...");
 					foreach(string dbDate in dbDates)
 					{
 						jrt.Customers = new List<Customer> ();
@@ -625,7 +626,9 @@ namespace Puratap
 			// payments section rows
 			foreach(StyledStringElement element in Root[0])
 			{
-				if (element.Caption.TrimStart (' ').StartsWith (jrt.CurrentCustomer.CustomerNumber.ToString()))
+				string tmp = element.Caption.TrimStart(' ');
+				tmp = tmp.Substring (0, tmp.IndexOf (' '));
+				if (tmp == jrt.CurrentCustomer.CustomerNumber.ToString())
 				{
 					element.BackgroundColor = UIColor.Blue;
 					element.TextColor = UIColor.White;

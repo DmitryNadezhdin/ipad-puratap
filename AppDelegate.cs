@@ -106,14 +106,14 @@ namespace Puratap
 			try {
 				if (_tabs._jobRunTable._ds.TestDBIntegrity () )
 					// if database integrity check went ok, load customers and jobs from it
-					_tabs._jobRunTable._ds.LoadJobRun (true);
+					_tabs._jobRunTable._ds.LoadJobRun (1);
 				else
 				{
 					var integrityCheckFailedAlert = new UIAlertView ("Database integrity check failed", "We are really sorry about that.\nTry loading the data anyway?", null, "No", "Yes");
 					integrityCheckFailedAlert.Dismissed += delegate(object sender, UIButtonEventArgs e) {
 						if (e.ButtonIndex != integrityCheckFailedAlert.CancelButtonIndex)
 						{
-							_tabs._jobRunTable._ds.LoadJobRun (true);
+							_tabs._jobRunTable._ds.LoadJobRun (1);
 						}
 					};
 					this.InvokeOnMainThread (delegate {
@@ -171,7 +171,7 @@ namespace Puratap
 
 							if (copyResult == true) {
 								// reload the run so that the added job is displayed
-								_tabs._jobRunTable._ds.LoadJobRun(false);
+								_tabs._jobRunTable._ds.LoadJobRun(2);
 
 								// if data copying is successful, send the e-mail confirmation
 								if (MFMailComposeViewController.CanSendMail)
@@ -212,7 +212,7 @@ namespace Puratap
 							MyConstants.DBReceivedFromServer = openedFileName;
 
 							// call LoadJobRun to reload the run
-							_tabs._jobRunTable._ds.LoadJobRun (false);
+							_tabs._jobRunTable._ds.LoadJobRun (2);
 						} else {
 							// delete the file that has been copied to Inbox folder of the app
 							File.Delete (url.Path);
