@@ -195,6 +195,20 @@ namespace Puratap
 			
 			this.ToolbarItems = new UIBarButtonItem[] { new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, null) };
 		}
+
+		public void SetCurrentJobStartedNone()
+		{
+			Job selectedJob = (_navWorkflow._tabs._jobRunTable.CurrentJob.HasParent()) ?
+				_navWorkflow._tabs._jobRunTable.FindParentJob(_navWorkflow._tabs._jobRunTable.CurrentJob) :
+				_navWorkflow._tabs._jobRunTable.CurrentJob;
+			selectedJob.Started = MyConstants.JobStarted.None;
+
+			if (selectedJob.HasChildJobs ()) {
+				foreach (Job child in selectedJob.ChildJobs) {
+					child.Started = MyConstants.JobStarted.None;
+				}
+			}
+		}
 		
 		public void JobWasNotDoneClicked()
 		{
@@ -202,9 +216,9 @@ namespace Puratap
 			{
 				if (_jobNotDone == null) // if this is the first time, we create the dialog
 				{
-					_jobNotDone = new UIAlertView("", "", null, "Cancel",
+					_jobNotDone = new UIAlertView("Please specify a reason", "", null, "Cancel",
 				                               "Customer not at home",
-				                               "Customer to be rebooked",
+				                               "Cancelled by customer",
 				                               "I wasn't there in time",
 				                              "The address was wrong",
 					                              "Other");
@@ -225,7 +239,7 @@ namespace Puratap
 								switch (e.ButtonIndex)
 								{
 								case 1:	chosenOption = "Not home"; selectedJob.Started = MyConstants.JobStarted.CustomerNotAtHome; break;
-								case 2:	chosenOption = "To be rebooked"; selectedJob.Started = MyConstants.JobStarted.CustomerRebooked; break;
+								case 2:	chosenOption = "Customer cancelled"; selectedJob.Started = MyConstants.JobStarted.CustomerCancelled; break;
 								case 3:	chosenOption = "Late"; selectedJob.Started = MyConstants.JobStarted.PuratapLate; break;
 								case 4:	chosenOption = "Wrong address"; selectedJob.Started = MyConstants.JobStarted.AddressWrong; break;
 								case 5:	chosenOption = "Other"; selectedJob.Started = MyConstants.JobStarted.Other; break;

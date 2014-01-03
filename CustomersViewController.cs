@@ -470,6 +470,7 @@ namespace Puratap
 			lbCompanyName.Hidden = false;
 			lbContactPerson.Hidden = false;
 			this._tabs._jobRunTable.TableView.UserInteractionEnabled = true;
+
 			// enable the workflow and extra actions buttons
 			foreach (UIBarButtonItem btn in this._tabs.MyNavigationBar.TopItem.RightBarButtonItems)	//NavigationItem.RightBarButtonItem.Enabled = false;
 				btn.Enabled = true;

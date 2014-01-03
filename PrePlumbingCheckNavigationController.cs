@@ -5,11 +5,11 @@ namespace Puratap
 {
 	public class PrePlumbingCheckNavigationController : UINavigationController
 	{
-		DetailedTabs _tabs;
+		public readonly DetailedTabs Tabs;
 
 		public PrePlumbingCheckNavigationController (DetailedTabs tabs) : base()
 		{
-			_tabs = tabs;
+			Tabs = tabs;
 		}
 	}
 }

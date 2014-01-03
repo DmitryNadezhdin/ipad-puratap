@@ -164,8 +164,9 @@ namespace Puratap
 					// check if a customer with this number already exists in the database
 					// if it exists, the user should have added to his job cluster, show a message explaining that
 					Customer c = new Customer(result, "Mr.", "FirstName", "LastName", "Address", "Suburb", 
-									                          					String.Format("({0}){1}", "000", "000-0000"), 
-									                          					String.Format("({0}){1}", "000", "000-0000"), DateTime.Now, "", "", 0, "", true);
+									      					String.Format("({0}){1}", "000", "000-0000"), 
+									                        String.Format("({0}){1}", "000", "000-0000"), DateTime.Now, 
+					                          				"", "", 0, "", true, 0, 0);
 					c.JobHistory = new List<HistoryJob>();
 					c.CustomerMemos = new List<Memo>();
 					
@@ -534,8 +535,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				_table = table;
 				
 				Customer c = new Customer(999999999, "Mr.", "FirstName", "LastName", "Address", "Suburb", 
-								                          					String.Format("({0}){1}", "PhoneAreaCode", "PhoneNumber"), 
-								                          					String.Format("({0}){1}", "MobileCode", "MobileNumber"), DateTime.Now, "", "", 0, "", true); // dummy customer
+								                          String.Format("({0}){1}", "PhoneAreaCode", "PhoneNumber"), 
+								                          String.Format("({0}){1}", "MobileCode", "MobileNumber"), 
+				                          				  DateTime.Now, "", "", 0, "", true, 0, 0); // dummy customer
 				_table._customers = new List<Customer> {c};
 				
 				Job j = new Job(999999999, 999999999, 999999999, DateTime.Now, DateTime.Now, 0, DateTime.Now, 0, "", "", "FIL", 0, false, false, "", "");	// dummy job
@@ -608,7 +610,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						string sql = 	"SELECT " +  // "MAX(wsales.wdateins), " +
 											" wclient.cusnum, wctitle, wconame, wcsname, wcomname, " +
 											" wcadd1 || \" \" || wcadd11 as street_address, wcadd2, wcacde||exdigit, wcphone, mobpre, mobile, " +
-											" wcstitle, wcsoname, wcssname, wccoacde, wccophone, tu_done, coi_id " +
+											" wcstitle, wcsoname, wcssname, wccoacde, wccophone, tu_done, coi_id, coords_lat, coords_lng " +
 											" FROM wclient, pl_recor " + // , wsales " +
 											" WHERE pl_recor.plappdate= " + dbDate +
 												" AND wclient.cusnum=pl_recor.cusnum " +
@@ -642,7 +644,10 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								
 								string fbContact = String.Format ("{0} {1} {2}", (string)reader["wcstitle"], (string)reader["wcsoname"], (string)reader["wcssname"]);
 								string fbPhone = String.Format ("{0} {1}", (string)reader["wccoacde"], (string)reader["wccophone"]);
-								
+
+								double cLat = (double)reader ["coords_lat"];
+								double cLng = (double)reader ["coords_lng"];
+
 								DateTime lastInstallDate;
 								// DEBUG :: DateTime.TryParse((string)reader["max(wsales.wdateins)"], out lastInstallDate);
 								lastInstallDate = DateTime.Now.Date;
@@ -653,7 +658,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, 
 								                          					String.Format("{0} {1}", PhoneAreaCode, PhoneNumber), 
 								                          					String.Format("{0} {1}", MobilePrefix, MobileNumber),
-								                          					lastInstallDate, fbContact, fbPhone, companyID, companyName, tubingDone);				
+								                          					lastInstallDate, fbContact, fbPhone, 
+								                          					companyID, companyName, tubingDone, cLat, cLng);				
 								_table._customers.Add(c);
 							}
 							if (! reader.IsClosed) reader.Close ();
@@ -830,7 +836,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, 
 									                          					String.Format("({0}){1}", PhoneAreaCode, PhoneNumber), 
 									                          					String.Format("({0}){1}", MobilePrefix, MobileNumber),
-								                          						lastInstallDate, fbContact, fbPhone, CompanyID, CompanyName, tubingDone);
+								                          						lastInstallDate, fbContact, fbPhone, CompanyID, CompanyName, tubingDone, 0, 0);
 									
 									if (_table.UserAddedCustomers == null) _table.UserAddedCustomers = new List<Customer> {c};
 									else _table.UserAddedCustomers.Add (c);
@@ -1272,13 +1278,18 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					if (string.IsNullOrEmpty (dbPath) || (! File.Exists (dbPath)))
 						dbPath = ServerClientViewController.dbFilePath;
 
-					ReadRunData (chosenDate, dbPath);
+					try {
+						ReadRunData (chosenDate, dbPath);
+					} catch {
+						var readRunDataFailed = new UIAlertView ("Error", "Reading run data has failed. Please try to donwload data from server again", null, "OK");
+						readRunDataFailed.Show ();
+					}
+
 					_table.TableView.ReloadData ();
 				}
 				else 
 				{
-					// might quit the app here
-					// UIApplication.SharedApplication.PerformSelector (new Selector("terminateWithSuccess"), null, 0f);
+					// 
 				}
 			}
 									
@@ -1354,8 +1365,12 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						cell.TextLabel.Text = (c.isCompany) ? c.CompanyName : String.Format ("{0} {1}", /*c.Title,*/c.FirstName, c.LastName);
 
 						if (_table.MainJobList.Count > 0) {
-							cell.DetailTextLabel.Text = _table.MainJobList [indexPath.Row].JobTime.ToString ("h:mm tt") + "   " + c.Suburb + "\n" +
-								c.Address; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
+							try {
+								cell.DetailTextLabel.Text = _table.MainJobList [indexPath.Row].JobTime.ToString ("h:mm tt") + "   " + c.Suburb + "\n" +
+									c.Address; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
+							} catch {
+								cell.DetailTextLabel.Text = "Exception!";
+							}
 						} else
 							cell.DetailTextLabel.Text = "Nothing to see here, move along";
 						cell.DetailTextLabel.Lines = 2;
@@ -1389,9 +1404,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			public override int NumberOfSections (UITableView tableView)
 			{
 				return 4;
-				//int jobs = (_table.MainJobList != null && _table.MainJobList.Count > 0) ? 1:0;
-				//int additions = (_table.UserCreatedJobs != null && _table.UserCreatedJobs.Count > 0) ? 1:0;
-				//return jobs+additions+1;
 			}
 			
 			public override int RowsInSection (UITableView tableview, int section)
@@ -1429,7 +1441,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			
 			public override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
 			{
-				if (editingStyle==UITableViewCellEditingStyle.Delete)
+				if (editingStyle == UITableViewCellEditingStyle.Delete)
 				{
 					// delete the client record from WCLIENT : only delete ones with empty history & memos
 					if (_table.UserAddedCustomers[indexPath.Row].JobHistory.Count == 0 && _table.UserAddedCustomers[indexPath.Row].CustomerMemos.Count == 0)
@@ -1581,8 +1593,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				if (indexPath.Section == 3) {
 					_table.TableView.DeselectRow (indexPath, true);
 				}
-
-
             }
 			
 			/* public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
@@ -1640,6 +1650,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		}
 		
 		public long CustomerNumber;
+		public double Lat { get; set; }
+		public double Lng { get; set; }
 
 		public bool isCompany { get; set; }
 		public long CompanyID { get; set; }
@@ -1686,7 +1698,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public string FallbackPhoneNumber { get; set; }
 		
 		public int PhotosTakenToday; // defaults to 0
-
 		public List<string> FilesToPrint { get; set; }
 
 		
@@ -1703,7 +1714,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		                string address, string suburb, // postcode ? probably unnecessary
 		                string phonenumber, string mobilenumber, 
 		                DateTime lastinstalldate, string fbcontact, 
-		                string fbphone, long companyID, string companyName, bool tubingDone)
+		                string fbphone, long companyID, string companyName, bool tubingDone, 
+		                double cLat, double cLng)
 		{
 			this.HighLighted = false;
 			this.CustomerNumber = customernumber;
@@ -1726,6 +1738,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			this.DepositAmount = 0;
 			this.DepositUsed = 0;
 
+			this.Lat = cLat;
+			this.Lng = cLng;
 
 			if (this.FirstName != "FirstName")	// if this condition is true, it is either a dummy customer or a newly created one by user
 			{
@@ -1849,12 +1863,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 		public bool CheckIfInvoiceChargesWaived()
 		{
-			// FIXME :: this is a stub that serves no purpose now
+			// this is a stub that serves no purpose now
 			// this logic layer was removed along with the invoice charges
-
-			// open database connection, read COI table with COI_ID = Customer.COI_ID
-			// get the value of InvoiceFeesWaived field
-
 			return true;
 		}
 	} // end class Customer
@@ -1922,13 +1932,18 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		private MyConstants.JobStarted _started = MyConstants.JobStarted.None;
 		public MyConstants.JobStarted Started { 
 			// Again, a tricky one, this actually answers the following question: Did the guy actually start the job (in real world)? 
-			// Everything except "Yes" (and "None") means "No" and specifies the reason
+			// Everything except "Yes" (and "None") means "No" and a reason must be specified
 			get { return _started; } 
 			set { 
 				_started = value;
-				// If the guy tells us that he did not perform the job in the real world, then the workflow for this job in the app is finished
-				if (value != MyConstants.JobStarted.Yes && value != MyConstants.JobStarted.None) 
-					JobDone = true;
+				// If the guy tells us that he could not do a job, then the workflow for this job in the app is finished
+//				if (value != MyConstants.JobStarted.Yes && value != MyConstants.JobStarted.None)
+//					this.JobDone = true;
+				/* else */ 
+				if (value == MyConstants.JobStarted.None)
+					this.JobDone = false;
+				else // if (value == MyConstants.JobStarted.Yes)
+					this.JobDone = true; 
 			} 
 		}
 		

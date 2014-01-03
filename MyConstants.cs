@@ -104,7 +104,7 @@ namespace Puratap
 
 		public static string DEBUG_TODAY = String.Format (" '{0}' ", DateTime.Now.Date.ToString ("yyyy-MM-dd")); // " '2012-06-28' ";
 		public static long DUMMY_MEMO_NUMBER = 999999999999;
-		public enum JobStarted { Yes, CustomerNotAtHome, CustomerRebooked, PuratapLate, AddressWrong, Other, None }
+		public enum JobStarted { Yes, CustomerNotAtHome, CustomerCancelled, PuratapLate, AddressWrong, Other, None }
 				
 		public static string NEW_DEVICE_GUID_STRING = "aaaabbbb-cccc-dddd-eeee-ffff00001111";
 		private static string DEVICE_ID_STRING = "PuratapDeviceID";
@@ -486,7 +486,7 @@ namespace Puratap
 		{
 			string settingsBundle = NSBundle.MainBundle.PathForResource("Settings", @"bundle");
 			if(settingsBundle == null) {
-				System.Console.WriteLine(@"Could not find Settings.bundle");
+				// System.Console.WriteLine(@"Could not find Settings.bundle");
 				return;
 			}
 			NSString keyString = new NSString(@"Key");
@@ -629,7 +629,8 @@ namespace Puratap
 		}
 
 		/*
-		 * Saving coordinates to database like this leads to data file corruption since it was used by several different concurrent threads. Rewritten the logic, implemented a buffer to hold the locations
+		 * Saving coordinates to database like this leads to data file corruption since it was used by several different concurrent threads. 
+		 * Rewritten the logic, implemented a buffer to hold the locations
 		 * The buffer is managed by LocDelegate class in AppDelegate.cs
 		 * 
 		public static void SaveDeviceCoordinates(DeviceLocation loc)

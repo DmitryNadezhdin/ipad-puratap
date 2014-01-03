@@ -1,3 +1,53 @@
+2014-01-03  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Info.plist:
+	* AppDelegate.cs:
+	* Puratap.csproj:
+	* MyConstants.cs:
+	* TEST.pdf:
+	* PrePlumbingCheckView.cs:
+	* CustomersViewController.cs:
+	* SigningNavigationController.cs:
+	* ServiceNavigationController.cs:
+	* NotDoneCommentViewController.cs:
+	* UsedPartsNavigationController.cs:
+	* JobInstallationViewController.cs:
+	* RunRouteViewController.designer.cs:
+	* PaymentsSummaryNavigationController.cs:
+	* PrePlumbingCheckNavigationController.cs: Updated to 1.3e
+
+	* RunRouteFinder.cs: Updated to 1.3e: RunRouteFinder searches
+	for a route that allows all jobs to be done in the appropriate
+	time frames
+
+	* RunRouteNavigationController.cs: Updated to 1.3e:
+	RunRouteNavigationController controls the app flow on the "Run
+	Route" tab
+
+	* RunRouteViewController.cs: Updated to 1.3e:
+	RunRouteViewController defines the interface elements on the
+	"Run Route" tab (before route is calculated)
+
+	* RunRouteViewController.xib: Updated to 1.3e: Interface
+	definition for RunRouteViewController
+
+	* DetailedTabs.cs: Updated to 1.3e: added route calculation
+
+	* JobRunTable.cs: Updated to 1.3e: reading LatLng for each
+	customer
+
+	* Part.cs: Updated to 1.3e: removed Price field from Part
+	class
+
+	* ServerClientViewController.cs: Updated to 1.3e: disabled the
+	Send/Receive button when Puratap server is only reachable
+	through cellular connection (WWAN)
+
+	* UsedPartsViewController.cs: Updated to 1.3e: Removed Price
+	field from Part class
+
+	* WorkflowNavigationController.cs: Updated to 1.3e: cleaned up
+
 2013-11-01  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Reachability.cs: 1.3d: Reachability class is used to

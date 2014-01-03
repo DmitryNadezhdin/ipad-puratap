@@ -459,32 +459,39 @@ namespace Puratap
 
 		public void ApplyExtraFeeForSaleOption(long optionID)
 		{
-			Job curJob = SaleOptionsDVC.jrt.CurrentJob;
+			if (SaleOptionsDVC.jrt.CurrentJob != null) {
+				Job curJob = SaleOptionsDVC.jrt.CurrentJob;
 
-			if (curJob.EmployeeFee < 1) curJob.EmployeeFee = curJob.Type.EmployeeFee;
-			curJob.EmployeeFee += GetExtraFeeForOptionID(optionID);
+				if (curJob.EmployeeFee < 1)
+					curJob.EmployeeFee = curJob.Type.EmployeeFee;
+				curJob.EmployeeFee += GetExtraFeeForOptionID (optionID);
 
-			bool found = false;
-			foreach (Job j in SaleOptionsDVC.jrt.MainJobList) {
-				if (j.JobBookingNumber == curJob.JobBookingNumber) {
-					j.EmployeeFee = curJob.EmployeeFee;
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				foreach (Job j in SaleOptionsDVC.jrt.UserCreatedJobs) {
-					if (j.JobBookingNumber == curJob.JobBookingNumber) {
-						j.EmployeeFee = curJob.EmployeeFee;
-						found = true;
-						break;
+				bool found = false;
+				if (SaleOptionsDVC.jrt.MainJobList != null) {
+					foreach (Job j in SaleOptionsDVC.jrt.MainJobList) {
+						if (j.JobBookingNumber == curJob.JobBookingNumber) {
+							j.EmployeeFee = curJob.EmployeeFee;
+							found = true;
+							break;
+						}
 					}
 				}
-			}
 
-			if (!found) {
-				// Bad things have happened
+				if (!found) {
+					if (SaleOptionsDVC.jrt.UserCreatedJobs != null) {
+						foreach (Job j in SaleOptionsDVC.jrt.UserCreatedJobs) {
+							if (j.JobBookingNumber == curJob.JobBookingNumber) {
+								j.EmployeeFee = curJob.EmployeeFee;
+								found = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (!found) {
+					// Bad things have happened
+				}
 			}
 		}		
 

@@ -975,11 +975,11 @@ namespace Puratap
 					connection.Open();
 					string sql = "";
 					if (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee)				
-						sql = 	"SELECT Parts.Partno, Parts.Prtprice, Parts.Prtdesc, Parts_Pics.Picture " +
+						sql = 	"SELECT Parts.Partno, Parts.Prtdesc, Parts_Pics.Picture " +
 							" FROM Parts LEFT JOIN Parts_Pics ON Parts.Partno = Parts_Pics.PartNo " +
 							" WHERE Parts.Deletedprt = 0 AND Parts.Plumpparts = 0";							// the last condition hides the plumbing parts for franchisees, so that the list is shorter for them
 					else 
-						sql = 	"SELECT Parts.Partno, Parts.Prtprice, Parts.Prtdesc, Parts_Pics.Picture " +
+						sql = 	"SELECT Parts.Partno, Parts.Prtdesc, Parts_Pics.Picture " +
 							" FROM Parts LEFT JOIN Parts_Pics ON Parts.Partno = Parts_Pics.PartNo " +
 							" WHERE Parts.Deletedprt = 0";																	// if not franchisee, show the full parts list
 
@@ -997,7 +997,7 @@ namespace Puratap
 									{ 
 										PartNo = Convert.ToInt32 (reader["partno"]),
 										Description = " "+ (string)reader["prtdesc"],
-										Price = (double)reader["prtprice"],
+										// Price = (double)reader["prtprice"],
 										ImageNotFound = true,
 										Image = Part.PlaceholderImage
 									}	 );
@@ -1008,7 +1008,7 @@ namespace Puratap
 									{ 
 										PartNo = Convert.ToInt32 (reader["partno"]),
 										Description = " "+ (string)reader["prtdesc"],
-										Price = (double)reader["prtprice"],
+										// Price = (double)reader["prtprice"],
 										ImageNotFound = false
 									};
 									NSData data = new NSData();
@@ -1023,8 +1023,8 @@ namespace Puratap
 					catch {
 						Part part = new Part() {
 							PartNo = 99999999,
-							Description = "We are SORRY that you have to go through this...",
-							Price = 0.00f,
+							Description = "Sorry...",
+							// Price = 0.00f,
 							ImageNotFound = true
 						};
 						_upvc.DBParts.Add (part);

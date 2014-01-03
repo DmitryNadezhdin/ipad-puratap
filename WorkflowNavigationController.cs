@@ -21,6 +21,7 @@ namespace Puratap
 		Default, None };
 	
 	public class WorkflowNavigationController : UINavigationController
+	// this controller is deprecated and is used as a container for methods that should belong to DetailedTabs class
 	{
 		
 		public DetailedTabs _tabs { get; set; }
@@ -83,26 +84,23 @@ namespace Puratap
 			
 			// display the list
 			// set the ShouldPayFee to the appropriate default value (false for SERVICE, true for everything else)
-			// if this is not a main job (which has an agreed upon price), set the job's MoneyToCollect property to the default retail price, save the loyalty price somewhere
+			// if this is not a main job, set the job's MoneyToCollect property to the default retail price
 			InvokeOnMainThread( delegate {
 				Job curj = _tabs._jobRunTable.CurrentJob;
 
 				UIActionSheet _alert = new UIActionSheet("Choose a job type", null, null, null); //, buttonTitles);
 
-				// NO NEED TO CHECK THAT, since the job types that one can do may change over time (e.g. when going from PLUMBER mode to FRANCHISEE mode) :: if (JobRunTable.JobTypes == null)
+				// since the job types that one can do may change over time (e.g. when going from PLUMBER mode to FRANCHISEE mode),
+				// reload list of job types available
 				JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB ();
 
-				foreach(JobType jt in JobRunTable.JobTypes)
-				{
-					if (jt.CanDo)
-					{
+				foreach(JobType jt in JobRunTable.JobTypes) {
+					if (jt.CanDo) {
 						_alert.AddButton (jt.Description);
 					}
 				}
 
-
-				_alert.Dismissed += delegate(object sender, UIButtonEventArgs e) 
-				{
+				_alert.Dismissed += delegate(object sender, UIButtonEventArgs e) {
 					if (e.ButtonIndex != _alert.CancelButtonIndex)
 					{
 						string chosenType = _alert.ButtonTitle(e.ButtonIndex);
@@ -111,35 +109,21 @@ namespace Puratap
 							if (jt.Description == chosenType)
 							{
 								curj.UsedParts.Clear ();
-								
-								/* WHY would someone want to wipe the child jobs here?
-								// resetting the job results: deleting child jobs
-								if (curj.ChildJobs != null)
-								{
-									foreach(Job child in curj.ChildJobs)
-										EraseChildJobFromDatabase (child);
-									curj.ChildJobs.Clear ();
-								}
-								*/
+
 								// resetting the job results: reverting service operation view controller to defaults
 								_tabs._jobService.ResetToDefaults ();
-								// _tabs._serviceParts.ResetToDefaults ();
-								
 								curj.SetJobType(jt.Code);
 								_tabs._prePlumbView.SetJobTypeText (jt.Description);
 								
-								if (_tabs._jobRunTable.LastSelectedRowPath.Section == 1) // if the current job was user-created
-								{
+								if (_tabs._jobRunTable.LastSelectedRowPath.Section == 1) { // if the current job was user-created
 									curj.MoneyToCollect = curj.Type.RetailPrice;
 								}
 								break;
 							}
 						}
-						// Start workflow for the chosen job type
-						// StartWorkflowForJob (curj);
 					}
 				};
-				_alert.ShowInView (this._tabs.View); // .Show();
+				_alert.ShowInView (this._tabs.View);
 			} );		
 		}
 		
@@ -217,29 +201,19 @@ namespace Puratap
 			if (_tabs.UsedPartsNav.ViewControllers.Length > 1)  _tabs.UsedPartsNav.PopToRootViewController (false);
 			_tabs.UsedPartsNav.PushViewController (_tabs._jobDelivery, false);			
 		}
-
 		
-		/* public void _resetAdditionalParts(object obj, EventArgs e)
-		{
-			InvokeOnMainThread ( delegate {
-				// clear tableview contents
-				// _tabs._jobFilter.HideAdditionalParts ();
-			}	);
-		} */
-		
-		public WorkflowNavigationController (DetailedTabs tabs)
+		public WorkflowNavigationController (DetailedTabs tabs) 
+		// this controller is deprecated and is used as a container for methods that should belong to DetailedTabs class
 		{
 			this._tabs = tabs;
-			// this._printer = new UIPrintInteractionController();
 			this.ChosenPart = new Part();
 			
 			this.Title = NSBundle.MainBundle.LocalizedString ("Workflow", "Workflow");
-			//this.TabBarItem.Image = _tabBarImage;
 			using (var image = UIImage.FromBundle ("Images/103-map") ) this.TabBarItem.Image = image;
 
 			this.NavigationBar.BarStyle = UIBarStyle.Black;
 			this.NavigationBar.Translucent = true;
-			this.NavigationBar.Hidden = true; // this controller is deprecated and should never be shown
+			this.NavigationBar.Hidden = true; 
 
 			this.Toolbar.BarStyle = UIBarStyle.Black;
 			this.Toolbar.Translucent = true;
@@ -980,11 +954,11 @@ namespace Puratap
 						}
 						else {
 							switch (j.Started) {
-							case MyConstants.JobStarted.AddressWrong : 				jResult = "Wrong address"; break;
+							case MyConstants.JobStarted.AddressWrong : 			jResult = "Wrong address"; break;
 							case MyConstants.JobStarted.CustomerNotAtHome : 	jResult = "Not home"; break;
-							case MyConstants.JobStarted.CustomerRebooked : 		jResult = "Customer to be rebooked"; break;
-							case MyConstants.JobStarted.PuratapLate : 				jResult = "Late to site"; break;
-							case MyConstants.JobStarted.Other :							jResult = "No: other"; break;
+							case MyConstants.JobStarted.CustomerCancelled : 	jResult = "Customer cancelled"; break;
+							case MyConstants.JobStarted.PuratapLate : 			jResult = "Late to site"; break;
+							case MyConstants.JobStarted.Other :					jResult = "No: other"; break;
 							default : jResult = "Not done"; break;
 							}
 						}

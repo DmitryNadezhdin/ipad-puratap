@@ -5,7 +5,7 @@ namespace Puratap
 {
 	public class UsedPartsNavigationController : UINavigationController
 	{
-		public DetailedTabs Tabs { get; set; }
+		public readonly DetailedTabs Tabs;
 		public UsedPartsNavigationController (DetailedTabs tabs)
 		{
 			Tabs = tabs;

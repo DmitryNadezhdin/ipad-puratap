@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading;
 using System.Linq;
 using System.Text;
@@ -49,6 +50,7 @@ namespace Puratap
 						_jobHistoryView,
 						_memosView,
 						_photosView,
+						RunRouteNav,
 						SummaryNav,
 						ServerNav // _scView					
 					};
@@ -88,13 +90,14 @@ namespace Puratap
 		// comments about view controllers are deprecated, the interface uses another logic now
 		
 		// View controllers
-		public JobRunTable _jobRunTable { get; set; }							// table on the left side
-		public CustomersViewController _customersView { get; set; }		// customer details screen (tab)
+		public JobRunTable _jobRunTable { get; set; }						// table on the left side
+		public CustomersViewController _customersView { get; set; }			// customer details screen (tab)
 		public JobHistoryViewController _jobHistoryView { get; set; }		// job history screen (tab)
-		public Memos _memosView { get; set; }									// memos screen (tab)
+		public Memos _memosView { get; set; }								// memos screen (tab)
 		public ServerClientViewController _scView { get; set; }				// server/client (tab)
 		public TakePhotosViewController _photosView { get; set; }			// photos (tab)
-		public PaymentsSummary _paySummaryView { get; set; }			// payment summary screen (tab)
+		public PaymentsSummary _paySummaryView { get; set; }				// payment summary screen (tab)
+		public RunRouteViewController _vcRunRoute { get; set; }					// run route (tab)
 		
 		public WorkflowNavigationController _navWorkflow { get; set; }	// TODO :: GET RID OF THIS CLASS, ROLL THE FUNCTIONALITY INTO DetailedTabs
 		
@@ -121,6 +124,7 @@ namespace Puratap
 		public UsedPartsNavigationController UsedPartsNav { get; set;}
 		public SigningNavigationController SigningNav { get; set; }
 		public PaymentsSummaryNavigationController SummaryNav { get; set; }
+		public RunRouteNavigationController RunRouteNav { get; set; }
 
 		public CustomerNavigationController CustomerNav { get; set; }
 		public ServerClientNavigatonController ServerNav { get; set; }
@@ -135,7 +139,6 @@ namespace Puratap
 		// public UsedPartsViewController _jobFilter { get; set; }			REPLACED BY derived classes: ServiceUsedPartsViewController, FilterChangeViewController, JobInstallationViewController
 		// public InvoiceViewController _invoiceView { get; set; }			REPLACED BY PaymentViewController
 		
-		// private UINavigationBar _navBar;		// the upper stripe on the tabs' half of the screen
 		UIPopoverController _pc;					// this controller is JobRunTable, it's in portrait mode
 		
 		public UIPopoverController Popover {
@@ -369,18 +372,43 @@ namespace Puratap
 			 _editJobList = delegate {			// event handler for a button that allows rearranging of customers in the jobs table on the left-hand side of the screen
 												// this handler is used when the table is in NOT editing mode
 				
-				var ac = new UIActionSheet("", null, null, null, "Rearrange jobs", "Reset jobs to default order", "Show in Apple maps", "Show on Google maps", "Reprint docs for customer") { 
+				var ac = new UIActionSheet("", null, null, null, "Rearrange jobs",
+				                           "Show in Apple maps", 
+				                           "Show in Google maps", 
+				                           "Reprint docs for customer",
+				                           "Reset jobs to default order",
+				                           "Show run layout",
+				                           "Calculate run route" ) { 
 					Style = UIActionSheetStyle.BlackTranslucent
 				};
 
 				ac.Dismissed += delegate(object sender, UIButtonEventArgs e) {
 					switch(e.ButtonIndex)
 					{
-					case 4: { DoReprintDocsForCustomer (); break; }
-					case 3: { DoShowCustomerGoogleMaps(); break; }
-					case 2: { DoShowCustomerAppleMaps(); break; } // not used anymore -- SearchCustomersByStreet(null, null); break; }
-					case 1: { DoResetToDefault (); break; }
-					case 0: { DoRearrange (); break; }
+						case 6: { 
+						// calculate route -- calculate route, show it in a Monotouch.DialogViewController with multiline elements
+							this.SelectedViewController = this.ViewControllers[4];
+							// this.FindRoute();
+						
+						break; }
+						case 5: {
+						// show run layout -- generate an html file, show it in a UIWebView
+
+						break; }
+						case 4: { 
+							// prompt for a confirmation, reset to default order if confirmed
+							var confirmAlert = new UIAlertView("Reset confirmation", "Reset jobs to default order?", null, "No", "Yes");
+							confirmAlert.Dismissed += delegate(object _sender, UIButtonEventArgs _e) {
+								if (_e.ButtonIndex != confirmAlert.CancelButtonIndex)
+									DoResetToDefault (); 
+							};
+							confirmAlert.Show();
+							break; 
+						}
+						case 3: { DoReprintDocsForCustomer (); break; }
+						case 2: { DoShowCustomerGoogleMaps(); break; }
+						case 1: { DoShowCustomerAppleMaps(); break; } // not used anymore -- SearchCustomersByStreet(null, null); break; }
+						case 0: { DoRearrange (); break; }
 					}
 					BtnEdit.Enabled = true;
 				};
@@ -394,7 +422,6 @@ namespace Puratap
 
 				BtnEdit.Enabled = false;
 			};
-
 
 			// Create navigation controllers for the tabs
 			_navWorkflow = new WorkflowNavigationController(this);
@@ -459,30 +486,31 @@ namespace Puratap
 			CustomerNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			CustomerNav.NavigationBar.Translucent = true;
 			CustomerNav.NavigationBar.Hidden = true;
-
 			CustomerNav.Toolbar.BarStyle = UIBarStyle.Black;
 			CustomerNav.Toolbar.Translucent = true;
 			CustomerNav.Toolbar.Hidden = true;
+
+			RunRouteNav = new RunRouteNavigationController(this);
+			RunRouteNav.Title = "Run route";
+			using (var image = UIImage.FromBundle("/Images/103-map")) RunRouteNav.TabBarItem.Image = image;
 
 			// Create views corresponding to each of the tabs
 			_customersView = new CustomersViewController(this);
 			_jobHistoryView = new JobHistoryViewController(this);
 			_memosView = new Memos(this);
 			
-			// _signView = new SignatureViewController(this);
+			// _signView = new SignatureViewController(this) -- replaced by several different view controllers and a navigation controller;
+			// _invoiceView = new InvoiceViewController();
 			SignPre = new SignPrePlumbingViewController(this);
 			SignService = new SignServiceReportViewController(this);
 			SignInvoice = new SignInvoiceViewController(this);
 			
-			// _invoiceView = new InvoiceViewController();
 			_scView = new ServerClientViewController(this);
 			_photosView = new TakePhotosViewController(this);
 
 			_paySummaryView = new PaymentsSummary(new RootElement(""), SummaryNav, _jobRunTable);
-			_jobSummaryView = new JobSummary(_navWorkflow, this, new RootElement(""), true);
-			
-			_prePlumbView = new PrePlumbingCheckView(_navWorkflow);
-			
+			_jobSummaryView = new JobSummary(_navWorkflow, this, new RootElement(""), true);			
+			_prePlumbView = new PrePlumbingCheckView(_navWorkflow);			
 			_jobFilter = new FilterChangeViewController(new RootElement("Filter change"), _navWorkflow, UsedPartsNav, true );
 			
 			_jobInstall = new JobInstallationViewController(new RootElement("Installation"), _navWorkflow, UsedPartsNav, true);
@@ -498,7 +526,9 @@ namespace Puratap
 			_serviceParts = new ServiceUsedPartsViewController(new RootElement(""), _navWorkflow, UsedPartsNav, true);
 			_serviceParts.Title = "Service parts";
 			using(var image = UIImage.FromBundle ("/Images/20-gear2") ) _serviceParts.TabBarItem.Image = image;
-			
+
+			_vcRunRoute = new RunRouteViewController(this);
+
 			var tmp = new FilterChangeViewController(new RootElement(""), null, null, false);
 			tmp.Title = "Parts";
 			tmp.NavigationItem.HidesBackButton = true;
@@ -515,6 +545,7 @@ namespace Puratap
 			SummaryNav.PushViewController (_paySummaryView, false);
 			ServerNav.PushViewController (_scView, false);
 			CustomerNav.PushViewController (_customersView, false);
+			RunRouteNav.PushViewController(_vcRunRoute, false);
 
 			this.ShouldSelectViewController = delegate(UITabBarController tabBarController, UIViewController viewController) 
 			{
@@ -556,6 +587,12 @@ namespace Puratap
 			};
 			
 			this.Mode = DetailedTabsMode.Lookup;
+		}
+
+		private void GenerateRunHtmlLayout() {
+			// TODO create an HTML file using Google Maps API and JavaScript to show markers at job points 
+			var nyi = new UIAlertView ("Not implemented yet", "", null, "OK");
+			nyi.Show ();
 		}
 
 		private void SaveNewJobOrder()

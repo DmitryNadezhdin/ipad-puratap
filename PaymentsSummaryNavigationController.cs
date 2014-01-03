@@ -6,7 +6,7 @@ namespace Puratap
 {
 	public class PaymentsSummaryNavigationController : UINavigationController
 	{
-		public DetailedTabs Tabs { get; set; } 
+		public readonly DetailedTabs Tabs; 
 			
 		public PaymentsSummaryNavigationController (DetailedTabs tabs) : base ()
 		{

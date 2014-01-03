@@ -9,7 +9,7 @@
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Puratap</RootNamespace>
-    <ReleaseVersion>1.3d</ReleaseVersion>
+    <ReleaseVersion>1.3e</ReleaseVersion>
     <SynchReleaseVersion>False</SynchReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
@@ -180,6 +180,12 @@
     <Compile Include="JobDelivery.cs" />
     <Compile Include="PrePlumbingCheckNavigationController.cs" />
     <Compile Include="Reachability.cs" />
+    <Compile Include="RunRouteFinder.cs" />
+    <Compile Include="RunRouteNavigationController.cs" />
+    <Compile Include="RunRouteViewController.cs" />
+    <Compile Include="RunRouteViewController.designer.cs">
+      <DependentUpon>RunRouteViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Memos.xib" />
@@ -197,6 +203,7 @@
     <InterfaceDefinition Include="ReceiptPDFView.xib" />
     <InterfaceDefinition Include="DailyStockUsedPDFTemplate.xib" />
     <InterfaceDefinition Include="NotDoneCommentViewController.xib" />
+    <InterfaceDefinition Include="RunRouteViewController.xib" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Images\86-camera.png" />
@@ -209,7 +216,6 @@
     <Content Include="Images\174-imac.png" />
     <Content Include="Images\117-todo.png" />
     <Content Include="Images\103-map.png" />
-    <Content Include="TEST.pdf" />
     <Content Include="Images\157-wrench.png" />
     <Content Include="Images\158-wrench-2.png" />
     <Content Include="Images\181-hammer.png" />

@@ -5,7 +5,7 @@ namespace Puratap
 {
 	public class SigningNavigationController : UINavigationController
 	{
-		public DetailedTabs Tabs { get; set; }
+		public readonly DetailedTabs Tabs;
 		
 		public SigningNavigationController (DetailedTabs tabs)
 		{

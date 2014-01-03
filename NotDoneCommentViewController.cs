@@ -30,6 +30,7 @@ namespace Puratap
 			// Perform any additional setup after loading the view, typically from a nib.
 
 			tCancelClicked = delegate(object sender, EventArgs e) {
+				_parent.SetCurrentJobStartedNone();
 				_nav.PopToRootViewController (true);
 			};
 			tDoneClicked = delegate(object sender, EventArgs e) {

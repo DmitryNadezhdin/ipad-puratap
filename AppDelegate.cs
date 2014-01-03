@@ -104,21 +104,56 @@ namespace Puratap
 
 			// if database file exists, check its integrity 
 			try {
-				if (_tabs._jobRunTable._ds.TestDBIntegrity () )
-					// if database integrity check went ok, load customers and jobs from it
-					_tabs._jobRunTable._ds.LoadJobRun (1);
-				else
+				if (File.Exists(MyConstants.DBReceivedFromServer)) {
+					if (_tabs._jobRunTable._ds.TestDBIntegrity () ) {
+	//					// HACK temporary transitional code for updating from version 1.3c to 1.3d
+						// 1.3d requires IPAD_ORDERING field in PL_RECOR table
+						// some of the databases may not contain it if they were exported before the change was implemented
+	
+						// check if "IPAD_ORDERING" field exists in database
+						string dbPath = MyConstants.DBReceivedFromServer;
+						using (var dbCon = new SqliteConnection("Data Source="+dbPath)) {
+							dbCon.Open ();
+							using (var cmd = dbCon.CreateCommand ()) {
+								string sql = " SELECT IPAD_ORDERING FROM PL_RECOR ";
+								cmd.CommandText = sql;
+								try {
+									using (var reader = cmd.ExecuteReader ()) {								
+										if (reader.HasRows) {
+											// db is good, the IPAD_ORDERING field exists
+										}
+									} 
+								} catch { 
+									// IPAD_ORDERING field does not exists, we need to add it
+									cmd.Parameters.Clear();
+									cmd.CommandText = "ALTER TABLE PL_RECOR ADD COLUMN IPAD_ORDERING INTEGER NULL DEFAULT 9999";
+									cmd.ExecuteNonQuery();
+									cmd.CommandText = "UPDATE PL_RECOR SET IPAD_ORDERING = 9999";
+									cmd.ExecuteNonQuery();
+								}
+							} // end using dbCommand
+						} // end using dbConnection
+	//					// END HACK this code should be removed on 08.11.2013
+
+						// if database integrity check went ok, load customers and jobs from it
+						_tabs._jobRunTable._ds.LoadJobRun (1);
+					} else {
+						var integrityCheckFailedAlert = new UIAlertView ("Database integrity check failed", "Try loading the data anyway? (App may crash if you choose 'Yes')", null, "No", "Yes");
+						integrityCheckFailedAlert.Dismissed += delegate(object sender, UIButtonEventArgs e) {
+							if (e.ButtonIndex != integrityCheckFailedAlert.CancelButtonIndex)
+							{
+								_tabs._jobRunTable._ds.LoadJobRun (1);
+							}
+						};
+						this.InvokeOnMainThread (delegate {
+							integrityCheckFailedAlert.Show ();
+						});
+					}
+				} else 
 				{
-					var integrityCheckFailedAlert = new UIAlertView ("Database integrity check failed", "We are really sorry about that.\nTry loading the data anyway?", null, "No", "Yes");
-					integrityCheckFailedAlert.Dismissed += delegate(object sender, UIButtonEventArgs e) {
-						if (e.ButtonIndex != integrityCheckFailedAlert.CancelButtonIndex)
-						{
-							_tabs._jobRunTable._ds.LoadJobRun (1);
-						}
-					};
-					this.InvokeOnMainThread (delegate {
-						integrityCheckFailedAlert.Show ();
-					});
+					// db file does not exist
+					var dbNotfound = new UIAlertView("Database file not found", "Please complete the data exchange with the server.", null, "OK");
+					this.InvokeOnMainThread (delegate { dbNotfound.Show(); });
 				}
 			} 
 			finally 
@@ -362,8 +397,6 @@ namespace Puratap
 	                dvc.Popover = pc;
 	            }
 	        }
-			
-			
 	
 	        public override void WillShowViewController (UISplitViewController svc, UIViewController aViewController, UIBarButtonItem button)
 	        {
@@ -403,8 +436,6 @@ namespace Puratap
 
 	public class LocDelegate : MonoTouch.CoreLocation.CLLocationManagerDelegate
 	{
-		// AppDelegate thisApp;
-		// private int ThreadCounter = 0;
 		private LocManager thisManager;
 		private Object locationsBufferLock = new object();
 
@@ -419,7 +450,6 @@ namespace Puratap
 
 		public LocDelegate(LocManager man) : base()
 		{
-			// this.thisApp = app;
 			thisManager = man;
 			LastCoordsRecordedTimeStamp = DateTime.Now.AddMinutes(-2);
 		}

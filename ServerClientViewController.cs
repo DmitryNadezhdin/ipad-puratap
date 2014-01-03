@@ -285,12 +285,15 @@ namespace Puratap
 						btnStartDataExchange.Enabled = true;
 						aivConnectingToService.Hidden = true;
 					break;
-					case ReachabilityStatus.ViaWWAN:
-						btnStartDataExchange.SetTitle("Send/receive data", UIControlState.Normal);
-						btnStartDataExchange.SetTitleColor( btnChangeDate.TitleColor (UIControlState.Normal), UIControlState.Normal);
-						btnStartDataExchange.Enabled = true;
-						aivConnectingToService.Hidden = true;
-					break;
+
+					// WWAN does not really make data exchange possible -- not just yet
+//					case ReachabilityStatus.ViaWWAN:
+//						btnStartDataExchange.SetTitle("Send/receive data", UIControlState.Normal);
+//						btnStartDataExchange.SetTitleColor( btnChangeDate.TitleColor (UIControlState.Normal), UIControlState.Normal);
+//						btnStartDataExchange.Enabled = true;
+//						aivConnectingToService.Hidden = true;
+//					break;
+
 					default:
 						btnStartDataExchange.SetTitle("Connecting to data service", UIControlState.Normal);
 						btnStartDataExchange.Enabled = false;
