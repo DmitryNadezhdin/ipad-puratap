@@ -1,3 +1,11 @@
+2014-01-22  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* JobRunTable.cs: Updated to 1.3f: corrected an issue where
+	deposits would be aacounted for incorrectly
+
+	* Info.plist:
+	* Puratap.csproj: Updated to 1.3f
+
 2014-01-03  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Info.plist:

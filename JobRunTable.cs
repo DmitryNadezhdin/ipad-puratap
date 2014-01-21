@@ -1040,15 +1040,22 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					dbConnection.Open ();
 					using (var cmd = dbConnection.CreateCommand () )
 					{
-						// Get client deposits from JOURNAL: exclude old deposits, deduct SUM(debit) from SUM(credit)
+						// Get client deposits from JOURNAL: sum by customer, deduct SUM(debit) from SUM(credit), exclude old deposits, 
+						// exclude deposits where a job has been done after they were taken, exclude deposits that have been used on this run
 						string sql = " SELECT CusNum, " +
 										" SUM(Credit) - SUM(Debit) as Deposit " +
 										" FROM JOURNAL " +
 										" WHERE Journal.AccNum = 2.1300 " +
 											" AND Journal.jDate > DATE('now', '-12 months') " +
+						             		" AND Journal.jDate > (SELECT IFNULL(MAX(PlAppDate), '1900-01-01')" +
+						             								" FROM PL_RECOR " +
+						             								" WHERE CusNum = Journal.CusNum " +
+						             									" AND PlAppDate < :Run_Date " +
+															            " AND Installed IN ('Installed', 'Changed', 'Upgraded', 'New Tap', 'Service Do', 'Service Done'))  " +
 											" AND Journal.jDesc != 'Deposit used on iPad' " +
 									" GROUP BY CusNum";
 						cmd.CommandText = sql;
+						cmd.Parameters.Add ("Run_Date", DbType.String).Value = MyConstants.DEBUG_TODAY;
 						using (var reader = cmd.ExecuteReader())
 						{
 							while (reader.Read () )
@@ -1104,8 +1111,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							// get the possible dates to load from the database
 
 							string sql = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee) ? 
-								"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate >= date('now', '-7 day') group by plappdate having jobs>15 order by plappdate" : 
-									"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate >= date('now', '-7 day') and plnum=" + MyConstants.EmployeeID.ToString() + " group by plappdate having jobs>0 order by plappdate";
+							             "SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate >= date('now', '-7 day') group by plappdate having jobs > 15 order by plappdate" : 
+							             "SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate >= date('now', '-7 day') and plnum = " + MyConstants.EmployeeID.ToString() + " group by plappdate having jobs > 0 order by plappdate";
 							cmd.CommandText = sql;
 							using (var dateReader = cmd.ExecuteReader())
 							{
