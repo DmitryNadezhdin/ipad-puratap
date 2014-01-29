@@ -1044,18 +1044,18 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						// exclude deposits where a job has been done after they were taken, exclude deposits that have been used on this run
 						string sql = " SELECT CusNum, " +
 										" SUM(Credit) - SUM(Debit) as Deposit " +
-										" FROM JOURNAL " +
-										" WHERE Journal.AccNum = 2.1300 " +
-											" AND Journal.jDate > DATE('now', '-12 months') " +
-						             		" AND Journal.jDate > (SELECT IFNULL(MAX(PlAppDate), '1900-01-01')" +
+						             	" FROM JOURNAL j " +
+								             " WHERE j.AccNum = 2.1300 " +
+						             			" AND j.jDesc != 'Deposit used on iPad' " +
+									            " AND j.jDate > DATE('now', '-12 months') " +
+									            " AND j.jDate > (SELECT IFNULL(MAX(PlAppDate), '1900-01-01') " +
 						             								" FROM PL_RECOR " +
-						             								" WHERE CusNum = Journal.CusNum " +
-						             									" AND PlAppDate < :Run_Date " +
-															            " AND Installed IN ('Installed', 'Changed', 'Upgraded', 'New Tap', 'Service Do', 'Service Done'))  " +
-											" AND Journal.jDesc != 'Deposit used on iPad' " +
+						             									" WHERE CusNum = j.CusNum " +
+							             									" AND PlAppDate < ? " +
+						             " AND Installed IN ('Installed', 'Changed', 'Upgraded', 'New Tap', 'Service Do', 'Service Done', 'Result'))  " +												
 									" GROUP BY CusNum";
 						cmd.CommandText = sql;
-						cmd.Parameters.Add ("Run_Date", DbType.String).Value = MyConstants.DEBUG_TODAY;
+						cmd.Parameters.Add ("@Run_Date", DbType.String).Value = MyConstants.DEBUG_TODAY;
 						using (var reader = cmd.ExecuteReader())
 						{
 							while (reader.Read () )

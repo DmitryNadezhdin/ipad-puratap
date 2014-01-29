@@ -43,7 +43,7 @@ namespace Puratap
 				im.AsJPEG().Save(path, true, out err);
 				im.SaveToPhotosAlbum (null);
 
-
+				// rise of nations?
 
 				// error handling here according to NSError err
 				if (err != null)
@@ -70,21 +70,6 @@ namespace Puratap
 
 			this.PresentViewController (ipc, true, null); // this.PresentModalViewController (ipc, true);
 
-		}
-		
-		public override void DidReceiveMemoryWarning ()
-		{
-			// Releases the view if it doesn't have a superview.
-			base.DidReceiveMemoryWarning ();
-			
-			// Release any cached data, images, etc that aren't in use.
-		}
-		
-		public override void ViewDidLoad ()
-		{
-			base.ViewDidLoad ();
-			
-			//any additional setup after loading the view, typically from a nib.
 		}
 
 		[Obsolete]

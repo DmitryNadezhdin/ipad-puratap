@@ -1,3 +1,15 @@
+2014-01-29  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Info.plist:
+	* Puratap.csproj:
+	* TakePhotosViewController.cs: Updated to 1.3g
+
+	* JobRunTable.cs: Updated to 1.3g: Fixed a fix -- reading
+	deposits
+
+	* NEWTESTDB.sqlite: Updated to 1.3g: Streamlined test run with
+	the latest table structure for exported data
+
 2014-01-22  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* JobRunTable.cs: Updated to 1.3f: corrected an issue where
