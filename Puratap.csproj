@@ -9,7 +9,7 @@
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Puratap</RootNamespace>
-    <ReleaseVersion>1.3g</ReleaseVersion>
+    <ReleaseVersion>1.3h</ReleaseVersion>
     <SynchReleaseVersion>False</SynchReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
@@ -138,7 +138,9 @@
     <Compile Include="PrePlumbingCheckView.designer.cs">
       <DependentUpon>PrePlumbingCheckView.cs</DependentUpon>
     </Compile>
-    <Compile Include="MyConstants.cs" />
+    <Compile Include="MyConstants.cs">
+      <DependentUpon>JobHDTubingUpgrade.cs</DependentUpon>
+    </Compile>
     <Compile Include="JobFilterChangeViewController.designer.cs">
       <DependentUpon>UsedPartsViewController.cs</DependentUpon>
     </Compile>

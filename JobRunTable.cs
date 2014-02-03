@@ -984,13 +984,26 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 				this.ReadCustomerDeposits (dbDate, databasePath);
 
-				/* * * * THIS WAS READING INVOICE FEES * * * * NO LONGER APPLIES * * * */
-//				this.ReadCustomerCharges (dbDate, databasePath);
+				// check if every job in the table has been done
+				bool allDone = true;
+				foreach(Job j in _table._tabs._jobRunTable.MainJobList) {
+					if (j.JobDone == false) { allDone = false; break; }
+				}
+				if (allDone)
+				{
+					foreach (Job j in _table._tabs._jobRunTable.UserCreatedJobs)
+					{
+						if (j.JobDone == false) { allDone = false; break; }
+					}
+				}
+				_table._tabs._jobRunTable.AllJobsDone = allDone;
 
 				JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB (); // just in case the employee mode changes, they'd need to reload job types so that the fees are calculated correctly
 			}
 
 			/* * * * THIS WAS READING INVOICE FEES * * * * NO LONGER APPLIES * * * */
+//			this.ReadCustomerCharges (dbDate, databasePath);
+
 //			public void ReadCustomerCharges( string dbDate, string databasePath)
 //			{
 //				using (var dbConnection = new SqliteConnection("Data Source="+databasePath))
@@ -1040,37 +1053,42 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					dbConnection.Open ();
 					using (var cmd = dbConnection.CreateCommand () )
 					{
-						// Get client deposits from JOURNAL: sum by customer, deduct SUM(debit) from SUM(credit), exclude old deposits, 
-						// exclude deposits where a job has been done after they were taken, exclude deposits that have been used on this run
-						string sql = " SELECT CusNum, " +
-										" SUM(Credit) - SUM(Debit) as Deposit " +
-						             	" FROM JOURNAL j " +
-								             " WHERE j.AccNum = 2.1300 " +
-						             			" AND j.jDesc != 'Deposit used on iPad' " +
-									            " AND j.jDate > DATE('now', '-12 months') " +
-									            " AND j.jDate > (SELECT IFNULL(MAX(PlAppDate), '1900-01-01') " +
-						             								" FROM PL_RECOR " +
-						             									" WHERE CusNum = j.CusNum " +
-							             									" AND PlAppDate < ? " +
-						             " AND Installed IN ('Installed', 'Changed', 'Upgraded', 'New Tap', 'Service Do', 'Service Done', 'Result'))  " +												
-									" GROUP BY CusNum";
+						// Get client deposits from JOURNAL: sum by customer, deduct SUM(debit) from SUM(credit), exclude really old deposits,
+						// (more than 12 months old), exclude deposits where a job has been done after they were taken (check if Last_Job_Date is null), 
+						// exclude deposits that have been used on this run already (j.jDesc != 'Deposit used on iPad')
+
+						// Also, a scenario could arise where deposit was credited more than 12 months ago and then debited recently.
+						// The journal credit record would not be included in the result set, but the debit one would. 
+						// This can lead to SUM(Credit)-SUM(Debit) being < 0, thus added "HAVING Deposit > 0" clause
+
+						string sql = "SELECT j.CusNum as Customer, " +
+						             	" SUM(j.Credit) - SUM(j.Debit) as Deposit, " +
+						             	" MAX(PlAppDate) as Last_Job_Date " +
+						             " FROM JOURNAL j LEFT OUTER JOIN PL_RECOR pl ON j.CusNum = pl.CusNum " +
+						             											" AND pl.PlAppDate < ? " +
+						             											" AND Installed IN ('', 'Installed', 'Changed', 'Upgraded', 'New Tap', 'Service Do', 'Service Done', 'Result') " +
+						             " WHERE j.AccNum = 2.1300 " +
+						             	" AND j.jDesc != 'Deposit used on iPad' " +
+						             	" AND j.jDate > DATE('now', '-12 months')" +
+						             " GROUP BY j.CusNum " +
+						             " HAVING Deposit > 0 ";
+
 						cmd.CommandText = sql;
 						cmd.Parameters.Add ("@Run_Date", DbType.String).Value = MyConstants.DEBUG_TODAY;
 						using (var reader = cmd.ExecuteReader())
 						{
 							while (reader.Read () )
 							{
-								foreach(Customer c in _table.Customers){
-									if (c.CustomerNumber == (long)reader ["CusNum"]) {
-										// A scenario could arise where deposit was credited more than 12 months ago (thus not read), and then 
-										// debited recently. This would lead to SUM(Credit)-SUM(Debit) being < 0
-										if ( (double)reader["Deposit"] > 0 ) {
+								// Console.WriteLine (String.Format ("Customer = {0}; Deposit = {1}", reader ["CusNum"], reader ["Deposit"]));
+								if (reader ["Last_Job_Date"] == DBNull.Value) {
+									foreach(Customer c in _table.Customers){
+										if (c.CustomerNumber == (long)reader ["Customer"]) {
 											c.DepositAmount = (double)reader ["Deposit"];
 										}
 									}
-								}
-							}
-						}
+								} // endif -- check if Last_Job_Date is null
+							} // end while reader.Read()
+						} // end using reader
 
 						// this reads deposits used only on the current run (Journal.jDate = dbDate)
 						sql = " SELECT CusNum, " +
@@ -1091,8 +1109,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								}
 							}
 						}
-
-
 					} // end using dbCommand
 				} // end using dbConnection
 			}

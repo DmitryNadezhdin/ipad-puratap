@@ -1,3 +1,12 @@
+2014-02-03  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Info.plist:
+	* Puratap.csproj: Updated to 1.3h
+
+	* JobRunTable.cs: Updated to 1.3h -- rewritten the SQL that
+	reads customer deposits. It should now behave correctly even
+	in case of deposits that were not credited in the Journals.
+
 2014-01-29  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Info.plist:
