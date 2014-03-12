@@ -7,7 +7,7 @@ using MonoTouch.Dialog;
 using MonoTouch.Foundation;
 using MonoTouch.CoreGraphics;
 using Mono.Data.Sqlite;
-using ZSDK_Binding;
+using ZSDK_Test;
 
 namespace Puratap
 {
@@ -575,18 +575,23 @@ namespace Puratap
 		public bool ArePartsOK()
 		{
 			var curj = this.selectedJob;
-			if (curj.HasParent ()) curj = this._navWorkflow._tabs._jobRunTable.FindParentJob (curj);
-			
-			if ( (curj.Type.Code != "SER" && curj.Type.Code != "UNI" && curj.Type.Code != "REI") 
-			    	&& (curj.UsedParts.Count == 0))
-				return false;
-			else {
-				// uninstall, re-install and service jobs should be allowed to be performed without using any stock parts
+			if (curj != null) {
+				if (curj.HasParent ())
+					curj = this._navWorkflow._tabs._jobRunTable.FindParentJob (curj);
+				
+				if ((curj.Type.Code != "SER" && curj.Type.Code != "UNI" && curj.Type.Code != "REI")
+				    && (curj.UsedParts.Count == 0))
+					return false;
+				else {
+					// uninstall, re-install and service jobs should be allowed to be performed without using any stock parts
+					return true;
+				}
+			} else {
 				return true;
 			}
 		}
 		
-		void acProceed (NSObject sender)
+		private void acProceed (NSObject sender)
 		{
 			// analyze parts used for the jobs in the current cluster
 			bool partsOK = ArePartsOK();
@@ -1236,52 +1241,66 @@ namespace Puratap
 		
 		public bool CheckIfCanProceed()
 		{
-			if (_navWorkflow._tabs._jobRunTable.CurrentJob != null)
-			{
-				Job current = _navWorkflow._tabs._jobRunTable.CurrentJob;
-				Job main;
-				if (current.HasParent () )
-					main = _navWorkflow._tabs._jobRunTable.FindParentJob (current);
-				else main = current;
+			try {
+				if (_navWorkflow._tabs._jobRunTable.CurrentJob != null) {
+					Job current = _navWorkflow._tabs._jobRunTable.CurrentJob;
+					Job main;
+					if (current.HasParent ())
+						main = _navWorkflow._tabs._jobRunTable.FindParentJob (current);
+					else
+						main = current;
 				
-				double money = CalculateMoneyToCollect ();
-				// foreach(Job child in main.ChildJobs)
-				// 	money += child.MoneyToCollect;
+					double money = CalculateMoneyToCollect ();
+					// foreach(Job child in main.ChildJobs)
+					// 	money += child.MoneyToCollect;
 				
-				if (money < 0.01) return true;
+					if (money < 0.01)
+						return true;
 
-				if (!this.SplitPaymentMode)
-				{
-					switch(main.Payments[0].Type)
-					{
-					case PaymentTypes.Invoice : { return true; }
-					case PaymentTypes.Cash : { return true; }
-					case PaymentTypes.Cheque : { return IsChqNumberOK(); }
-					case PaymentTypes.CreditCard : { return (IsCreditCardNumberOK() && IsCreditCardNameOK() && IsCreditCardExpiryOK()); }
-					case PaymentTypes.EFTPOS : { return true; }
-					case PaymentTypes.CCDetails : { return true; }
-					default: return false;
+					if (!this.SplitPaymentMode) {
+						switch (main.Payments [0].Type) {
+						case PaymentTypes.Invoice:
+							{
+								return true; }
+						case PaymentTypes.Cash:
+							{
+								return true; }
+						case PaymentTypes.Cheque:
+							{
+								return IsChqNumberOK (); }
+						case PaymentTypes.CreditCard:
+							{
+								return (IsCreditCardNumberOK () && IsCreditCardNameOK () && IsCreditCardExpiryOK ()); }
+						case PaymentTypes.EFTPOS:
+							{
+								return true; }
+						case PaymentTypes.CCDetails:
+							{
+								return true; }
+						default:
+							return false;
+						}
+					} else { // split payment mode
+						// check if both payment methods are selected
+						if (scSplitPaymentMethod1.SelectedSegment == -1 || scSplitPaymentMethod2.SelectedSegment == -1)
+							return false;
+						// sum the numbers in payment fields
+						double moneyReceived = CalculateSplitPaymentSum ();
+						if (moneyReceived < CalculateMoneyToCollect ())
+							return false; 
+
+						bool IsOk = true;
+						foreach (JobPayment payment in main.Payments)
+							if (payment.Type == PaymentTypes.Cheque)
+								IsOk = IsOk && IsChqNumberOK (); 
+
+						return IsOk;
 					}
-				}
-				else // split payment mode
-				{
-					// check if both payment methods are selected
-					if ( scSplitPaymentMethod1.SelectedSegment == -1 || scSplitPaymentMethod2.SelectedSegment == -1 )
-						return false;
-					// sum the numbers in payment fields
-					double moneyReceived = CalculateSplitPaymentSum();
-					if (moneyReceived < CalculateMoneyToCollect())
-						return false; 
-
-					bool IsOk = true;
-					foreach (JobPayment payment in main.Payments)					
-						if (payment.Type == PaymentTypes.Cheque)
-							IsOk = IsOk && IsChqNumberOK (); 
-
-					return IsOk;
-				}
+				} else // if (_navWorkflow._tabs._jobRunTable.CurrentJob != null) 
+					return false;
+			} catch {
+				return false;
 			}
-			else return false;
 		}
 
 		public double CalculateSplitPaymentSum()

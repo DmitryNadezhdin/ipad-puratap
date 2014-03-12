@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Linq;
 using System.Text;
+using MonoTouch.QuickLook;
 using MonoTouch.Foundation;
 using MonoTouch.CoreLocation;
 using MonoTouch.AddressBook;
@@ -373,12 +374,13 @@ namespace Puratap
 												// this handler is used when the table is in NOT editing mode
 				
 				var ac = new UIActionSheet("", null, null, null, "Rearrange jobs",
-				                           "Show in Apple maps", 
-				                           "Show in Google maps", 
-				                           "Reprint docs for customer",
-				                           "Reset jobs to default order",
-				                           "Show run layout",
-				                           "Calculate run route" ) { 
+				                           	"Show in Apple maps", 
+				                           	"Show in Google maps", 
+				                           	"Reprint docs for customer",
+				                           	"Reset jobs to default order",
+											"Run route",
+											"View manual"
+					 ) { 
 					Style = UIActionSheetStyle.BlackTranslucent
 				};
 
@@ -386,15 +388,15 @@ namespace Puratap
 					switch(e.ButtonIndex)
 					{
 						case 6: { 
-						// calculate route -- calculate route, show it in a Monotouch.DialogViewController with multiline elements
-							this.SelectedViewController = this.ViewControllers[4];
-							// this.FindRoute();
-						
+							// open franchisee manual in QuickLook
+							this.OpenFranchiseeManual(this);
 						break; }
-						case 5: {
-						// show run layout -- generate an html file, show it in a UIWebView
 
+						case 5: {
+							// calculate route -- calculate route, show it in a Monotouch.DialogViewController with multiline elements
+							this.SelectedViewController = this.ViewControllers[4];
 						break; }
+
 						case 4: { 
 							// prompt for a confirmation, reset to default order if confirmed
 							var confirmAlert = new UIAlertView("Reset confirmation", "Reset jobs to default order?", null, "No", "Yes");
@@ -712,6 +714,58 @@ namespace Puratap
 			}
 		}
 
+		public void OpenFranchiseeManual (NSObject sender)
+		{
+			// Only works if a non-default pdf viewer is installed on the device
+			// Replaced with QuickLook controller implementation
+
+				//			string path = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
+				//			string filePath = Path.Combine(path, "Franchisee Manual.pdf");
+				//			var viewer = UIDocumentInteractionController.FromUrl(NSUrl.FromFilename(filePath));
+				//			viewer.PresentOpenInMenu(new RectangleF(360,-260,320,320),this.View, true);
+
+			QLPreviewController previewController = new QLPreviewController();             
+			previewController.DataSource = new PuratapQlPreviewControllerDataSource();     
+			this.PresentViewController(previewController, true, null);
+		}
+
+		public class PuratapQlPreviewControllerDataSource : QLPreviewControllerDataSource
+		{
+			public override int PreviewItemCount (QLPreviewController controller)
+			{
+				return 1;
+			}
+
+			public override QLPreviewItem GetPreviewItem (QLPreviewController controller, int index)
+			{
+				string fileName = @"Franchisee Manual.pdf";
+				var documents = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments);
+				var library = Path.Combine (documents, fileName);
+				NSUrl url = NSUrl.FromFilename (library);
+				return new PuratapQlItem ("Franchisee Manual", url);
+			}
+		}
+
+		public class PuratapQlItem : MonoTouch.QuickLook.QLPreviewItem 
+		{
+			string _title; 
+			NSUrl _url;
+
+			public PuratapQlItem (string title, NSUrl url) 
+			{ 
+				this._title = title; 
+				this._url = url; 
+			} 
+
+			public override string ItemTitle { 
+				get { return _title; } 
+			} 
+
+			public override NSUrl ItemUrl { 
+				get { return _url; } 
+			} 
+		}
+
 		public string BuildHTML()
 		{
 			// %%1%% char sequences are replaced with "-s after building, otherwise it's too hard to read with all \" and 
@@ -1002,16 +1056,18 @@ namespace Puratap
 		
 		public void SetNavigationButtons(NavigationButtonsMode mode)
 		{
-			this.MyNavigationBar.BarStyle = UIBarStyle.Black;
+			this.MyNavigationBar.BarStyle = UIBarStyle.Default; // .Black;
+			this.MyNavigationBar.Translucent = true;
 
-			if (MyConstants.iOSVersion >= 7) {
-				this.MyNavigationBar.TintColor = UIColor.Blue;
-				this.MyNavigationBar.BarTintColor = UIColor.FromRGBA (0, 0, 0, 25);
-				this.MyNavigationBar.SetTitleTextAttributes (new UITextAttributes () {
-					TextColor = UIColor.Black,
-					TextShadowColor = UIColor.Clear
-				});
-			}
+			// DEPRECATED
+//			if (MyConstants.iOSVersion >= 7) {
+//				this.MyNavigationBar.TintColor = UIColor.Blue;
+//				this.MyNavigationBar.BarTintColor = UIColor.FromRGBA (94, 94, 36, 255);
+//				this.MyNavigationBar.SetTitleTextAttributes (new UITextAttributes () {
+//					TextColor = UIColor.Black,
+//					TextShadowColor = UIColor.Clear
+//				});
+//			}
 
 			switch(mode) {
 				case NavigationButtonsMode.CustomerDetails: {

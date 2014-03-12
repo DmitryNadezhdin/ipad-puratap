@@ -6,7 +6,7 @@ using MonoTouch.Foundation;
 using System.IO;
 using Mono.Data.Sqlite;
 using MonoTouch.CoreGraphics;
-using ZSDK_Binding;
+using ZSDK_Test;
 
 namespace Puratap
 {
@@ -929,7 +929,7 @@ namespace Puratap
 			//UIImage img = UIImage.FromBundle("/Images/puratap-logo");
 			CGPDFDocument pdfDoc = CGPDFDocument.FromFile (Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), "100605 PrePlumbingPDF_Signed.pdf"));
 			UIImage img = MyConstants.ImageFromPDF(pdfDoc, 1);			
-			
+
 			TcpPrinterConnection myConn;
 			myConn = new TcpPrinterConnection("10.11.1.3", 6101, 10, 10);
 			
@@ -940,8 +940,8 @@ namespace Puratap
 			if (connectionOK)
 			{
 				try {				
-					// string test = SGD.Get ("appl.name", myConn, out err); -- SGD class from Zebra API works	
-					
+					// string test = SGD.Get ("appl.name", myConn, out err); // -- SGD class from Zebra API works
+
 					ZebraPrinterCpcl zprn = ZebraPrinterFactory.GetInstance(myConn, PrinterLanguage.PRINTER_LANGUAGE_CPCL);
 					GraphicsUtilCpcl gu = zprn.GetGraphicsUtil();
 					

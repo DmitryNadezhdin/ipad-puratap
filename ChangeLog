@@ -1,3 +1,40 @@
+2014-03-13  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Franchisee Manual.pdf: 1.4a -- Franchisee Manual added
+
+	* AppDelegate.cs: 1.4a -- Added "View Manual" option to the
+	menu of actions 
+
+	* Info.plist:
+	* MyConstants.cs:
+	* Puratap.csproj:
+	* PaymentsSummary.cs:
+	* ReceiptPDFView.xib:
+	* CustomersViewController.cs: Updated to 1.4a
+
+	* DetailedTabs.cs: 1.4a -- Added "View Manual" to actions
+	list, changed navigation bars properties for iOS 7.1
+
+	* JobRunTable.cs: 1.4a -- Changed phone output mask to 0499
+	999 999, removed code for invoice fees
+
+	* PaymentViewController.cs: 1.4a -- Added TRY ... CATCH to
+	CheckIfCanProceed() method
+
+	* TakePhotosViewController.cs: 1.4a -- Fixed a crash in iPad
+	simulator
+
+	* TestFlight.dll: 1.4a -- New TestFlight bound library
+
+	* UsedPartsNavigationController.cs: 1.4a -- Navigation bars
+	now use default style
+
+	* monotouch-testflight.dll: 1.4a -- Removed old Testflight
+	library (now references TestFlight.dll)
+
+	* SigningNavigationController.cs: 1.4a -- Navigation bars use
+	default style now
+
 2014-02-03  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Info.plist:

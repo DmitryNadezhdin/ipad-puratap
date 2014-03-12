@@ -6,7 +6,6 @@ using System.Drawing;
 using System.Threading;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-
 using MonoTouch.UIKit;
 using Mono.Data.Sqlite;
 using MonoTouch.Foundation;
@@ -643,7 +642,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								string MobileNumber = (string)reader["mobile"];
 								
 								string fbContact = String.Format ("{0} {1} {2}", (string)reader["wcstitle"], (string)reader["wcsoname"], (string)reader["wcssname"]);
-								string fbPhone = String.Format ("{0} {1}", (string)reader["wccoacde"], (string)reader["wccophone"]);
+								string fbPhone = (string)reader["wccoacde"] + (string)reader["wccophone"];
+								string formattedFbPhone = (fbPhone.Length > 7) ? String.Format ("{0} {1} {2}", fbPhone.Substring(0,4), fbPhone.Substring(4,3), fbPhone.Substring(7)) : fbPhone;
 
 								double cLat = (double)reader ["coords_lat"];
 								double cLng = (double)reader ["coords_lng"];
@@ -655,10 +655,15 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								bool tubingDone = (reader["tu_done"] == DBNull.Value) ? false : Convert.ToBoolean (reader["tu_done"]);
 								if (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber) tubingDone = true;
 
-								Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, 
-								                          					String.Format("{0} {1}", PhoneAreaCode, PhoneNumber), 
-								                          					String.Format("{0} {1}", MobilePrefix, MobileNumber),
-								                          					lastInstallDate, fbContact, fbPhone, 
+								string formattedPhone = ((PhoneAreaCode + PhoneNumber).Length > 4) ? (PhoneAreaCode + PhoneNumber).Substring(0,4) + " " + 
+									(PhoneAreaCode + PhoneNumber).Substring(4,3) + " " + (PhoneAreaCode + PhoneNumber).Substring(7) : PhoneAreaCode + PhoneNumber;
+								string formattedMobile = ((MobilePrefix + MobileNumber).Length > 4) ? (MobilePrefix + MobileNumber).Substring(0,4) + " " +
+									(MobilePrefix + MobileNumber).Substring(4,3) + " " + (MobilePrefix + MobileNumber).Substring(7) : MobilePrefix + MobileNumber;
+
+								Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, formattedPhone, formattedMobile,
+									// String.Format("{0} {1}", PhoneAreaCode, PhoneNumber), 
+									// String.Format("{0} {1}", MobilePrefix, MobileNumber),
+									lastInstallDate, fbContact, formattedFbPhone, 
 								                          					companyID, companyName, tubingDone, cLat, cLng);				
 								_table._customers.Add(c);
 							}
@@ -834,8 +839,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									bool tubingDone = true;
 								
 									Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, 
-									                          					String.Format("({0}){1}", PhoneAreaCode, PhoneNumber), 
-									                          					String.Format("({0}){1}", MobilePrefix, MobileNumber),
+									String.Format("{0} {1}", PhoneAreaCode, PhoneNumber), 
+									String.Format("{0} {1}", MobilePrefix, MobileNumber),
 								                          						lastInstallDate, fbContact, fbPhone, CompanyID, CompanyName, tubingDone, 0, 0);
 									
 									if (_table.UserAddedCustomers == null) _table.UserAddedCustomers = new List<Customer> {c};
@@ -1001,51 +1006,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB (); // just in case the employee mode changes, they'd need to reload job types so that the fees are calculated correctly
 			}
 
-			/* * * * THIS WAS READING INVOICE FEES * * * * NO LONGER APPLIES * * * */
-//			this.ReadCustomerCharges (dbDate, databasePath);
-
-//			public void ReadCustomerCharges( string dbDate, string databasePath)
-//			{
-//				using (var dbConnection = new SqliteConnection("Data Source="+databasePath))
-//				{
-//					dbConnection.Open ();
-//					using (var cmd = dbConnection.CreateCommand () )
-//					{
-//						// Get the InvoiceFeesWaived flag for each customer
-//						string sql = "Select CusNum, Coi_No_Fees FROM WCLIENT, COI WHERE COI.COI_ID = WCLIENT.COI_ID";
-//						cmd.CommandText = sql;
-//						using (var reader = cmd.ExecuteReader ()) {
-//							while (reader.Read ()) {
-//								foreach (Customer c in _table.Customers) {
-//									if (c.CustomerNumber == (long)reader["CusNum"]) {
-//										c.InvoiceChargesWaived = true; // Convert.ToBoolean ((byte)reader["Coi_No_Fees"]);
-//									}
-//								}
-//							}
-//						}
-//
-//						// Get client charges from CHARGES table
-//						sql = " SELECT Cust_OID, " +
-//							" SUM(Amount) as Charges " +
-//								" FROM CHARGES " +
-//								" GROUP BY Cust_OID";
-//						cmd.CommandText = sql;
-//						using (var reader = cmd.ExecuteReader())
-//						{
-//							while (reader.Read () )
-//							{
-//								foreach(Customer c in _table.Customers){
-//									if (c.CustomerNumber == (long)reader ["Cust_OID"] && !c.InvoiceChargesWaived) {
-//										c.ChargeAmount = (double)reader ["Charges"];
-//									}
-//								}
-//							}
-//						}
-//					} // end using dbCommand
-//				} // end using dbConnection
-//			}
-			/* * * * THIS WAS READING INVOICE FEES * * * * NO LONGER APPLIES * * * */
-
 			public void ReadCustomerDeposits(string dbDate, string databasePath)
 			{
 				using (var dbConnection = new SqliteConnection("Data Source="+databasePath))
@@ -1062,16 +1022,14 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						// This can lead to SUM(Credit)-SUM(Debit) being < 0, thus added "HAVING Deposit > 0" clause
 
 						string sql = "SELECT j.CusNum as Customer, " +
-						             	" SUM(j.Credit) - SUM(j.Debit) as Deposit, " +
-						             	" MAX(PlAppDate) as Last_Job_Date " +
-						             " FROM JOURNAL j LEFT OUTER JOIN PL_RECOR pl ON j.CusNum = pl.CusNum " +
-						             											" AND pl.PlAppDate < ? " +
-						             											" AND Installed IN ('', 'Installed', 'Changed', 'Upgraded', 'New Tap', 'Service Do', 'Service Done', 'Result') " +
+						             	" j.jDate as DepositDate, " +
+						             	" SUM(j.Credit) - SUM(j.Debit) as DepositAmount " +
+						             " FROM JOURNAL j " +
 						             " WHERE j.AccNum = 2.1300 " +
 						             	" AND j.jDesc != 'Deposit used on iPad' " +
-						             	" AND j.jDate > DATE('now', '-12 months')" +
-						             " GROUP BY j.CusNum " +
-						             " HAVING Deposit > 0 ";
+						             	" AND j.jDate > DATE('now', '-11 months')" +
+						             " GROUP BY j.CusNum, DepositDate " +
+						             " HAVING DepositAmount > 0 ";
 
 						cmd.CommandText = sql;
 						cmd.Parameters.Add ("@Run_Date", DbType.String).Value = MyConstants.DEBUG_TODAY;
@@ -1079,24 +1037,27 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						{
 							while (reader.Read () )
 							{
-								// Console.WriteLine (String.Format ("Customer = {0}; Deposit = {1}", reader ["CusNum"], reader ["Deposit"]));
-								if (reader ["Last_Job_Date"] == DBNull.Value) {
-									foreach(Customer c in _table.Customers){
-										if (c.CustomerNumber == (long)reader ["Customer"]) {
-											c.DepositAmount = (double)reader ["Deposit"];
+								Customer c = _table.Customers.FindLast (x => x.CustomerNumber == (long)reader ["Customer"]);
+								if ( _table.Customers.Contains(c) ) {
+									if (c.JobHistory.Any ()) {
+										var maxDate = c.JobHistory.Max (x => x.JobDate);
+										if (maxDate < (DateTime)reader ["DepositDate"]) {
+											c.DepositAmount = (double)reader ["DepositAmount"];
 										}
+									} else {
+										c.DepositAmount = (double)reader ["DepositAmount"];
 									}
-								} // endif -- check if Last_Job_Date is null
+								} // end if c != null
 							} // end while reader.Read()
 						} // end using reader
 
 						// this reads deposits used only on the current run (Journal.jDate = dbDate)
 						sql = " SELECT CusNum, " +
-							" SUM(Debit) as DepositUsed " +
+								" SUM(Debit) as DepositUsed " +
 								" FROM JOURNAL " +
-								" WHERE Journal.AccNum = 2.1300 " +
-								" AND Journal.jDate = " + dbDate +
-								" AND Journal.jDesc = 'Deposit used on iPad' " +
+									" WHERE Journal.AccNum = 2.1300 " +
+										" AND Journal.jDate = " + dbDate +
+										" AND Journal.jDesc = 'Deposit used on iPad' " +
 								" GROUP BY CusNum";
 						cmd.CommandText = sql;
 						using (var reader = cmd.ExecuteReader ()) {
@@ -1196,7 +1157,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 										"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate>=date('now', '-7 day') and plnum = " + MyConstants.EmployeeID.ToString() + 
 										" GROUP BY plappdate having jobs>0 order by plappdate" : 
 											"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate>=date('now', '-7 day') and repnum =  " + MyConstants.EmployeeID.ToString() + 
-											" GROUP BY plappdate having jobs>15 order by plappdate";
+									             " GROUP BY plappdate having jobs>15 order by plappdate";
 									cmd.CommandText = sql;
 									using (var dateReader = cmd.ExecuteReader())
 									{
@@ -1276,6 +1237,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							}	 // END using (var cmd = dbConnection.CreateCommand())
 						} // END using (var dbConnection = ...)
 					} // END else -- if (employee type is not a plumber)
+
 					_table.TableView.ReloadData ();
 					_table._tabs._scView.Log (String.Format ("GetCustomersFromDB: Loaded database: {0}, run date: {1}", Path.GetFileName (dbPath), dbDate));
 					this._table._tabs._app.myLocationManager.StartUpdatingLocation ();
@@ -1303,8 +1265,11 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 					try {
 						ReadRunData (chosenDate, dbPath);
-					} catch {
+					} catch (Exception exc) {
 						var readRunDataFailed = new UIAlertView ("Error", "Reading run data has failed. Please try to donwload data from server again", null, "OK");
+						_table._tabs._scView.Log ("Exception: ReadRunData: " + exc.Message);
+						_table._tabs._scView.Log ("Exception: ReadRunData: " + exc.StackTrace);
+
 						readRunDataFailed.Show ();
 					}
 
@@ -1785,9 +1750,10 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						using (var cmd = connection.CreateCommand())
 						{
 							connection.Open();
-							string sql = 	"SELECT Booknum, Type, Pay_pl, Plappdate FROM Pl_recor " +
-												"WHERE cusnum="+this.CustomerNumber.ToString()+
-													" AND plappdate != " + MyConstants.DEBUG_TODAY; // Gets all jobs' data except today's job for the customer
+							string sql = "SELECT Booknum, Type, Pay_pl, Plappdate FROM Pl_recor " +
+							             "WHERE cusnum=" + this.CustomerNumber.ToString () +
+							             " AND plappdate < " + MyConstants.DEBUG_TODAY + // Gets all jobs' data except today's job for the customer
+							             " AND LOWER(installed) NOT IN ('', 'no: other', 'not done', 'not home', 'customer cancelled', 'customer to be reboo')";
 							cmd.CommandText = sql;
 							using (var reader = cmd.ExecuteReader())
 							{

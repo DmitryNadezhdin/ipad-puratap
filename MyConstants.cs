@@ -10,7 +10,7 @@ using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
 using Mono.Data.Sqlite;
 using MonoTouch.SystemConfiguration;
-using ZSDK_Binding;
+using ZSDK_Test;
 
 namespace Puratap
 {

@@ -9,7 +9,7 @@
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Puratap</RootNamespace>
-    <ReleaseVersion>1.3h</ReleaseVersion>
+    <ReleaseVersion>1.4a</ReleaseVersion>
     <SynchReleaseVersion>False</SynchReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
@@ -92,10 +92,13 @@
     <Reference Include="monotouch" />
     <Reference Include="Mono.Data.Sqlite" />
     <Reference Include="System.Data" />
+    <Reference Include="OpenTK-1.0" />
     <Reference Include="TestFlight">
       <HintPath>TestFlight.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK-1.0" />
+    <Reference Include="ZSDK_Test">
+      <HintPath>ZSDK_Test.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -241,16 +244,13 @@
     <Content Include="Images\sqlite-icon-big.png" />
     <Content Include="Images\sqlite-icon-small.png" />
     <Content Include="Settings.bundle\Root.plist" />
+    <Content Include="Franchisee Manual.pdf" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <ProjectReference Include="..\MonoTouch.Dialog\MonoTouch.Dialog.csproj">
       <Project>{3FFBFFF8-5560-4EDE-82E5-3FFDFBBA8A50}</Project>
       <Name>MonoTouch.Dialog</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ZSDK_Binding\ZSDK_Binding.csproj">
-      <Project>{717BA73A-95FE-4CF9-B303-FE3762BDBBEF}</Project>
-      <Name>ZSDK_Binding</Name>
     </ProjectReference>
   </ItemGroup>
   <ProjectExtensions>
