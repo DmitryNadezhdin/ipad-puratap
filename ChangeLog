@@ -1,5 +1,13 @@
 2014-03-26  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
+	* Puratap.csproj: 1.4a -- added final version of Franchisee
+	manual
+
+	* AppDelegate.cs: 1.4a -- removed TestFlight checkpoints when
+	job workflow has been finished
+
+2014-03-26  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
 	* DetailedTabs.cs: 1.4a -- added TestFlight checkpoint when
 	manual is opened
 

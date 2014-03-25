@@ -670,12 +670,6 @@ namespace Puratap
 			}
 			else
 			{
-//				try {
-//					Console.WriteLine (String.Format ("Geocoding returned an error: {0} {1}", error.Code, error.Description));
-//				} catch {
-//					// nothing to be done about this one
-//					// this should be removed in release builds
-//				}
 				newAddress = String.Format ("Geocoding error: {0}", error.Code);
 				Interlocked.Exchange<string>(ref thisDeviceAddress, newAddress);
 			}
@@ -688,7 +682,7 @@ namespace Puratap
 			                                          CurrentRequest.customer, CurrentRequest.job, 
 			                                          CurrentRequest.lat, CurrentRequest.lng, newAddress);
 			
-			MonoTouch.TestFlight.TestFlight.PassCheckpoint (checkPointMessage);
+			// MonoTouch.TestFlight.TestFlight.PassCheckpoint (checkPointMessage);
 			AddLocationToBuffer(CurrentRequest.lng, CurrentRequest.lat, 
 			                    CurrentRequest.timeStamp.ToString ("yyyy-MM-dd HH:mm:ss"), 
 			                    "Job data input finished: " + newAddress, 

@@ -244,6 +244,7 @@
     <Content Include="Images\sqlite-icon-big.png" />
     <Content Include="Images\sqlite-icon-small.png" />
     <Content Include="Settings.bundle\Root.plist" />
+    <Content Include="Franchisee Training Manual.pdf" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
