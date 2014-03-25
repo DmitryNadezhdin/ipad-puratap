@@ -724,6 +724,9 @@ namespace Puratap
 				//			var viewer = UIDocumentInteractionController.FromUrl(NSUrl.FromFilename(filePath));
 				//			viewer.PresentOpenInMenu(new RectangleF(360,-260,320,320),this.View, true);
 
+			string checkPointMessage = "Opened franchisee manual";
+			MonoTouch.TestFlight.TestFlight.PassCheckpoint (checkPointMessage);
+
 			QLPreviewController previewController = new QLPreviewController();             
 			previewController.DataSource = new PuratapQlPreviewControllerDataSource();     
 			this.PresentViewController(previewController, true, null);

@@ -1,5 +1,15 @@
 2014-03-26  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
+	* DetailedTabs.cs: 1.4a -- added TestFlight checkpoint when
+	manual is opened
+
+	* Franchisee Training Manual.pdf: Removed manual file with
+	corrupted icons on pages 69-71
+
+	* Puratap.csproj: Updated to 1.4a
+
+2014-03-26  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
 	* ClientServerDataExchange.cs: 1.4a -- unsigned files are now
 	purge along with the old ones after data exchange with the
 	server
