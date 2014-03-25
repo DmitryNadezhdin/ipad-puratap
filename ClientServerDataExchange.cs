@@ -178,6 +178,7 @@ namespace Puratap
 															_controller.Log ("Data exhange with the server completed successfully.");
 															// PURGE old files (older than a week)
 															PurgeOldFiles();
+															PurgeUnsignedPDFFiles();
 														}
 														else {
 															var dataIntegrityError = new UIAlertView("Database integrity error", 
@@ -409,6 +410,7 @@ namespace Puratap
 													_controller.Log ("Data exhange with the server completed successfully.");
 													// PURGE old files (older than a week)
 													PurgeOldFiles();
+													PurgeUnsignedPDFFiles();
 												}
 												else {
 													var dataIntegrityError = new UIAlertView("Database integrity error", 
@@ -689,7 +691,7 @@ namespace Puratap
 			for (int i = fileNames.Length; i>0; i--)
 			{
 				FileInfo f = new FileInfo(fileNames[i-1]);
-				if ( (f.Name.StartsWith ("UPLOADED")) || (f.Name.StartsWith ("tmp")) || f.Name.StartsWith("NEWTESTDB") || f.Name.Contains ("_Not_Signed") || f.Name.Contains ("_NOT_Signed") ) 
+				if ( (f.Name.StartsWith ("UPLOADED")) || (f.Name.StartsWith ("tmp")) || f.Name.StartsWith("NEWTESTDB") || f.Name.StartsWith("Franchisee Manual") || f.Name.Contains ("_Not_Signed") || f.Name.Contains ("_NOT_Signed") ) 
 				{
 					fileNames[i-1] = "";
 					count --;
@@ -762,12 +764,25 @@ namespace Puratap
 			
 			for (int i = 0; i<fileNames.Length; i++)
 			{
-				FileInfo f = new FileInfo(fileNames[i]);
-				if ( f.LastAccessTime.Date < DateTime.Now.Date.Subtract (TimeSpan.FromDays (7)) )
-				{
+				if ( !fileNames [i].StartsWith ("Franchisee Manual") ) {
+					FileInfo f = new FileInfo (fileNames [i]);
+					if (f.LastAccessTime.Date < DateTime.Now.Date.Subtract (TimeSpan.FromDays (7))) {
+						_controller.Log (String.Format ("Found an old file: {0}, last access time: {1}, deleted", f.Name, f.LastAccessTime.ToString ("yyyy-MM-dd HH:mm:ss")));
+						File.Delete (f.FullName);
+					}
+				}
+			}
+		}
 
-					_controller.Log (String.Format ("Found an old file: {0}, last access time: {1}, deleted", f.Name, f.LastAccessTime.ToString ("yyyy-MM-dd HH:mm:ss") ));
+		public void PurgeUnsignedPDFFiles() {
+			_controller.Log ("Purging unsigned PDF files.");
+			string[] fileNames = Directory.GetFiles ( Environment.GetFolderPath(Environment.SpecialFolder.Personal), "*.pdf", SearchOption.AllDirectories );
+
+			for (int i = 0; i < fileNames.Length; i++) {
+				if (fileNames [i].ToUpper().Contains ("_NOT_SIGNED") ) {
+					FileInfo f = new FileInfo (fileNames [i]);
 					File.Delete (f.FullName);
+					_controller.Log (String.Format ("Deleted unsigned file: {0}", f.Name));
 				}
 			}
 		}

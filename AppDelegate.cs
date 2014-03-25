@@ -58,11 +58,11 @@ namespace Puratap
 				string _to = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "NEWTESTDB.sqlite");
 				File.Copy( _from, _to );
 
-				if (File.Exists (Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "Franchisee Manual.pdf"))) {
-					File.Delete (Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "Franchisee Manual.pdf"));
+				if (File.Exists (Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "Franchisee Training Manual.pdf"))) {
+					File.Delete (Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "Franchisee Training Manual.pdf"));
 				}
-				_from = Path.Combine (NSBundle.MainBundle.BundlePath, "Franchisee Manual.pdf");
-				_to = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "Franchisee Manual.pdf");
+				_from = Path.Combine (NSBundle.MainBundle.BundlePath, "Franchisee Training Manual.pdf");
+				_to = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "Franchisee Training Manual.pdf");
 				File.Copy (_from, _to);
 			}
 			// create a new window instance based on the screen size

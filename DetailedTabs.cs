@@ -738,7 +738,7 @@ namespace Puratap
 
 			public override QLPreviewItem GetPreviewItem (QLPreviewController controller, int index)
 			{
-				string fileName = @"Franchisee Manual.pdf";
+				string fileName = @"Franchisee Training Manual.pdf";
 				var documents = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments);
 				var library = Path.Combine (documents, fileName);
 				NSUrl url = NSUrl.FromFilename (library);

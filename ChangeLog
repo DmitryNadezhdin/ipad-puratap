@@ -1,3 +1,26 @@
+2014-03-26  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* ClientServerDataExchange.cs: 1.4a -- unsigned files are now
+	purge along with the old ones after data exchange with the
+	server
+
+	* PrePlumbingCheckView.xib: Updated to 1.4a -- Increased
+	comment area
+
+	* JobRunTable.cs: Updated to 1.4a -- manually created jobs can
+	now be reordered
+
+	* Puratap.csproj:
+	* DetailedTabs.cs: Updated to 1.4a
+
+	* Franchisee Training Manual.pdf: 1.4a -- added franchisee
+	manual
+
+	* AppDelegate.cs: Updated to 1.4a -- copying manual file from
+	bundle to /Documents
+
+	* Franchisee Manual.pdf: 1.4a -- removed old manual
+
 2014-03-13  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Franchisee Manual.pdf: 1.4a -- Franchisee Manual added

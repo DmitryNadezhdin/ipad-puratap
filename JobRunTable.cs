@@ -1411,20 +1411,32 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			
 			public override bool CanMoveRow (UITableView tableView, NSIndexPath indexPath)
 			{
-				if (indexPath.Section > 0) return false;
+				if (indexPath.Section > 1) 
+					return false;
 				else return true;
 			}
 			
 			public override void MoveRow (UITableView tableView, NSIndexPath sourceIndexPath, NSIndexPath destinationIndexPath)
 			{
-				// move customer record in _customers
-				Customer c = _table._customers[sourceIndexPath.Row];
-				_table._customers.RemoveAt(sourceIndexPath.Row);
-				_table._customers.Insert (destinationIndexPath.Row, c);
-				// move job record in _joblist
-				Job j = _table._mainjoblist[sourceIndexPath.Row];
-				_table._mainjoblist.RemoveAt(sourceIndexPath.Row);
-				_table._mainjoblist.Insert(destinationIndexPath.Row, j);
+				if (sourceIndexPath.Section == 0) {
+					// move customer record in _customers
+					Customer c = _table.Customers [sourceIndexPath.Row];
+					_table.Customers.RemoveAt (sourceIndexPath.Row);
+					_table.Customers.Insert (destinationIndexPath.Row, c);
+					// move job record in _joblist
+					Job j = _table.MainJobList [sourceIndexPath.Row];
+					_table.MainJobList.RemoveAt (sourceIndexPath.Row);
+					_table.MainJobList.Insert (destinationIndexPath.Row, j);
+				} else if (sourceIndexPath.Section == 1) {
+					// move customer record in _customers
+					Customer c = _table.UserAddedCustomers [sourceIndexPath.Row];
+					_table.UserAddedCustomers.RemoveAt (sourceIndexPath.Row);
+					_table.UserAddedCustomers.Insert (destinationIndexPath.Row, c);
+					// move job record in _joblist
+					Job j = _table.UserCreatedJobs [sourceIndexPath.Row];
+					_table.UserCreatedJobs.RemoveAt (sourceIndexPath.Row);
+					_table.UserCreatedJobs.Insert (destinationIndexPath.Row, j);
+				}
 			}
 			
 			public override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
