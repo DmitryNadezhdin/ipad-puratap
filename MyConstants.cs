@@ -36,6 +36,8 @@ namespace Puratap
 		OtherTechnicalIssues,
 		Other
 	}
+
+
 	
 	public class MyConstants
 	{
@@ -628,49 +630,25 @@ namespace Puratap
 			return result;
 		}
 
-		/*
-		 * Saving coordinates to database like this leads to data file corruption since it was used by several different concurrent threads. 
-		 * Rewritten the logic, implemented a buffer to hold the locations
-		 * The buffer is managed by LocDelegate class in AppDelegate.cs
-		 * 
-		public static void SaveDeviceCoordinates(DeviceLocation loc)
+		public static int GetNthIndex(string s, char t, int n)
 		{
-			MyConstants.SaveDeviceCoordinates (loc.Lng, loc.Lat, loc.Timestamp, loc.Address);
-		}
+			if (string.IsNullOrEmpty (s) || n < 1 || t == null)
+				return -1;
 
-		public static void SaveDeviceCoordinates(double lng, double lat, string time, string address)
-		{
-			if ( File.Exists(ServerClientViewController.dbFilePath) && Math.Abs (lng) > 0.1 && Math.Abs (lat) > 0.1 )
+			int count = 0;
+			for (int i = 0; i < s.Length; i++)
 			{
-				using (var connection = new SqliteConnection("Data Source="+ServerClientViewController.dbFilePath) )
+				if (s[i] == t)
 				{
-					try {
-						connection.Open();
-						using (var cmd = connection.CreateCommand() )
-						{
-							cmd.CommandText = (String.IsNullOrEmpty (address)) ? "INSERT INTO IPAD_COORDS (empl_oid, timestamp, lng, lat, customer) VALUES (:employee_id, :time, :lng, :lat, :customer)" : 
-																												"INSERT INTO IPAD_COORDS (empl_oid, timestamp, lng, lat, address, customer) VALUES (:employee_id, :time, :lng, :lat, :address, :customer)";
-
-							cmd.Parameters.Add ("employee_id", System.Data.DbType.Int32).Value = EmployeeID;
-							cmd.Parameters.Add ("time", System.Data.DbType.String).Value = time; // DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss");
-							cmd.Parameters.Add ("lng", System.Data.DbType.Double).Value = lng;
-							cmd.Parameters.Add ("lat", System.Data.DbType.Double).Value = lat;
-							cmd.Parameters.Add ("customer", System.Data.DbType.Int64).Value = (MyConstants._jrt.CurrentCustomer == null) ? 0 : MyConstants._jrt.CurrentCustomer.CustomerNumber;
-
-							if (!String.IsNullOrEmpty (address))
-								cmd.Parameters.Add ("address", System.Data.DbType.String).Value = address;
-
-							cmd.ExecuteNonQuery ();
-						}
-					}
-					catch 
+					count++;
+					if (count == n)
 					{
-
-					} // catch
-				} // using (var connection = new SqliteConnection("Data Source="+ServerClientViewController.dbFilePath) )
+						return i;
+					}
+				}
 			}
+			return -1;
 		}
-		*/
 	}
 
 	/*

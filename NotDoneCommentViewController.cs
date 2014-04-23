@@ -46,6 +46,7 @@ namespace Puratap
 			foreach (UITabBarItem tbi in this.TabBarController.TabBar.Items)
 				tbi.Enabled = false;			
 
+			tvComment.Text = _parent._navWorkflow._tabs._jobRunTable.CurrentJob.NotDoneComment;
 			tvComment.BecomeFirstResponder ();
 			base.ViewDidAppear (animated);
 		}

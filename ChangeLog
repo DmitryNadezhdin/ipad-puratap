@@ -1,3 +1,28 @@
+2014-04-23  Dmitry Nadezhdin  <denadezhdin@gmail.com>
+
+	* Memos.cs:
+	* Info.plist:
+	* MyConstants.cs:
+	* JobRunTable.cs:
+	* Puratap.csproj:
+	* DetailedTabs.cs:
+	* RELEASE-NOTES.txt:
+	* RunRouteFinder.cs:
+	* 202-tick.png:
+	* 201-cross.png:
+	* PaymentViewController.cs:
+	* PaymentViewController.xib:
+	* ClientServerDataExchange.cs:
+	* 22-skull-n-bones.png:
+	* Franchisee Training Manual.pdf:
+	* NotDoneCommentViewController.cs: Updated to 1.4c
+
+	* PrePlumbingCheckView.cs: Updated to 1.4c -- job not done
+	comments are now read from Job class property
+
+	* WorkflowNavigationController.cs: Updated to 1.4c -- fixed a
+	bug in distance calculation formula
+
 2014-03-26  Dmitry Nadezhdin  <denadezhdin@gmail.com>
 
 	* Puratap.csproj: 1.4a -- added final version of Franchisee

@@ -691,7 +691,7 @@ namespace Puratap
 			for (int i = fileNames.Length; i>0; i--)
 			{
 				FileInfo f = new FileInfo(fileNames[i-1]);
-				if ( (f.Name.StartsWith ("UPLOADED")) || (f.Name.StartsWith ("tmp")) || f.Name.StartsWith("NEWTESTDB") || f.Name.StartsWith("Franchisee Manual") || f.Name.Contains ("_Not_Signed") || f.Name.Contains ("_NOT_Signed") ) 
+				if ( (f.Name.StartsWith ("UPLOADED")) || (f.Name.StartsWith ("tmp")) || f.Name.StartsWith("NEWTESTDB") || f.Name.StartsWith("Franchisee Training Manual") || f.Name.Contains ("_Not_Signed") || f.Name.Contains ("_NOT_Signed") ) 
 				{
 					fileNames[i-1] = "";
 					count --;

@@ -212,12 +212,21 @@ namespace Puratap
 				
 				if (_jobRunTable.CurrentJob != null && _jobRunTable.CurrentJob.JobDone)
 				{
-					var alert = new UIAlertView("Warning", "This job has been marked as DONE. Are you sure you want to go through all the motions again?", null, "No, never mind", "Yes, start over");
-					{
-						alert.WillDismiss += HandleStartOverAlertWillDismiss;
-						alert.Show();
-						//return false;
-					}	
+					if (_jobRunTable.CurrentJob.Started == MyConstants.JobStarted.Yes) {
+						var alert = new UIAlertView ("Warning", "This job has been marked as DONE. Are you sure you want to go through all the motions again?", null, "No, never mind", "Yes, start over");
+					alert.WillDismiss += HandleStartOverAlertWillDismiss;	// HandleStartOver will reset job results
+						alert.Show ();
+						 
+					} else {
+						// job was marked as "NOT DONE" -- allow user to go in to make changes without resetting the results
+						UIView.BeginAnimations (null);
+						UIView.SetAnimationDuration (0.3f);
+						MyNavigationBar.Hidden = true;
+						this.Mode = DetailedTabsMode.Workflow;
+						UIView.CommitAnimations ();
+
+						_jobRunTable.TableView.UserInteractionEnabled = false;
+					}
 				}
 				else {
 					UIView.BeginAnimations (null);
@@ -226,13 +235,7 @@ namespace Puratap
 					this.Mode = DetailedTabsMode.Workflow;
 					UIView.CommitAnimations ();
 					
-					_jobRunTable.TableView.UserInteractionEnabled = false;	
-
-					//	_navWorkflow.SetToolbarHidden (false, true);
-					//	if (_navWorkflow.ViewControllers.Length == 0) 
-					//	_navWorkflow.PushViewController (_prePlumbView, true);
-					//	SetNavigationButtons (NavigationButtonsMode.PrePlumbing);
-					//	return true;							
+					_jobRunTable.TableView.UserInteractionEnabled = false;								
 				}
 			}			
 		}		
@@ -724,7 +727,7 @@ namespace Puratap
 				//			var viewer = UIDocumentInteractionController.FromUrl(NSUrl.FromFilename(filePath));
 				//			viewer.PresentOpenInMenu(new RectangleF(360,-260,320,320),this.View, true);
 
-			string checkPointMessage = "Opened franchisee manual";
+			string checkPointMessage = MyConstants.EmployeeID.ToString() + ": Opened franchisee manual";
 			MonoTouch.TestFlight.TestFlight.PassCheckpoint (checkPointMessage);
 
 			QLPreviewController previewController = new QLPreviewController();             

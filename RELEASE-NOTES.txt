@@ -1,0 +1,350 @@
+Updated to 1.4c -- Crosses and ticks
+
+Comments for jobs that have not been done are now editable and persist between app restarts
+Job results are now communicated clearly (by ticks and crosses in job cells)
+Fixed a bug in distance calculation formula
+Fixed memo text editing covering the navigation bar
+
+======================================
+
+1.4b -- Manual jobs can be moved into the main list
+
+Franchisee manual has been updated (SOP 003, section 7)
+Manually created jobs can now be rearranged and placed into the main list (but not back). However, reloading the run by switching dates or using "Reset to default order button" will place them into their original section.
+
+======================================
+
+1.4a -- Franchisee manual introduced
+
+Franchisee manual is now available in-app (in "More actions" menu).
+Phone numbers are now formatted as 0800 000 000.
+Manually created jobs can now be re-ordered the same way booked jobs can.
+Comments area on pre-plumbing check view has been increased.
+Unsigned files are now purged after data exchange to reduce app footprint.
+
+======================================
+
+1.4 -- Address update
+
+Fixed issues with reading run data. 
+In 1.3j a message saying "Reading run data failed" would sometimes appear when there were no actual errors.
+There was an old North Terrace address on the receipt template. It has been replaced with the new Stepney address.
+Run route calculation algorithm has been updated and optimized.
+Photo camera view controller will no longer cause a crash in the simulator.
+
+======================================
+
+1.3j -- Deposits yet again
+
+I love deposits, everyone loves deposits, they are expected to be working correctly now [for real this time].
+
+======================================
+
+1.3g -- Fixes for fixes
+
+Fixed the fix for deposits bug deployed with 1.3f (it did not cover some of the scenarios).
+Fixed the fix that prevents a pop-up saying "Data for some of the jobs has not been entered" from appearing incorrectly.
+Updated test database file so it can be loaded without errors when database is missing for whatever reason. 
+
+======================================
+
+1.3f -- Deposits bug
+
+Corrected an issue where deposits collected before an install job would be accounted for in filter change jobs.
+
+======================================
+
+1.3e -- Run routes calculation added
+
+Implemented calculation of a run route using the longitude and latitude of customer addressess in the database. It leaves a lot to be desired, though, and will be iterated over in future.
+
+======================================
+
+1.3d -- Job order persists between app sessions
+
+Re-ordering of the jobs is now persistent.
+Fixed a bug related to highlighting customer records in payments summary when a job cell was selected (sometimes other customer records were highlighted along with the correct one).
+Data exchange timeouts are more aggressive so that the interface responds faster.
+Data exchange session does not hang when trying to establish connection.
+App recovers much quicker from errors during data transfers. This means that consecutive data exchange attempts are much more likely to succeed.
+
+======================================
+
+1.3c -- Reworked data exchange code
+
+Fixed a regression bug introduced in 1.3b where additional jobs and fees for them would "disappear". They were not being read correctly from run database file. Office data processing for these records, however, was correct, so no fees have been lost due to this.
+Fixed an issue where a warning saying "Data for some jobs has not been entered" was shown incorrectly.
+Fixed signature field responding to touches before "Start signing" button was clicked.
+Data exchange process has been reworked, speed and reliability have improved.
+
+======================================
+
+1.3b -- Bug fixes and job time frames
+
+Job time frames are now recorded in a different way in the office booking system and displayed in "Job time" field. For some jobs the ttime frames mentioned in plumbing comments and in "Job time" field may differ. PLUMBING COMMENTS CONTAINS THE CORRECT TIME IN THIS SCENARIO.
+Fixed a crash related to using "More actions" button.
+Fixed a crash related to using "Job not done" button.
+Fixed a bug related to adding two jobs for the same customer when opening e-mails.
+Added warranty text on the receipt for "HD tubing upgrade" jobs.
+Jobs are now sorted differently (according to their time frames). It was not possible previously due to times being recorded in arbitrary form in plumbing comments. 
+
+======================================
+
+1.3a -- Interface changes for iOS 7
+
+Navigation bars no longer overlap the status bar (clock and battery level stay visible).
+Fonts in job table view have been made bigger and bolder.
+Highlighting a job was not distinct enough, it is now blue again, resembling iOS 6 behavior.
+App version is now visible on the main navigation bar.
+
+======================================
+
+1.3 -- Extra jobs through e-mails
+
+This build supports iOS 7, it is now safe to update your iPad software to that version.
+
+Extra job that are booked and done on the same day will now be e-mailed.
+When such e-mail is received, open the message in Mail, download and click the attachment and select "Open in Puratap" option. Job data will be then added to your current run. This newly created entry will be marked in yellow (as if "Attention" flag has been set).
+After the job has been added, a confirmation e-mail window will pop up. Fields will be pre-filled, you will only need to click the "Send" button.
+
+======================================
+
+1.2i -- Signature fix
+
+Signature capturing has been completely overhauled. It is no longer bland and laggy when someone paints in the signature box for a while.
+
+Known issues:
+    The very first time a receipt PDF is generated for previewing, it will not display properly (a blank grey window is shown instead).
+
+======================================
+
+1.2h -- Interface fix for iOS 7
+
+Fixed many interface elements overlapping each other in iOS 7.
+Fixed a crash when creating a new memo on iPads running iOS 7.
+
+Known issues: 
+   1. Signature capturing is not functioning properly (after a short while, strokes begin to be captured as series of disjointed short lines).
+   2. The first time a PDF is generated for previewing, it will not display properly (a blank grey window is shown instead).
+
+1.2g -- Hotfix for iOS 7
+
+Fixes a crash when manually adding jobs on iPads running iOS 7.
+
+======================================
+
+1.2f -- Plumbing comments
+
+Resolved an issue that sometimes led to displaying of an incorrect comment for the job.
+
+======================================
+
+1.2e -- Minor bug fixes
+
+Both company name and customer name can now appear separately on the receipt.
+Fixed a bug where removing company name from customer details screen would not update the database properly.
+Fixed a bug during data transfer that led to an application crash. 
+
+======================================
+
+1.2d -- Minor stuff
+
+The app did not communicate the data exchange result clearly. To remedy this, another section of the job run table has been added that displays the time of the last successful data download attempt. Also, if download fails, an alert will pop up to notify the user. 
+ 
+There was an issue related to reading deposits data that sometimes threw off accounting and payment information. It has now been fixed.
+
+There was an issue related to the filter change fee that would sometimes lead to incorrectly assigniing an old $13.23 fee for FC jobs. It will no longer happen.
+
+
+======================================
+1.2c -- HD upgrade fees fixed
+
+Fixed a bug that led to app assigning $14.00 fee for HD tubing upgrades. It now assigns $15.42 as it should.
+
+======================================
+1.2b -- Invoice fees are no more
+
+Fixed a regression crash caused by marking the first job after starting the app as "Not Done".
+Invoice fees have not been an effective solution for debt bloat.
+
+1.2a -- Deposits and Invoice fees
+
+Deposits for installation jobs will now be properly recognized on iPad.
+Sending an invoice to the customer will now incur an additional $ 5.00 fee. This is not to increase income but rather to prevent debts from growing (because a lot of invoices are paid overdue and some will not be paid at all).
+The fees for some of the plumbing jobs were displaying incorrectly in the summary, this has been fixed.
+
+1.2 -- Bugfixes
+
+The checkboxes introduced in 1.1e were not implemented correctly and led to quite a few crashes. Clicking the checkbox right after finishing a job was crashing the app. This has been fixed.
+
+========================================
+1.1e -- Checkboxes
+
+A checkbox button has been implemented to quickly set the customer's tubing upgrade status.
+A checkbox button has been implemented to quickly set the job's "attention" status.
+"Boxed unit delivery" job type has been implemented.
+Receipts will now be saved and transferred to the server regardless of whether they have been signed or not.
+Pics for the stainless steel jaco and hepworth connector have been put in.
+========================================
+
+1.1d -- Minor bug fixes
+
+Build 1.1b introduced a bug: the signature field would capture the touches before the "Start signing" button had been clicked. This has been fixed.
+Submitting incomplete runs (where some of the jobs have not been "ticked" will now generate a warning.
+Adjusted default stock for plumbing builds slightly.
+
+========================================
+
+1.1b -- Fix for the stock counting bug
+
+A stock counting bug that was introduced in build 1.1 has been fixed.
+========================================
+
+1.1a -- Hotfix for signature issue
+
+There was an issue with signature capturing in 1.1. It was not reproducible in the iPad simulator in development. Touches that went straight across the signature field from left to right would not be captured properly. This has been fixed.
+Changed the background color of signature field to yellow.
+
+========================================
+
+1.1 -- Quality of life changes
+
+Signing will no longer eventually crash the app. Thanks to everyone who has been poking me about this, sorry it took so long. (There was a memory leak when capturing signatures. It led to an eventual crash, sometimes at quite random times, and no crash logs were sent out. This has been fixed now.)
+Pressing "Job not done" button will now display a large field to enter the comments. Thanks to Tony for suggesting this.
+The parts list on the filter change screen will now be populated with standard parts by default. However, this means it will take half a second to display it.
+On devices that are running iOS 5 there was a bug where device location updated far too frequently. This led to battery drain and has been fixed.
+Geocoding data was missing data points when device was put to sleep and when app went into background. It is now much more reliable.
+
+========================================1.0h -- Bug fixes
+
+Added database integrity checks so that even if the database is corrupt, the app would still start and allow to try to receive the data from server again.
+Simplified the threading code to get rid of random crashes.
+If a phone number was removed completely, the app would crash upon trying to update it. This has been fixed.
+Fixed a crash when the system issued a memory warning and the app would try to unload some of the inactive views.
+Improved memory management -- objects are now released quicker.
+
+========================================
+1.0g -- Minor improvements
+
+Photos taken in the app will now be saved to the default album in "Photos" (as well as to the app's internal storage) so that they are accessible after they have been taken
+Fixed a rare scenario where two threads would attempt to write to the database at the same time, thus corrupting the database file and making it unreadable
+Prepared the code to be able to replace polysophone jaco with stainless steel jacos
+Rewritten the code that managed the locations buffer, further reducing the battery usage
+
+========================================
+1.0f -- Code refactoring
+
+Not a public build
+
+========================================
+1.0e -- Minor improvements
+
+Fields of the service report forms now revert to empty values after completing a service job.
+Refactored the code to use less battery power.
+
+========================================
+1.0d
+
+When rearranging jobs, dragging a job cell from one section to another will now trigger an appropriate alert. 
+Introduced new map awareness functionality that will allow to optimize the process of booking the runs in future.
+This functionality requires location services to be "On", please allow the app to use it. 
+
+========================================
+1.0c
+
+Several improvements -- not a public build
+
+1.0b  --  Testflight is back
+
+Re-introduced TestFlight library back into project. We had to pull it out before due to a bug in TestFlight's framework code.
+Executing TestFlight.TakeOff call will not crash the app upon launch anymore.
+Implemented a "Submit feedback" on the "Server/Client" tab. This will allow to send feedback directly to developer.
+
+========================================
+
+1.0a
+
+Fixed a bug that led to a crash on plumber jobs
+
+========================================
+
+1.0 - Almost there
+
+Added re-install job type for plumbers (allows to go through without choosing any parts)
+Customer address on the left-hand side is now displayed on 2 lines
+Added a reminder to the receipt template about tap warranty on tap replacement jobs
+Adjusted the timeouts and fixed several potential issues with data exchange with the server
+Fixed an issue that led to errors when transferring memos to office database
+
+========================================
+
+0.9.9 - Minor updates
+
+Tubing upgrade - Option 2 has been added for plumbers
+Increased font size of the fees on the summary screen and summary printout
+Added followup records for jobs that were not done
+========================================
+0.9.8 - Bug fixes
+
+The service screen issue where the user would not be able to go forward to payment has been fixed.
+The issue that would lead to payment type saving as "None" has been fixed (thanks to Jim, Steve, George and everyone else who has been reporting this).
+Service report comments will now save without unreadable characters between words.
+
+0.9.7 - Major update
+
+Added plumber-related functionality
+Reworked service reports feature to make it much easier to generate a ervice report. This applies to both plumber and franchisee versions of the app.
+Fixed an issue that would lead to parts list being displayed incorrectly after scrolling
+Fixed several scenarios that would sometimes lead to an app crash
+Added more part pictures
+
+0.9.6.4 - Major update
+
+Printing operations will time out after 5 seconds. If the app does not get a response from the printer, it will allow you to proceed.
+The app can now re-print the documents generated for the customer after the job data input is completed. To use this feature, select a customer, tap "More actions" -> "Reprint".
+Payment summary will highlight the rows corresponding to the selected customer, which will make summaries much easier to reconcile.
+The default job price for new taps is $59.
+The server response times when uploading the data have been significantly improved.
+If a tubing upgrade was accepted by customer, the pre-plumbing check will now mention if it has been done or not.
+The pre-plumbing checks do not get the attention they deserve, a confirmation dialog will now pop up whenever the user does not enter any information there.
+
+0.9.6.3
+Daily summaries are now generated for all runs just before submitting the data
+Fixed an issue that led to an app crash when an exception occured while trying to get a list of reachable WiFi networks
+
+0.9.6.2
+Fixed a glaring issue with followups (prompts not coming up when selecting 'Other' as a followup reason)
+
+0.9.6.1
+Implemented TestFlightSDK to get better information about crashes and checkpoints in the app.
+
+0.9.6
+Fixed an issue that would not let the app start in certain circumstances (especially with country runs).
+
+0.9.5
+Fixed signing issues for iOS 5 (bugged for iOS6, fixed in the next update).
+Several stability improvements.
+
+0.9.4
+Customers that have not had a tubing upgrade done are highlighted in blue.
+The app will no longer crash at startup under any circumstances (database corruption, files missing, etc).
+The custom notes available when "Attention" switch is on are now saved between application restarts.
+
+0.9.3
+Rainwater filter changes are implemented (they are booked as normal filter changes now with a price of $109, your fee will be $20.9). You can now select "Rainwater filter change" in the job type list.
+When signing, the "Done" and "Clear signature" buttons will now appear on top of the document instead of under the hand of the person trying to sign.
+Customer titles will no longer appear on receipts.
+Fixed application crash when going from payment to signing with a job under warranty and no payment options selected.
+Fixed processing of milk bottle jobs, the fees will now be assigned correctly.
+Triple tap on the signature field will no longer clear the signature.
+"Attention" comments field implemented. These comments WILL NOT PERSIST between application restarts. Please use "Special notes" field for any comments that the office should be aware of.
+
+0.9.2
+Customers titles no longer appear in the job run
+Business names are now properly displayed on job receipts
+Install dates are now displayed in 'Installation date' field on customer details screen
+Times are now displayed in 12-hour format (you're welcome, Gareth!)
+
+0.9.1
+Initial submission with versioning fixed
+Data loss after update issue fixed

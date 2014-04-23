@@ -541,7 +541,10 @@ namespace Puratap
 			rLat2 = DegreesToRadians (lat2);
 			rLng1 = DegreesToRadians (lng1);
 			rLng2 = DegreesToRadians (lng2);
-			return 6371.00 * Math.Acos (Math.Sin (rLat1) * Math.Sin (rLat2) + Math.Cos (rLat1) * Math.Cos (rLat2) * Math.Cos (rLng1 - rLng2));
+			if (rLat1 == rLat2 && rLng1 == rLng2)
+				return 0;
+			else
+				return 6371.00 * Math.Acos (Math.Sin (rLat1) * Math.Sin (rLat2) + Math.Cos (rLat1) * Math.Cos (rLat2) * Math.Cos (rLng1 - rLng2));
 		}
 
 		public double DegreesToRadians(double degree)

@@ -774,7 +774,6 @@ namespace Puratap
 				{
 					Tabs.SigningNav.PopToRootViewController(false);
 					Tabs.SigningNav.PushViewController (Tabs.SignInvoice, true);
-					// _navWorkflow._finishWorkflow(null, null);
 					this.selectedJob = null;
 				}			
 			}
@@ -785,10 +784,10 @@ namespace Puratap
 			Summary.ClearChildJobs ();
 		}
 		
-		void acSetLoyalty (NSObject sender)
-		{
-			_navWorkflow._setLoyaltyPrices(sender, null);
-		}
+//		void acSetLoyalty (NSObject sender)
+//		{
+//			_navWorkflow._setLoyaltyPrices(sender, null);
+//		}
 		
 		void acAddAnotherJob (NSObject sender)
 		{
@@ -1296,7 +1295,7 @@ namespace Puratap
 
 						return IsOk;
 					}
-				} else // if (_navWorkflow._tabs._jobRunTable.CurrentJob != null) 
+				} else // if (_navWorkflow._tabs._jobRunTable.CurrentJob == null) 
 					return false;
 			} catch {
 				return false;
@@ -1400,10 +1399,8 @@ namespace Puratap
 		
 		public override void DidReceiveMemoryWarning ()
 		{
-			// Releases the view if it doesn't have a superview.
-			// base.DidReceiveMemoryWarning ();
-			
-			// Release any cached data, images, etc that aren't in use.
+			this.UnloadEventHandlers ();
+			base.DidReceiveMemoryWarning ();
 		}
 		
 		public void FormatInput(UITextField textField, NSRange range, string replacementString)
@@ -1474,6 +1471,7 @@ namespace Puratap
 		public override void ViewDidLoad ()
 		{
 			base.ViewDidLoad ();
+			this.LoadEventHandlers ();
 			
 			// if iOS 7 -- bring the toolbar down 14 pixels
 			if (UIDevice.CurrentDevice.SystemVersion.Split ('.')[0] == "7") {
@@ -1482,50 +1480,12 @@ namespace Puratap
 				this.myToolbar.Frame = new RectangleF (current.X, current.Y+14, current.Width, current.Height);
 				this.myToolbar.SetNeedsLayout ();
 			}
-
-
-			//any additional setup after loading the view, typically from a nib.			
+						
 			lbExpiryDateInvalid.TextColor = UIColor.Red;
 			lbChequeNumberInvalid.TextColor = UIColor.Red;
 			lbCardOwnerNameInvalid.TextColor = UIColor.Red;
 			
 			tfCreditCardNumber.ShouldChangeCharacters = CCNShouldChangeCharacters;
-			
-			 /*
-			 // FUCK THIS SHIT
-			 // After a MonoTouch update to 5.2.12 the interaction with XCode's interface builder has been broken (Xamarin admitted it was their fuckup), 
-			 // and I needed to get the interface working somehow, so... see below
-			 */
-			
-			btnBack.Clicked += HandlebtnBackClicked;
-			btnProceed.Clicked += HandlebtnProceedClicked;
-			btnClearChildJobs.Clicked += HandleBtnClearChildJobsClicked;
-			btnAddChildJob.Clicked += HandleBtnAddAnotherJobClicked;
-			btnSplitPayment.Clicked += HandleBtnSplitPaymentClicked;
-
-			scPaymentType.ValueChanged += HandlePaymentControlValueChanged;
-			scSplitPaymentMethod1.ValueChanged += HandleSplitMethod1ValueChanged;
-			scSplitPaymentMethod2.ValueChanged += HandleSplitMethod2ValueChanged;
-
-			tfCreditCardExpiry.EditingDidEndOnExit += HandleTfCreditCardExpiryEditingDidEndOnExit;
-			tfCreditCardNumber.EditingDidEndOnExit += HandleCreditCardNumberEditingDidEndOnExit;
-			tfCreditCardName.EditingDidEndOnExit += HandleTfCreditCardNameEditingDidEndOnExit;
-			tfChequeNumber.EditingDidEndOnExit += HandleTfChequeNumberEditingDidEndOnExit;
-			tfToBeCollected.EditingDidEndOnExit += HandleTfToBeCollectedEditingDidEndOnExit;
-			tfTotalMoneyReceived.EditingDidEndOnExit += HandleTfTotalMoneyReceivedEditingDidEnd;
-
-			tfCreditCardNumber.EditingDidEnd += HandleCreditCardNumberEditingDidEndOnExit;
-			tfCreditCardName.EditingDidEnd += HandleTfCreditCardNameEditingDidEndOnExit;
-			tfCreditCardExpiry.EditingDidEnd += HandleTfCreditCardExpiryEditingDidEndOnExit;
-			tfChequeNumber.EditingDidEnd += HandleTfChequeNumberEditingDidEndOnExit;
-			tfToBeCollected.EditingDidEnd += HandleTfToBeCollectedEditingDidEndOnExit;
-			tfTotalMoneyReceived.EditingDidEnd += HandleTfTotalMoneyReceivedEditingDidEnd;
-
-			tfSplitPaymentAmount1.EditingDidEndOnExit += HandleTfSplitPaymentAmount1EditingDidEndOnExit;
-			tfSplitPaymentAmount2.EditingDidEndOnExit += HandleTfSplitPaymentAmount2EditingDidEndOnExit;
-
-			tfSplitPaymentAmount1.EditingDidEnd += HandleTfSplitPaymentAmount1EditingDidEndOnExit;
-			tfSplitPaymentAmount2.EditingDidEnd += HandleTfSplitPaymentAmount2EditingDidEndOnExit;
 			
 			Summary = new JobSummary(_navWorkflow, _navWorkflow._tabs, new RootElement("Job Summary"), false);
 			Summary.View.AutosizesSubviews = false;
@@ -1562,22 +1522,6 @@ namespace Puratap
 				notAllowedAlert.Show ();
 				return false;
 			};
-			/*
-			tfCreditCardNumber.ShouldBeginEditing = delegate(UITextField textField) {
-				tfCreditCardExpiry.EditingDidEnd(null, null);
-				tfCreditCardName.EditingDidEnd(null, null);
-			};
-
-			tfCreditCardExpiry.ShouldBeginEditing = delegate(UITextField textField) {
-				tfCreditCardName.EditingDidEnd(null,null);
-				tfCreditCardNumber.EditingDidEnd(null,null);
-			};
-
-			tfCreditCardName.ShouldBeginEditing = delegate(UITextField textField) {
-				tfCreditCardNumber.EditingDidEnd(null,null);
-				tfCreditCardExpiry.EditingDidEnd(null,null);
-			};
-			*/
 		}
 
 		void HandleTfSplitPaymentAmount2EditingDidEndOnExit (object sender, EventArgs e)
@@ -1644,20 +1588,47 @@ namespace Puratap
 			}
 		}
 
-		[Obsolete]
-		public override void ViewDidUnload ()
+		private void LoadEventHandlers() 
 		{
-			base.ViewDidUnload ();
-			
-			// Release any retained subviews of the main view.
-			// e.g. this.myOutlet = null;
+			btnBack.Clicked += HandlebtnBackClicked;
+			btnProceed.Clicked += HandlebtnProceedClicked;
+			btnClearChildJobs.Clicked += HandleBtnClearChildJobsClicked;
+			btnAddChildJob.Clicked += HandleBtnAddAnotherJobClicked;
+			btnSplitPayment.Clicked += HandleBtnSplitPaymentClicked;
+
+			scPaymentType.ValueChanged += HandlePaymentControlValueChanged;
+			scSplitPaymentMethod1.ValueChanged += HandleSplitMethod1ValueChanged;
+			scSplitPaymentMethod2.ValueChanged += HandleSplitMethod2ValueChanged;
+
+			tfCreditCardExpiry.EditingDidEndOnExit += HandleTfCreditCardExpiryEditingDidEndOnExit;
+			tfCreditCardNumber.EditingDidEndOnExit += HandleCreditCardNumberEditingDidEndOnExit;
+			tfCreditCardName.EditingDidEndOnExit += HandleTfCreditCardNameEditingDidEndOnExit;
+			tfChequeNumber.EditingDidEndOnExit += HandleTfChequeNumberEditingDidEndOnExit;
+			tfToBeCollected.EditingDidEndOnExit += HandleTfToBeCollectedEditingDidEndOnExit;
+			tfTotalMoneyReceived.EditingDidEndOnExit += HandleTfTotalMoneyReceivedEditingDidEnd;
+
+			tfCreditCardNumber.EditingDidEnd += HandleCreditCardNumberEditingDidEndOnExit;
+			tfCreditCardName.EditingDidEnd += HandleTfCreditCardNameEditingDidEndOnExit;
+			tfCreditCardExpiry.EditingDidEnd += HandleTfCreditCardExpiryEditingDidEndOnExit;
+			tfChequeNumber.EditingDidEnd += HandleTfChequeNumberEditingDidEndOnExit;
+			tfToBeCollected.EditingDidEnd += HandleTfToBeCollectedEditingDidEndOnExit;
+			tfTotalMoneyReceived.EditingDidEnd += HandleTfTotalMoneyReceivedEditingDidEnd;
+
+			tfSplitPaymentAmount1.EditingDidEndOnExit += HandleTfSplitPaymentAmount1EditingDidEndOnExit;
+			tfSplitPaymentAmount2.EditingDidEndOnExit += HandleTfSplitPaymentAmount2EditingDidEndOnExit;
+
+			tfSplitPaymentAmount1.EditingDidEnd += HandleTfSplitPaymentAmount1EditingDidEndOnExit;
+			tfSplitPaymentAmount2.EditingDidEnd += HandleTfSplitPaymentAmount2EditingDidEndOnExit;
+		}
+
+		private void UnloadEventHandlers() {
 			tfCreditCardExpiry.EditingDidEndOnExit -= HandleTfCreditCardExpiryEditingDidEndOnExit;
 			tfCreditCardNumber.EditingDidEndOnExit -= HandleCreditCardNumberEditingDidEndOnExit;
 			tfCreditCardName.EditingDidEndOnExit -= HandleTfCreditCardNameEditingDidEndOnExit;
 			tfChequeNumber.EditingDidEndOnExit -= HandleTfChequeNumberEditingDidEndOnExit;
 			tfToBeCollected.EditingDidEndOnExit -= HandleTfToBeCollectedEditingDidEndOnExit;
 			tfTotalMoneyReceived.EditingDidEndOnExit -= HandleTfTotalMoneyReceivedEditingDidEnd;
-			
+
 			tfCreditCardExpiry.EditingDidEnd -= HandleTfCreditCardExpiryEditingDidEndOnExit;
 			tfCreditCardNumber.EditingDidEnd -= HandleCreditCardNumberEditingDidEndOnExit;
 			tfCreditCardName.EditingDidEnd -= HandleTfCreditCardNameEditingDidEndOnExit;
@@ -1680,6 +1651,17 @@ namespace Puratap
 
 			tfSplitPaymentAmount1.EditingDidEnd -= HandleTfSplitPaymentAmount1EditingDidEndOnExit;
 			tfSplitPaymentAmount2.EditingDidEnd -= HandleTfSplitPaymentAmount2EditingDidEndOnExit;
+		}
+
+		[Obsolete]
+		public override void ViewDidUnload ()
+		{
+			base.ViewDidUnload ();
+			
+			// Release any retained subviews of the main view.
+			// e.g. this.myOutlet = null;
+			this.UnloadEventHandlers ();
+			this.ReleaseDesignerOutlets ();
 		}
 		
 
@@ -1943,42 +1925,29 @@ namespace Puratap
 			}
 		}
 
-		/*
-		void HandletfPaymentTypeTouchDown (object sender, EventArgs e)
-		{
-			acPaymentTypeTouchDown ();
-		}
-
-		void HandletfInvoicePOTouchDown (object sender, EventArgs e)
-		{
-			acInvoicePOTouchDown();
-		}
-		*/
-
-
 		void HandleBtnAddAnotherJobClicked (object sender, EventArgs e)
 		{
-			acAddAnotherJob(this);
+			this.acAddAnotherJob(null);
 		}
 
 		void HandlebtnSetLoyaltyClicked (object sender, EventArgs e)
 		{
-			acSetLoyalty(this);
+			// acSetLoyalty(null);
 		}
 
 		void HandleBtnClearChildJobsClicked (object sender, EventArgs e)
 		{
-			acClearChildJobs (this);
+			this.acClearChildJobs (null);
 		}
 
 		void HandlebtnProceedClicked (object sender, EventArgs e)
 		{
-			acProceed (this);
+			this.acProceed (null);
 		}
 
 		void HandlebtnBackClicked (object sender, EventArgs e)
 		{
-			acBack (this);
+			this.acBack (null);
 		}
 		
 		void HandleTfTotalMoneyReceivedEditingDidEnd (object sender, EventArgs e)

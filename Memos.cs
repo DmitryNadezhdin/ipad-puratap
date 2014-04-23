@@ -98,16 +98,23 @@ namespace Puratap
 				{
 					_memoView.oMemoText.Editable = true;
 					_memoView.oMemoText.ShouldBeginEditing = delegate {
-						_memoView.oMemoText.Frame = new RectangleF(0,40,663,300);
+						UIView.SetAnimationDuration(0.3);
+						UIView.BeginAnimations(null);
+						_memoView.oMemoText.Frame = new RectangleF(10,70,683,300);
 						_memoView.oMemosTable.Hidden = true;
-						
+						UIView.CommitAnimations();
 						return true;		// this means that oMemoText object is permitted to begin its editing
+
 					};
 					
 					_memoView.oMemoText.ShouldEndEditing = delegate {
 						_memoView.oMemoText.Editable = false;
+						UIView.SetAnimationDuration(0.3);
+						UIView.BeginAnimations(null);
 						_memoView.oMemoText.Frame = new RectangleF(20,523,663,166);
 						_memoView._memos[indexPath.Row].MemoContents = _memoView.oMemoText.Text;
+
+						UIView.CommitAnimations();
 						
 						// updates WCMemo database table here (as the editing has been done)
 						string dbPath = ServerClientViewController.dbFilePath;

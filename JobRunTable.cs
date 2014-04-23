@@ -677,10 +677,11 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						// This will ignore manually added jobs
 					
 						sql = " SELECT wsales.specialinstruct, wsales.wplcomment, wsales.contact_name, " +
-								" wsales.wsoldprice as sales_price, wcmemo.wmore as pl_memo, " +
+							" wsales.wsoldprice as sales_price, wcmemo.wmore as pl_memo, followups.comment as not_done_comment, " +
 								" pl_recor.* " +
 								" FROM pl_recor LEFT OUTER JOIN wsales ON pl_recor.cusnum = wsales.cusnum AND pl_recor.unitnum = wsales.unitnum " +
-											  " LEFT OUTER JOIN wcmemo ON pl_recor.booknum = wcmemo.booknum AND wcmemo.wmtype = 'PLU' " +
+											  	" LEFT OUTER JOIN wcmemo ON pl_recor.booknum = wcmemo.booknum AND wcmemo.wmtype = 'PLU' " +
+												" LEFT OUTER JOIN followups ON pl_recor.booknum = followups.job_id AND followups.reason_id = 10 " +
 								" WHERE pl_recor.plAppDate = " + dbDate +		// IMPLEMENTED :: was a hardcoded date, has been replaced by something a bit more flexible
 									// " AND wsales.unitnum != 0 " +				// getting rid of older WSALES records that cannot be used to determine the sale price
 									" AND pl_recor.cusnum != 72077 " +			// getting rid of dummy records ( Mr. Puratap )
@@ -748,8 +749,16 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 								// plug the value from the parentnum field into the job constructor
 								long parentnum = Convert.ToInt64(reader["parentnum"]);
+								string notDoneComment = (reader["not_done_comment"] == DBNull.Value) ? "" : (string)reader["not_done_comment"];
+								int colonCount = notDoneComment.Count (c => c == ':');
 																	
 								j = new Job(cusnum, jnum, unitnum, jTime, jDate, money, jbOn, jbBy, sp, plc, jType, parentnum, warranty, attention, cntct, attreason);
+
+								// comment saved in Followups has the following format
+								// Job not done: Reason selected by user: User comment
+								// therefore we check if it contains 2 or more colons, if it does, we use a substring that only contains user comment
+								j.NotDoneComment = (colonCount >= 2) ? notDoneComment.Substring (MyConstants.GetNthIndex (notDoneComment, ':', 2)+2 ) : notDoneComment;
+
 								j.JobTimeStart = jtStart;
 								j.JobTimeEnd = jtEnd;
 								j.OrderInRun = Convert.ToInt32 (reader ["ipad_ordering"]);
@@ -851,8 +860,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						
 						// Get user added jobs (manually created, were not booked)
 						sql = " SELECT pl_recor.*, " +
-										" '' as contact_name, '' as attention_reason " +
+										" '' as contact_name, '' as attention_reason, followups.comment as not_done_comment " +
 									" FROM pl_recor " +
+										" LEFT OUTER JOIN followups ON pl_recor.booknum = followups.job_id AND followups.reason_id = 10 " +
 									" WHERE pl_recor.plAppDate = " + dbDate +		// DEBUG :: was almost a hard-coded date, has been replaced by something a bit more flexible
 										" AND pl_recor.cusnum != 72077 " +		// getting rid of dummy records ( Mr. Puratap )
 										" AND (pl_recor.parentnum = -1 OR (pl_recor.parentnum > 0 AND pl_recor.parentnum < 1001)) " + 		// reading only user created jobs and their child jobs
@@ -877,11 +887,13 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								bool attention = Convert.ToBoolean( reader["attention"] );
 								string cntct = (reader["contact_name"] == DBNull.Value) ? "" : (string)reader["contact_name"];
 								string attreason = (reader["attention_reason"] == DBNull.Value) ? "" : (string)reader["attention_reason"];
+								string notDoneComment = (reader["not_done_comment"] == DBNull.Value) ? "" : (string)reader["not_done_comment"];
+								int colonCount = notDoneComment.Count (c => c == ':');
 
 								// plug the value from the parentnum field into the job constructor
 								// two empty strings are SpecialInstructions and PlumbingComments
 								j = new Job(cusnum, jnum, unitnum, jTime, jDate, money, jbOn, jbBy, "", "", jType, parentnum, warranty, attention, cntct, attreason);
-							
+								j.NotDoneComment = (colonCount >= 2) ? notDoneComment.Substring (MyConstants.GetNthIndex (notDoneComment, ':', 2)+2 ) : notDoneComment;
 								// getting job status values from database
 								int jDone = Convert.ToInt32 (reader["jdone"]);
 								j.JobDone = (jDone==1) ? true : false;	
@@ -1152,12 +1164,12 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								try 
 								{
 									dbConnection.Open();
-									// get the possible dates to load from the database
+									// get the possible dates to load from the database										
 									string sql = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber)? 
 										"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate>=date('now', '-7 day') and plnum = " + MyConstants.EmployeeID.ToString() + 
 										" GROUP BY plappdate having jobs>0 order by plappdate" : 
 											"SELECT plappdate as date, count(booknum) as jobs from pl_recor where plappdate>=date('now', '-7 day') and repnum =  " + MyConstants.EmployeeID.ToString() + 
-									             " GROUP BY plappdate having jobs>15 order by plappdate";
+											" GROUP BY plappdate having jobs>15 order by plappdate";
 									cmd.CommandText = sql;
 									using (var dateReader = cmd.ExecuteReader())
 									{
@@ -1305,6 +1317,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						cell.TextLabel.Text = caption;
 						cell.DetailTextLabel.Text = "Last data exchange time";
 						cell.Accessory = UITableViewCellAccessory.None;
+						cell.AccessoryView = null;
 						cell.BackgroundColor = UIColor.White;
 						break;
 					}
@@ -1312,8 +1325,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					{
 						cell.TextLabel.Text = "Tap to add new job";
 						cell.DetailTextLabel.Text = "Use with caution :-)";
-						cell.Accessory = UITableViewCellAccessory.None;
 						cell.BackgroundColor = UIColor.White;
+						cell.Accessory = UITableViewCellAccessory.None;
+						cell.AccessoryView = null;
 						break;
 					}
 				case 1:
@@ -1330,10 +1344,19 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							cell.DetailTextLabel.Lines = 2;
 
 							_table.UserAddedCustomers [indexPath.Row].HighLighted = false;
-							if (_table.UserCreatedJobs [indexPath.Row].JobDone)
-								cell.Accessory = UITableViewCellAccessory.Checkmark;
-							else
+							if (_table.UserCreatedJobs [indexPath.Row].JobDone) {
+								if (_table.UserCreatedJobs [indexPath.Row].Started == MyConstants.JobStarted.Yes) {
+									cell.AccessoryView = null;
+									cell.Accessory = UITableViewCellAccessory.Checkmark;
+								} else {
+									UIImageView view = new UIImageView (UIImage.FromBundle ("/Images/201-cross"));
+									cell.Accessory = UITableViewCellAccessory.None;
+									cell.AccessoryView = view;
+								}
+							} else {
+								cell.AccessoryView = null;
 								cell.Accessory = UITableViewCellAccessory.None;
+							}
 
 							if (_table.UserCreatedJobs [indexPath.Row].AttentionFlag)
 								cell.BackgroundColor = UIColor.Yellow;
@@ -1365,10 +1388,17 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 						try {
 
-							if (_table._mainjoblist [indexPath.Row].JobDone)
-								cell.Accessory = UITableViewCellAccessory.Checkmark;
-							else
-								cell.Accessory = UITableViewCellAccessory.None;
+							if (_table._mainjoblist [indexPath.Row].JobDone) {
+								if (_table._mainjoblist [indexPath.Row].Started == MyConstants.JobStarted.Yes) {
+									cell.AccessoryView = new UIImageView (UIImage.FromBundle ("/Images/202-tick"));
+								}
+								else {
+									cell.AccessoryView = new UIImageView (UIImage.FromBundle ("/Images/201-cross"));
+								}
+							}
+							else {
+								cell.AccessoryView = null;
+							}
 
 							if (_table.MainJobList [indexPath.Row].AttentionFlag)
 								cell.BackgroundColor = UIColor.Yellow;
@@ -1378,7 +1408,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								else
 									cell.BackgroundColor = UIColor.Cyan;
 							}
-						} catch {
+						} catch (Exception e) {
+							Console.WriteLine (e.Message);
 							cell.Accessory = UITableViewCellAccessory.None;
 							cell.BackgroundColor = UIColor.White;
 						}
@@ -1419,7 +1450,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			public override void MoveRow (UITableView tableView, NSIndexPath sourceIndexPath, NSIndexPath destinationIndexPath)
 			{
 				if (sourceIndexPath.Section == 0) {
-					// move customer record in _customers
+					// moving rows within section 0 -- main job list
+
+					// move customer record in customers list
 					Customer c = _table.Customers [sourceIndexPath.Row];
 					_table.Customers.RemoveAt (sourceIndexPath.Row);
 					_table.Customers.Insert (destinationIndexPath.Row, c);
@@ -1428,14 +1461,29 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 					_table.MainJobList.RemoveAt (sourceIndexPath.Row);
 					_table.MainJobList.Insert (destinationIndexPath.Row, j);
 				} else if (sourceIndexPath.Section == 1) {
-					// move customer record in _customers
-					Customer c = _table.UserAddedCustomers [sourceIndexPath.Row];
-					_table.UserAddedCustomers.RemoveAt (sourceIndexPath.Row);
-					_table.UserAddedCustomers.Insert (destinationIndexPath.Row, c);
-					// move job record in _joblist
-					Job j = _table.UserCreatedJobs [sourceIndexPath.Row];
-					_table.UserCreatedJobs.RemoveAt (sourceIndexPath.Row);
-					_table.UserCreatedJobs.Insert (destinationIndexPath.Row, j);
+					if (destinationIndexPath.Section == 1) {
+						// moving row within section 1 -- custom jobs
+
+						// move customer record in customers list
+						Customer c = _table.UserAddedCustomers [sourceIndexPath.Row];
+						_table.UserAddedCustomers.RemoveAt (sourceIndexPath.Row);
+						_table.UserAddedCustomers.Insert (destinationIndexPath.Row, c);
+						// move job record in _joblist
+						Job j = _table.UserCreatedJobs [sourceIndexPath.Row];
+						_table.UserCreatedJobs.RemoveAt (sourceIndexPath.Row);
+						_table.UserCreatedJobs.Insert (destinationIndexPath.Row, j);
+					} else if (destinationIndexPath.Section == 0) {
+						// moving a row from custom jobs section into the main section
+
+						// move customer record from user added customers to main customer list
+						Customer c = _table.UserAddedCustomers [sourceIndexPath.Row];
+						_table.UserAddedCustomers.RemoveAt (sourceIndexPath.Row);
+						_table.Customers.Insert (destinationIndexPath.Row, c);
+						// move the job record from user created jobs to main job list
+						Job j = _table.UserCreatedJobs [sourceIndexPath.Row];
+						_table.UserCreatedJobs.RemoveAt (sourceIndexPath.Row);
+						_table.MainJobList.Insert (destinationIndexPath.Row, j);
+					}
 				}
 			}
 			
@@ -1443,18 +1491,33 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			{
 				if (editingStyle == UITableViewCellEditingStyle.Delete)
 				{
-					// delete the client record from WCLIENT : only delete ones with empty history & memos
-					if (_table.UserAddedCustomers[indexPath.Row].JobHistory.Count == 0 && _table.UserAddedCustomers[indexPath.Row].CustomerMemos.Count == 0)
-						_table._tabs._navWorkflow.EraseCustomerRecordFromDatabase (_table.UserAddedCustomers[indexPath.Row]);
+					if (indexPath.Section == 1) { // deleting custom job in custom jobs section
 
-					// remove the customer data from customer list
-					_table.UserAddedCustomers.RemoveAt(indexPath.Row);
-					// delete everything from PAYMENTS, FEES, FOLLOWUPS, STOCKUSED and PL_RECOR (including child jobs)
-					_table._tabs._navWorkflow.EraseMainJobResultsFromDatabase ( _table.UserCreatedJobs[indexPath.Row] );
-					// erase the main job record from PL_RECOR
-					_table._tabs._navWorkflow.EraseJobRecordFromDatabase (_table.UserCreatedJobs[indexPath.Row]);
-					// remove the main job record from job list
-					_table.UserCreatedJobs.RemoveAt(indexPath.Row);
+						// delete the client record from WCLIENT : only delete ones with empty history & memos
+						if (_table.UserAddedCustomers [indexPath.Row].JobHistory.Count == 0 && _table.UserAddedCustomers [indexPath.Row].CustomerMemos.Count == 0)
+							_table._tabs._navWorkflow.EraseCustomerRecordFromDatabase (_table.UserAddedCustomers [indexPath.Row]);
+
+						// remove the customer data from customer list
+						_table.UserAddedCustomers.RemoveAt (indexPath.Row);
+						// delete everything from PAYMENTS, FEES, FOLLOWUPS, STOCKUSED and PL_RECOR (including child jobs)
+						_table._tabs._navWorkflow.EraseMainJobResultsFromDatabase (_table.UserCreatedJobs [indexPath.Row]);
+						// erase the main job record from PL_RECOR
+						_table._tabs._navWorkflow.EraseJobRecordFromDatabase (_table.UserCreatedJobs [indexPath.Row]);
+						// remove the main job record from job list
+						_table.UserCreatedJobs.RemoveAt (indexPath.Row);
+					} else if (indexPath.Section == 0) { // deleting custom job in the main section
+
+						// delete the client record from WCLIENT
+						_table._tabs._navWorkflow.EraseCustomerRecordFromDatabase (_table.Customers [indexPath.Row]);
+						// remove the customer data from customer list
+						_table.Customers.RemoveAt (indexPath.Row);
+						// delete everything from PAYMENTS, FEES, FOLLOWUPS, STOCKUSED and PL_RECOR (including child jobs)
+						_table._tabs._navWorkflow.EraseMainJobResultsFromDatabase (_table.MainJobList [indexPath.Row]);
+						// erase the main job record from PL_RECOR
+						_table._tabs._navWorkflow.EraseJobRecordFromDatabase (_table.MainJobList [indexPath.Row]);
+						// remove the main job record from job list
+						_table.MainJobList.RemoveAt (indexPath.Row);
+					}
 					// refresh the table view
 					_table.TableView.ReloadData ();
 				}
@@ -1476,7 +1539,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			public override UITableViewCellEditingStyle EditingStyleForRow (UITableView tableView, NSIndexPath indexPath)
 			{
 				switch (indexPath.Section) {
-				case 0: return UITableViewCellEditingStyle.None;
+				case 0: return (_table.MainJobList[indexPath.Row].JobBookingNumber <= 1000) ? UITableViewCellEditingStyle.Delete : UITableViewCellEditingStyle.None;
 				case 1: {
 						return UITableViewCellEditingStyle.Delete;
 						//return (_table.UserCreatedJobs == null || _table.UserCreatedJobs.Count == 0) ? UITableViewCellEditingStyle.Insert : UITableViewCellEditingStyle.Delete;
@@ -1602,10 +1665,11 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 			public override NSIndexPath CustomizeMoveTarget (UITableView tableView, NSIndexPath sourceIndexPath, NSIndexPath proposedIndexPath)
 			{
-				if (sourceIndexPath.Section != proposedIndexPath.Section)
+				// if (sourceIndexPath.Section != proposedIndexPath.Section)
+				if (sourceIndexPath.Section == 0 && proposedIndexPath.Section != 0)
 				{
-					// if user tries to drag a row from one section to another, show alert that it is not allowed
-					var cannotChangeSections = new UIAlertView ("Sorry", "Cells must stay within their table section", null, "OK");
+					// if user tries to drag a row from section one to any other, show alert that it is not allowed
+					var cannotChangeSections = new UIAlertView ("Sorry", "Job cell must stay within this table section", null, "OK");
 					cannotChangeSections.Show ();
 					return sourceIndexPath;
 				}
@@ -1919,6 +1983,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 		public string JobSpecialInstructions { get; set; }
 		public string JobPlumbingComments { get; set; }
 		public string ContactPerson { get; set; }
+
+		public string NotDoneComment { get; set; }
 		
 		// public JobDescription JobTypeDescription { get; set; }
 		// public string JobType { get; set; }

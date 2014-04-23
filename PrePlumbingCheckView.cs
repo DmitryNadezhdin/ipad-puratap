@@ -10,7 +10,7 @@ namespace Puratap
 {
 	public partial class PrePlumbingCheckView : UIViewController
 	{			
-		WorkflowNavigationController _navWorkflow;
+		public WorkflowNavigationController _navWorkflow;
 		UIActionSheet ac;
 		
 		float MovedViewY;
@@ -212,7 +212,7 @@ namespace Puratap
 		
 		public void JobWasNotDoneClicked()
 		{
-			if (_navWorkflow._tabs._jobRunTable.CurrentJob.Started == MyConstants.JobStarted.None) 
+			// if (_navWorkflow._tabs._jobRunTable.CurrentJob.Started == MyConstants.JobStarted.None) 
 			{
 				if (_jobNotDone == null) // if this is the first time, we create the dialog
 				{
@@ -220,7 +220,7 @@ namespace Puratap
 				                               "Customer not at home",
 				                               "Cancelled by customer",
 				                               "I wasn't there in time",
-				                              "The address was wrong",
+				                               "The address was wrong",
 					                              "Other");
 					_jobNotDone.Dismissed += delegate(object _sender, UIButtonEventArgs e) 
 					{
@@ -276,6 +276,7 @@ namespace Puratap
 
 			selectedJob.ShouldPayFee = false;	// fee is not paid since job was not done
 			selectedJob.JobDone = true;			// job data entering is finished
+			selectedJob.NotDoneComment = notDoneComment;
 			selectedJob.ChildJobs.Clear ();		// child job data is cleared since the main one was not done
 			selectedJob.UsedParts.Clear ();		// no parts have been used
 			_navWorkflow._tabs._jobRunTable.CurrentJob = selectedJob;	// TODO :: this should probably be removed

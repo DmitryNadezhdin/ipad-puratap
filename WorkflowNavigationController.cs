@@ -43,7 +43,7 @@ namespace Puratap
 		EventHandler _proceedAfterSigningPrePlumbing;
 		public EventHandler _refusedToPay;
 		public EventHandler _extraJobs;
-		public EventHandler _setLoyaltyPrices;
+		// public EventHandler _setLoyaltyPrices;
 		public EventHandler _clearJobsList;
 		
 		public EventHandler ResetWorkflow { get { return _resetWorkflow; } }
@@ -75,6 +75,9 @@ namespace Puratap
 		public void ProceedToBookedJobType(object obj, EventArgs evargs)
 		{
 			Job j = _tabs._jobRunTable.CurrentJob;
+			if (j.Started != MyConstants.JobStarted.Yes) {
+				j.Started = MyConstants.JobStarted.Yes;
+			}
 			StartWorkflowForJob (j);
 		}
 		
@@ -225,48 +228,48 @@ namespace Puratap
 				alert.Show ();				
 			};
 			
-			_setLoyaltyPrices = delegate {
-				Job curj = _tabs._jobRunTable.CurrentJob;
-				if (curj.HasParent ())
-				{	// find main job
-					curj = _tabs._jobRunTable.FindParentJob (curj);
-				}
-				
-				double discount = 0; 
-
-				if (curj.Type.RetailPrice > curj.MoneyToCollect) // initial discount value is difference between the main job's retail price and the current price
-					discount = curj.Type.RetailPrice - curj.MoneyToCollect;
-				int i = -1;
-				foreach(Job child in curj.ChildJobs)
-				{
-					if (child.MoneyToCollect == child.Type.RetailPrice) {
-						child.MoneyToCollect = child.Type.LoyaltyPrice;
-						child.Payments[0].Amount = child.MoneyToCollect;
-						discount += child.Type.RetailPrice - child.Type.LoyaltyPrice;
-					}
-					else {
-						if (child.MoneyToCollect < child.Type.RetailPrice)
-							discount += child.Type.RetailPrice - child.MoneyToCollect;	
-					}
-				}
-				
-				JobSummary summary = _tabs._payment.Summary;
-				summary.EditPrices(summary);
-				double total = summary.mainJob.MoneyToCollect;
-				foreach(StringElement element in summary.Root[0])
-				{
-					if (element == summary.Root[0].Elements[0]) continue;
-					else {
-						i++;
-						element.Value = String.Format ("${0:0.00}", curj.ChildJobs[i].MoneyToCollect);
-						total += curj.ChildJobs[i].MoneyToCollect;
-					}
-				}
-				summary.Root[0].Footer = String.Format ("Loyalty discount: ${0:0.00}", discount);
-				summary.ReloadData ();
-				summary.SelectCurrentJobRow ();
-				_tabs._payment.SetTotalToCollect (total);
-			};
+//			_setLoyaltyPrices = delegate {
+//				Job curj = _tabs._jobRunTable.CurrentJob;
+//				if (curj.HasParent ())
+//				{	// find main job
+//					curj = _tabs._jobRunTable.FindParentJob (curj);
+//				}
+//				
+//				double discount = 0; 
+//
+//				if (curj.Type.RetailPrice > curj.MoneyToCollect) // initial discount value is difference between the main job's retail price and the current price
+//					discount = curj.Type.RetailPrice - curj.MoneyToCollect;
+//				int i = -1;
+//				foreach(Job child in curj.ChildJobs)
+//				{
+//					if (child.MoneyToCollect == child.Type.RetailPrice) {
+//						child.MoneyToCollect = child.Type.LoyaltyPrice;
+//						child.Payments[0].Amount = child.MoneyToCollect;
+//						discount += child.Type.RetailPrice - child.Type.LoyaltyPrice;
+//					}
+//					else {
+//						if (child.MoneyToCollect < child.Type.RetailPrice)
+//							discount += child.Type.RetailPrice - child.MoneyToCollect;	
+//					}
+//				}
+//				
+//				JobSummary summary = _tabs._payment.Summary;
+//				summary.EditPrices(summary);
+//				double total = summary.mainJob.MoneyToCollect;
+//				foreach(StringElement element in summary.Root[0])
+//				{
+//					if (element == summary.Root[0].Elements[0]) continue;
+//					else {
+//						i++;
+//						element.Value = String.Format ("${0:0.00}", curj.ChildJobs[i].MoneyToCollect);
+//						total += curj.ChildJobs[i].MoneyToCollect;
+//					}
+//				}
+//				summary.Root[0].Footer = String.Format ("Loyalty discount: ${0:0.00}", discount);
+//				summary.ReloadData ();
+//				summary.SelectCurrentJobRow ();
+//				_tabs._payment.SetTotalToCollect (total);
+//			};
 			
 			_clearJobsList = delegate {
 				// This clears the job list (except the main job, of course)
@@ -283,22 +286,17 @@ namespace Puratap
 				// replaced basic alert with a subclass that displays obly those job types that the current employee can perform
 				// the job types are stored in JOB_TYPES database table
 
-
-
-
 				if (JobRunTable.JobTypes == null)
 					JobRunTable.JobTypes = MyConstants.GetJobTypesFromDB ();
 				UIActionSheet alert = new UIActionSheet("Choose a job type", null, null, null);
 				foreach(JobType jt in JobRunTable.JobTypes)
 				{
-					if (jt.CanDo)
-					{
+					if (jt.CanDo) {
 						alert.AddButton (jt.Description);
 					}
 				}
 				alert.Dismissed += delegate(object sender, UIButtonEventArgs e) {
-					if (e.ButtonIndex != alert.CancelButtonIndex)
-					{
+					if (e.ButtonIndex != alert.CancelButtonIndex) {
 						Job currentJob = _tabs._jobRunTable.CurrentJob;
 						string chosenTypeDescription = alert.ButtonTitle(e.ButtonIndex);
 						
@@ -448,6 +446,8 @@ namespace Puratap
 				ResetUserCreatedJobs();				// clear all data about user created jobs
 				if (_tabs._jobRunTable.CurrentJob != null) 
 				{
+					_tabs._jobRunTable.CurrentJob.NotDoneComment = "";
+					_tabs._jobRunTable.CurrentJob.Started = MyConstants.JobStarted.None;
 					if (_tabs._jobRunTable.CurrentJob.Payments != null) 
 						_tabs._jobRunTable.CurrentJob.Payments.Clear ();
 					_tabs._scView.Log (String.Format ("Workflow reset for Job ID: {0}", _tabs._jobRunTable.CurrentJob.JobBookingNumber));
@@ -893,15 +893,15 @@ namespace Puratap
 					_flexibleButtonSpace = new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace, null, null);
 					_rightButton = new UIBarButtonItem("Refused to pay", UIBarButtonItemStyle.Bordered, _refusedToPay);				
 					var extraJobButton = new UIBarButtonItem("Add another job", UIBarButtonItemStyle.Bordered, _extraJobs);
-					var loyaltyButton =  new UIBarButtonItem("Loyalty", UIBarButtonItemStyle.Bordered, _setLoyaltyPrices);
+					// var loyaltyButton =  new UIBarButtonItem("Loyalty", UIBarButtonItemStyle.Bordered, _setLoyaltyPrices);
 				
 				
-					_buttons = new UIBarButtonItem[] { _leftButton, _flexibleButtonSpace, extraJobButton, _flexibleButtonSpace, loyaltyButton, _flexibleButtonSpace, _rightButton };
+					_buttons = new UIBarButtonItem[] { _leftButton, _flexibleButtonSpace, extraJobButton, _flexibleButtonSpace, _rightButton };
 					this.Toolbar.SetItems (_buttons, true);					
 					return;
 				
 				case WorkflowToolbarButtonsMode.JobSummary:
-					_leftButton = new UIBarButtonItem("Loyalty", UIBarButtonItemStyle.Done, _setLoyaltyPrices);
+					_leftButton = new UIBarButtonItem("Loyalty", UIBarButtonItemStyle.Done, null);
 					_flexibleButtonSpace = new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace, null, null);
 					_rightButton = new UIBarButtonItem("Clear jobs list", UIBarButtonItemStyle.Bordered, _clearJobsList);
 					_buttons = new UIBarButtonItem[] { _leftButton, _flexibleButtonSpace, _rightButton };
@@ -937,19 +937,29 @@ namespace Puratap
 						// set job results data				
 						string jResult = "Result";
 						if (j.Started == MyConstants.JobStarted.Yes) {
+
+							// remove any records in FOLLOWUPS with reasonID = 10 
+							// there could be some if user selects "job not done" first, then finishes job workflow
+							cmd.CommandText = "DELETE FROM FOLLOWUPS WHERE Job_ID = ? AND Reason_ID = 10";
+							cmd.Parameters.Clear ();
+							cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+							cmd.ExecuteNonQuery ();
+
 							switch(j.Type.Code) {
-							case "INS": { jResult = "Installed "; break; }
-							case "SIN": { jResult = "Installed "; break; }
-							case "TWI": { jResult = "Installed "; break;}
-							case "UP": { jResult = "Upgraded  "; break; }
-							case "TUBINGUPGR": { jResult = "Upgraded"; break; }
-							case "HDTUBING": { jResult = "Upgraded"; break; }
-							case "NEWTAP": { jResult = "New Tap"; break; }
-							case "UNI": { jResult = "Uninstall "; break; }
-							case "FIL": { jResult = "Changed   "; break; }
-							case "MIL": { jResult = "Changed   "; break; }
-							case "FRC": { jResult = "Changed   "; break; }
-							case "SER": { jResult = "Service Done"; break; }
+								case "INS": { jResult = "Installed "; break; }
+								case "SIN": { jResult = "Installed "; break; }
+								case "TWI": { jResult = "Installed "; break; }
+								case "REI": { jResult = "Installed "; break; }
+								case "UP": { jResult = "Upgraded  "; break; }
+								case "TUBINGUPGR": { jResult = "Upgraded"; break; }
+								case "HDTUBING": { jResult = "Upgraded"; break; }
+								case "NEWTAP": { jResult = "New Tap"; break; }
+								case "UNI": { jResult = "Uninstall "; break; }
+								case "FIL": { jResult = "Changed   "; break; }
+								case "MIL": { jResult = "Changed   "; break; }
+								case "FRC": { jResult = "Changed   "; break; }
+								case "SER": { jResult = "Service Done"; break; }
+								case "DLV": { jResult = "Delivered "; break; }
 							}
 						}
 						else {
@@ -1209,6 +1219,7 @@ namespace Puratap
 		{
 			j.Started = MyConstants.JobStarted.None;
 			j.JobDone = false;
+			j.NotDoneComment = "";
 			if (j.UsedParts != null) j.UsedParts.Clear ();
 			if (j.Payments != null)
 			{
