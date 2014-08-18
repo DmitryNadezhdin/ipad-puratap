@@ -35,6 +35,18 @@ namespace Puratap
 			}
 		}
 
+		Assembly _chosenAssembly;
+		public Assembly ChosenAssembly {
+			get { return _chosenAssembly; }
+			set { 
+				_chosenAssembly = value;
+				PopViewControllerAnimated(true);
+				if (this.TopViewController != null) {
+					(this.TopViewController as UsedPartsViewController).AssemblyChosen (ChosenAssembly, false);
+				}
+			}
+		}
+
 	}
 }
 

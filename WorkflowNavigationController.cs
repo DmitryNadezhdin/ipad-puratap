@@ -43,7 +43,6 @@ namespace Puratap
 		EventHandler _proceedAfterSigningPrePlumbing;
 		public EventHandler _refusedToPay;
 		public EventHandler _extraJobs;
-		// public EventHandler _setLoyaltyPrices;
 		public EventHandler _clearJobsList;
 		
 		public EventHandler ResetWorkflow { get { return _resetWorkflow; } }
@@ -227,49 +226,6 @@ namespace Puratap
 				alert.WillDismiss += HandleRefusedToPayWillDismiss;
 				alert.Show ();				
 			};
-			
-//			_setLoyaltyPrices = delegate {
-//				Job curj = _tabs._jobRunTable.CurrentJob;
-//				if (curj.HasParent ())
-//				{	// find main job
-//					curj = _tabs._jobRunTable.FindParentJob (curj);
-//				}
-//				
-//				double discount = 0; 
-//
-//				if (curj.Type.RetailPrice > curj.MoneyToCollect) // initial discount value is difference between the main job's retail price and the current price
-//					discount = curj.Type.RetailPrice - curj.MoneyToCollect;
-//				int i = -1;
-//				foreach(Job child in curj.ChildJobs)
-//				{
-//					if (child.MoneyToCollect == child.Type.RetailPrice) {
-//						child.MoneyToCollect = child.Type.LoyaltyPrice;
-//						child.Payments[0].Amount = child.MoneyToCollect;
-//						discount += child.Type.RetailPrice - child.Type.LoyaltyPrice;
-//					}
-//					else {
-//						if (child.MoneyToCollect < child.Type.RetailPrice)
-//							discount += child.Type.RetailPrice - child.MoneyToCollect;	
-//					}
-//				}
-//				
-//				JobSummary summary = _tabs._payment.Summary;
-//				summary.EditPrices(summary);
-//				double total = summary.mainJob.MoneyToCollect;
-//				foreach(StringElement element in summary.Root[0])
-//				{
-//					if (element == summary.Root[0].Elements[0]) continue;
-//					else {
-//						i++;
-//						element.Value = String.Format ("${0:0.00}", curj.ChildJobs[i].MoneyToCollect);
-//						total += curj.ChildJobs[i].MoneyToCollect;
-//					}
-//				}
-//				summary.Root[0].Footer = String.Format ("Loyalty discount: ${0:0.00}", discount);
-//				summary.ReloadData ();
-//				summary.SelectCurrentJobRow ();
-//				_tabs._payment.SetTotalToCollect (total);
-//			};
 			
 			_clearJobsList = delegate {
 				// This clears the job list (except the main job, of course)
@@ -632,6 +588,13 @@ namespace Puratap
 					GoUnitUpgrade();
 					break;
 				}
+				case "TUBING": // Tubing upgrade
+				{
+					_tabs._jobTubingUpgrade.ThisJob = _tabs._jobRunTable.CurrentJob;
+					_tabs._jobTubingUpgrade.ClearPartsList ();
+					GoTubingUpgrade();
+					break;
+				}
 				case "TUBINGUPGR": // Tubing upgrade
 				{
 					_tabs._jobTubingUpgrade.ThisJob = _tabs._jobRunTable.CurrentJob;
@@ -724,67 +687,39 @@ namespace Puratap
 		
 		public void ResetViewControllersToDefaults(bool resetInstallFees)
 		{
-			/*
-			foreach (UIViewController vc in this.ViewControllers)
-			{
-				// if (vc is UsedPartsViewController) vc.ClearPartsList(); // this is a beautiful line, but, unfortunately, it's a bit limited for what we need to do here
-				switch (vc.GetType().Name)
-				{
-				// IMPLEMENTED :: reset UsedParts in FilterChange view controller
-				case "FilterChangeViewController":			(vc as FilterChangeViewController).ClearPartsList (); break;
-				
-				// IMPLEMENTED :: reset UsedParts in ServiceCall used parts view controller
-				case "ServiceUsedPartsViewController": 	(vc as ServiceUsedPartsViewController).ClearPartsList(); break;
-				
-				// IMPLEMENTED :: reset Problems in ServiceCall main view controller 
-				case "JobServiceCallViewController": 		(vc as JobServiceCallViewController).ResetToDefaults(); break;
-				
-				// IMPLEMENTED :: reset UsedParts in Installations view controller
-				case "JobInstallationViewController": 		(vc as JobInstallationViewController).ClearPartsList(); break;
-					
-				// IMPLEMENTED :: reset UsedParts in Installations view controller
-				case "JobUninstallViewController": 		(vc as JobUninstallViewController).ClearPartsList(); break;
-
-				// IMPLEMENTED :: reset Choices in PrePlumbingCheckView to defaults
-				case "PrePlumbingCheckView":				(vc as PrePlumbingCheckView).ResetChoices (); break;
-					
-				// IMPLEMENTED :: reset Payment data in Payment view controller
-				case "PaymentViewController":				(vc as PaymentViewController).ResetToDefaults (); break;
-				}
-			} */
 			_tabs._jobFilter.ClearPartsList ();
-			_tabs._serviceParts.ClearPartsList ();
 			_tabs._serviceParts.ResetToDefaults ();
 			_tabs._jobService.ResetToDefaults ();
-
 			_tabs._jobInstall.ResetToDefaults (resetInstallFees);
-
 			_tabs._jobUninstall.ClearPartsList ();
+
 			_tabs._prePlumbView.ResetChoices ();
 			_tabs._payment.ResetToDefaults ();
 			
 			_tabs.SetNavigationButtons (NavigationButtonsMode.CustomerDetails);
 			_tabs.BtnEdit.Enabled = true;
-			_tabs.BtnStuff.Enabled = true;
 		}
 		
 		public void ResetUserCreatedJobs()
 		{
 			Job curj = _tabs._jobRunTable.CurrentJob;
-			if (curj != null && curj.HasParent () ) // this is a child job, we should find its parent, loop through the list of child jobs and erase everything
-			{
-				foreach(Job j in _tabs._jobRunTable.MainJobList)
-				{
-					if (j.JobBookingNumber == curj.ParentJobBookingNumber)
-					{	// erase all child job results from database
-						foreach(Job childJob in j.ChildJobs) 
-						{
-							EraseChildJobFromDatabase(childJob);
+			if (curj == null)
+				return;
+
+			if (curj.HasParent ()) { // this is a child job, we should find its parent, loop through the list of child jobs and erase everything
+				foreach (Job j in _tabs._jobRunTable.MainJobList) {
+					if (j.JobBookingNumber == curj.ParentJobBookingNumber) {	// erase all child job results from database
+						foreach (Job childJob in j.ChildJobs) {
+							EraseChildJobFromDatabase (childJob);
 						}
 						j.ChildJobs.Clear ();	// clear list of child jobs
 						break;
 					}
 				}				
+			} else { // this is a main job, erase all child job results
+				foreach (Job childJob in curj.ChildJobs) {
+					EraseChildJobFromDatabase (childJob);
+				}
 			}
 			curj.ChildJobs.Clear ();
 		}
@@ -893,8 +828,6 @@ namespace Puratap
 					_flexibleButtonSpace = new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace, null, null);
 					_rightButton = new UIBarButtonItem("Refused to pay", UIBarButtonItemStyle.Bordered, _refusedToPay);				
 					var extraJobButton = new UIBarButtonItem("Add another job", UIBarButtonItemStyle.Bordered, _extraJobs);
-					// var loyaltyButton =  new UIBarButtonItem("Loyalty", UIBarButtonItemStyle.Bordered, _setLoyaltyPrices);
-				
 				
 					_buttons = new UIBarButtonItem[] { _leftButton, _flexibleButtonSpace, extraJobButton, _flexibleButtonSpace, _rightButton };
 					this.Toolbar.SetItems (_buttons, true);					
@@ -951,6 +884,7 @@ namespace Puratap
 								case "TWI": { jResult = "Installed "; break; }
 								case "REI": { jResult = "Installed "; break; }
 								case "UP": { jResult = "Upgraded  "; break; }
+								case "TUBING": { jResult = "Upgraded"; break; }
 								case "TUBINGUPGR": { jResult = "Upgraded"; break; }
 								case "HDTUBING": { jResult = "Upgraded"; break; }
 								case "NEWTAP": { jResult = "New Tap"; break; }
@@ -1098,8 +1032,10 @@ namespace Puratap
 								cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 								cmd.Parameters.Add ("@PaymentType", System.Data.DbType.String).Value = MyConstants.OutputStringForValue (payment.Type);
 								cmd.Parameters.Add ("@PaymentDate", System.Data.DbType.Date).Value = j.JobDate;
-								// IF THERE WAS A PURCHASE ORDER, THE AMOUNT VALUE SAVED WILL BE 0.00 IN ALL CASES
-								if (_tabs._payment.ContainsInvoicePaymentType (j.Payments)) payment.Amount = 0;
+
+									// IF THERE WAS A SERVICE REQUEST, THE AMOUNT VALUE SAVED WILL BE 0.00 IN ALL CASES
+									// if (_tabs._payment.ContainsInvoicePaymentType (j.Payments)) payment.Amount = 0;
+								if (payment.Type == PaymentTypes.Invoice) payment.Amount = 0;
 								cmd.Parameters.Add ("@Amount", System.Data.DbType.Double).Value = payment.Amount;
 
 								cmd.Parameters.Add ("@ChequeNumber", System.Data.DbType.String).Value = payment.ChequeNumber;
@@ -1168,18 +1104,20 @@ namespace Puratap
 						
 						// insert records for individual parts
 						if (j.UsedParts != null) {
-							if (j.UsedParts.Count>0) {
-								sql = "INSERT INTO StockUsed (CUSNUM, PLNUM, PARTNO, REPNUM, NUM_USED, USE_DATE, BOOKNUM) VALUES (?, ?, ?, ?, ?, ?, ?)";
+							if (j.UsedParts.Count > 0) {
+								sql = "INSERT INTO StockUsed (CUSNUM, PLNUM, PARTNO, ELEMENT_TYPE, ELEMENT_OID, REPNUM, NUM_USED, USE_DATE, BOOKNUM) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 								cmd.CommandText = sql;
 								
 								foreach (Part p in j.UsedParts)
 								{
-									cmd.Parameters.Clear ();
-									
+									cmd.Parameters.Clear ();									
 									cmd.Parameters.Add ("@CustomerNumber", System.Data.DbType.Int32).Value = j.CustomerNumber;
 									cmd.Parameters.Add ("@PlNum", System.Data.DbType.Int32).Value = 
 										(MyConstants.EmployeeType==MyConstants.EmployeeTypes.Franchisee) ? -1 : MyConstants.EmployeeID;
 									cmd.Parameters.Add ("@PartNo", System.Data.DbType.Int32).Value = p.PartNo;
+									cmd.Parameters.Add ("@ElementType", System.Data.DbType.String).Value = 'P';
+									cmd.Parameters.Add ("@ElementID", System.Data.DbType.Int32).Value = p.PartNo;
+
 									cmd.Parameters.Add ("@RepNum", System.Data.DbType.Int32).Value = 
 										(MyConstants.EmployeeType==MyConstants.EmployeeTypes.Franchisee) ? MyConstants.EmployeeID : -1;
 									cmd.Parameters.Add ("@QuantityUsed", System.Data.DbType.Double).Value = p.Quantity;
@@ -1188,20 +1126,33 @@ namespace Puratap
 									cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 			
 									cmd.ExecuteNonQuery ();
-
-									_tabs._scView.Log (String.Format ("SQL INSERT INTO STOCKUSED statement executed: {0}", sql));
-									/*
-									_tabs._scView.Log (String.Format ("Parameters: JobID = {0}", j.JobBookingNumber));							
-									_tabs._scView.Log (String.Format ("Parameters: CustomerNumber = {0}", j.CustomerNumber));							
-									_tabs._scView.Log (String.Format ("Parameters: PlumberNumber = {0}", (MyConstants.EmployeeType==MyConstants.EmployeeTypes.Franchisee)? -1 : MyConstants.EmployeeID ));							
-									_tabs._scView.Log (String.Format ("Parameters: RepNumber = {0}", (MyConstants.EmployeeType==MyConstants.EmployeeTypes.Franchisee) ? MyConstants.EmployeeID : -1));							
-									_tabs._scView.Log (String.Format ("Parameters: PartNo = {0}", p.PartNo));							
-									_tabs._scView.Log (String.Format ("Parameters: QuantityUsed = {0}", p.Quantity));							
-									_tabs._scView.Log (String.Format ("Parameters: DateUsed = {0}", DateTime.Now.Date.ToShortDateString() ));
-									*/
 								}
 							}	else _tabs._scView.Log (String.Format ("Job ID {0}: Used parts list is EMPTY: Nothing to write to database", j.JobBookingNumber));
 						}	else _tabs._scView.Log (String.Format ("Job ID {0}: Used parts list is NULL: Nothing to write to database", j.JobBookingNumber));
+
+						if (j.UsedAssemblies != null) {
+							if (j.UsedAssemblies.Count > 0) {
+								sql = "INSERT INTO StockUsed (CUSNUM, PLNUM, ELEMENT_TYPE, ELEMENT_OID, REPNUM, NUM_USED, USE_DATE, BOOKNUM) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+								cmd.CommandText = sql;
+
+								foreach (Assembly a in j.UsedAssemblies) {
+									cmd.Parameters.Clear ();
+									cmd.Parameters.Add ("@CustomerNumber", System.Data.DbType.Int32).Value = j.CustomerNumber;
+									cmd.Parameters.Add ("@PlNum", System.Data.DbType.Int32).Value = 
+										(MyConstants.EmployeeType==MyConstants.EmployeeTypes.Franchisee) ? -1 : MyConstants.EmployeeID;
+									cmd.Parameters.Add ("@ElementType", System.Data.DbType.String).Value = 'A';
+									cmd.Parameters.Add ("@ElementID", System.Data.DbType.Int32).Value = a.aID;
+
+									cmd.Parameters.Add ("@RepNum", System.Data.DbType.Int32).Value = 
+										(MyConstants.EmployeeType==MyConstants.EmployeeTypes.Franchisee) ? MyConstants.EmployeeID : -1;
+									cmd.Parameters.Add ("@QuantityUsed", System.Data.DbType.Double).Value = a.Quantity;
+									cmd.Parameters.Add ("@DateUsed", System.Data.DbType.Date).Value = j.JobDate; // DateTime.Now.Date;
+									cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+									cmd.ExecuteNonQuery ();
+								}
+							} else _tabs._scView.Log (String.Format ("Job ID {0}: Used assemblies list is EMPTY: Nothing to write to database.", j.JobBookingNumber));
+						} else _tabs._scView.Log (String.Format ("Job ID {0}: Used assemblies list is NULL: Nothing to write to database.", j.JobBookingNumber));
+						_tabs._scView.Log (String.Format ("SQL INSERT INTO STOCKUSED statements executed."));
 					} // end using (var cmd = connection.CreateCommand())
 				} // end using (var connection = new SqliteConnection("Data Source="+ServerClientViewController.dbFilePath) )
 			}
@@ -1217,6 +1168,11 @@ namespace Puratap
 		
 		public void ResetWorkflowForJob(Job j)
 		{
+			// reset deposit data
+			Customer c = _tabs._jobRunTable.FindCustomerForJob (j);
+			c.DepositUsed = 0;
+
+			// reset job properties
 			j.Started = MyConstants.JobStarted.None;
 			j.JobDone = false;
 			j.NotDoneComment = "";
@@ -1256,7 +1212,7 @@ namespace Puratap
 					using (var cmd = connection.CreateCommand())
 					{
 						connection.Open();
-						// reset used parts data :: to accomplish that, we delete all records from STOCKUSED, PAYMENTS and FOLLOWUPS tables for the job AND ITS CHILD JOBS
+						// reset data :: to accomplish that, we delete all records from STOCKUSED, PAYMENTS and FOLLOWUPS tables for the job AND ITS CHILD JOBS
 						string sql = "DELETE FROM Wclient WHERE Cusnum = ?";
 						cmd.CommandText = sql;
 						cmd.Parameters.Add ("@CustomerID", DbType.Int64).Value = c.CustomerNumber;
@@ -1310,15 +1266,13 @@ namespace Puratap
 					using (var cmd = connection.CreateCommand())
 					{
 						connection.Open();
-						// reset used parts data :: to accomplish that, we delete all records from STOCKUSED, PAYMENTS and FOLLOWUPS tables for the job AND ITS CHILD JOBS
+						// reset data :: delete all records from STOCKUSED, PAYMENTS, FOLLOWUPS, JOB_REPORTS, FEES, CUSTUPDATE tables for the job AND ITS CHILD JOBS
 						string sql = "DELETE FROM StockUsed WHERE Booknum IN (SELECT Booknum FROM Pl_recor WHERE Booknum = ? OR Parentnum = ?)";
 						cmd.CommandText = sql;
 						cmd.Parameters.Clear();
 						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 						cmd.Parameters.Add ("@ParentJobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 						cmd.ExecuteNonQuery ();
-						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
-						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
 						// reset payment data
 						sql = "DELETE FROM Payments WHERE BookingNum IN (SELECT Booknum FROM Pl_recor WHERE Booknum = ? OR Parentnum = ?)";
 						cmd.CommandText = sql;
@@ -1326,25 +1280,26 @@ namespace Puratap
 						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 						cmd.Parameters.Add ("@ParentJobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 						cmd.ExecuteNonQuery ();
-						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
-						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
+
 						// reset deposit info
-						sql = "DELETE FROM JOURNAL WHERE BookNum = ? AND AccNum = 2.1300";
-						cmd.CommandText = sql;
-						cmd.Parameters.Clear ();
-						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
-						int rowsDeleted = cmd.ExecuteNonQuery ();
-						if (rowsDeleted > 0) {
-							// find the customer and reset DepositUsed to 0
-							foreach (Customer c in _tabs._jobRunTable.Customers) {
-								if (c.CustomerNumber == j.CustomerNumber) {
-									
-									// check if the deposit was used for the job that is being reset
-									c.DepositAmount = c.DepositUsed;
-									c.DepositUsed = 0;
-								}
-							}
-						}
+						// 22.04.2014 -- I don't think this is to be done here -- what if someone re-entered info about a job with a deposit?
+//						sql = "DELETE FROM JOURNAL WHERE BookNum = ? AND AccNum = 2.1300";
+//						cmd.CommandText = sql;
+//						cmd.Parameters.Clear ();
+//						cmd.Parameters.Add ("@JobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+//						int rowsDeleted = cmd.ExecuteNonQuery ();
+//						if (rowsDeleted > 0) {
+//							// find the customer and reset DepositUsed to 0
+//							foreach (Customer c in _tabs._jobRunTable.Customers) {
+//								if (c.CustomerNumber == j.CustomerNumber) {
+//									
+//									// check if the deposit was used for the job that is being reset
+//									c.DepositAmount = c.DepositUsed;
+//									c.DepositUsed = 0;
+//								}
+//							}
+//						}
+
 						// reset follow up data
 						sql = "DELETE FROM Followups WHERE Job_ID IN (SELECT Booknum FROM Pl_recor WHERE Booknum = ? OR Parentnum = ?)";
 						cmd.CommandText = sql;
@@ -1352,8 +1307,6 @@ namespace Puratap
 						cmd.Parameters.Add ("@JobID", System.Data.DbType.Double).Value = j.JobBookingNumber;
 						cmd.Parameters.Add ("@ParentJobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 						cmd.ExecuteNonQuery ();
-						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
-						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
 						// reset fee data
 						sql = "DELETE FROM Fees WHERE Job_ID IN (SELECT Booknum FROM Pl_recor WHERE Booknum = ? OR Parentnum = ?)";
 						cmd.CommandText = sql;
@@ -1361,16 +1314,18 @@ namespace Puratap
 						cmd.Parameters.Add ("@JobID", System.Data.DbType.Double).Value = j.JobBookingNumber;
 						cmd.Parameters.Add ("@ParentJobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 						cmd.ExecuteNonQuery ();
-						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
-						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
 						// reset updates to pricing for child jobs
 						sql =  "DELETE FROM CustUpdate WHERE Job_OID IN (SELECT Booknum FROM Pl_recor WHERE Parentnum = ?) AND Field=\"JobPriceTotal\"";
 						cmd.Parameters.Clear();
 						cmd.Parameters.Add ("@JobID", System.Data.DbType.Double).Value = j.JobBookingNumber;
 						cmd.Parameters.Add ("@ParentJobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
 						cmd.ExecuteNonQuery ();
-						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
-						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
+						// reset job reports data
+						sql = "DELETE FROM Job_Reports WHERE Job_OID IN (SELECT BookNum FROM Pl_Recor WHERE BookNum = ? OR ParentNum = ?)";
+						cmd.Parameters.Clear();
+						cmd.Parameters.Add ("@JobID", System.Data.DbType.Double).Value = j.JobBookingNumber;
+						cmd.Parameters.Add ("@ParentJobID", System.Data.DbType.Int64).Value = j.JobBookingNumber;
+						cmd.ExecuteNonQuery ();
 
 						// reset job results data
 						// update the record in PL_RECOR table where BOOKINGNUMBER = job.BookingNumber, setting the following values: JDONE=0, INSTALLED=""
@@ -1449,7 +1404,14 @@ namespace Puratap
 						cmd.CommandText = sql;
 						cmd.ExecuteNonQuery ();
 						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
-						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));	
+						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
+						// erase job reports
+						sql = "DELETE FROM Job_Reports WHERE Job_OID = ?";
+						cmd.CommandText = sql;
+						cmd.ExecuteNonQuery ();
+						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
+						_tabs._scView.Log (string.Format ("Parameter: JobID = {0}", j.JobBookingNumber));
+
 						// delete job record from pl_recor
 						sql = "DELETE FROM PL_RECOR WHERE Booknum = ?";
 						cmd.CommandText = sql;
@@ -1460,7 +1422,7 @@ namespace Puratap
 						_tabs._scView.Log (String.Format ("SQL DELETE statement executed: {0}", sql));
 						_tabs._scView.Log (String.Format ("Parameter: JobID = {0}", j.JobBookingNumber));					
 						
-						_tabs._scView.Log (String.Format ("Erased child job from database (with child jobs): JobID = {0}", j.JobBookingNumber));
+						_tabs._scView.Log (String.Format ("Erased child job from database: JobID = {0}", j.JobBookingNumber));
 					}
 				}
 			}

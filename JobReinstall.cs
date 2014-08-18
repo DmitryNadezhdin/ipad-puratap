@@ -14,6 +14,7 @@ namespace Puratap
 			NavUsedParts = upnav;
 			NavWorkflow = nav;
 			DBParts = new List<Part>();
+			DBAssemblies = new List<Assembly> ();
 			dvcSO = new SaleOptionsDVC(null, false, true, this.NavUsedParts.Tabs._jobRunTable, this);
 			DeactivateEditingMode ();
 			
@@ -94,11 +95,11 @@ namespace Puratap
 			};
 		}
 
-		public override void InstallDataGathered()
-		{
-			ClearPartsList ();
-			base.InstallDataGathered ();
-		}
+//		public override void InstallDataGathered()
+//		{
+//			ClearPartsList ();
+//			base.InstallDataGathered ();
+//		}
 		
 		public override void ViewDidAppear (bool animated)
 		{

@@ -12,6 +12,7 @@ namespace Puratap
 			NavUsedParts = upnav;
 			NavWorkflow=nav;
 			DBParts = new List<Part>();
+			DBAssemblies = new List<Assembly> ();
 			DeactivateEditingMode ();
 
 			/*
@@ -154,7 +155,13 @@ namespace Puratap
 		}
 		
 		public override void ViewDidAppear (bool animated)
-		{			
+		{
+			// set used stock to default if empty
+			if (ThisJob.UsedParts.Count == 0 
+					&& ThisJob.UsedAssemblies.Count == 0 
+					&& MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee)
+				SetPartsToStandardBuild (16);
+
 			base.ViewDidAppear (animated);
 		}	
 	}

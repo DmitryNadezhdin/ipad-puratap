@@ -17,8 +17,8 @@ namespace Puratap
 		{
 			NavUsedParts = upnav;
 			NavWorkflow = nav;
-			//Parts = new List<Part>();
-			DBParts = new List<Part>();		
+			DBParts = new List<Part>();
+			DBAssemblies = new List<Assembly> ();
 			DeactivateEditingMode ();
 
 			/*
@@ -155,7 +155,12 @@ namespace Puratap
 				section.Caption = (ThisJob.Warranty)? "Job Report" : " ";
 				ReloadData ();
 			}
-			SetPartsToStandardBuild ();
+
+			// set used stock to default if empty
+			if (ThisJob.UsedParts.Count == 0 && ThisJob.UsedAssemblies.Count == 0)
+				SetPartsToStandardBuild ();
+
+
 			base.ViewWillAppear (animated);
 		}
 		

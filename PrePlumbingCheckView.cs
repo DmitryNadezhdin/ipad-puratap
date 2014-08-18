@@ -315,7 +315,7 @@ namespace Puratap
 		
 		partial void acLeaveWorkflow (NSObject sender)
 		{
-			var alert = new UIAlertView("Warning", "This will reset the workflow for all jobs for selected customer. Are you sure?", null, "No, never mind", "Yes");
+				var alert = new UIAlertView("Warning", "This will reset the workflow for all jobs for selected customer. Are you sure?", null, "No, never mind", "Yes");
 			alert.Dismissed += delegate(object ssender, UIButtonEventArgs e) {
 				if (e.ButtonIndex != alert.CancelButtonIndex)
 				{
@@ -509,11 +509,11 @@ namespace Puratap
 					if (main.HasParent())
 						main = _navWorkflow._tabs._jobRunTable.FindParentJob (_navWorkflow._tabs._jobRunTable.CurrentJob);
 					bool tuInJobCluster = false;
-					if ((main.Type.Code == "TUBINGUPGR") && (main.Warranty == false))
+					if ((main.Type.Code == "TUBINGUPGR" || main.Type.Code == "TUBING") && (main.Warranty == false))
 						tuInJobCluster = true;
 					else
 						foreach (Job child in main.ChildJobs)
-							if ((child.Type.Code == "TUBINGUPGR") && (child.Warranty == false))
+							if ((child.Type.Code == "TUBINGUPGR" || child.Type.Code == "TUBING") && (child.Warranty == false))
 						{	tuInJobCluster = true; break; }
 
 					if (tuInJobCluster)

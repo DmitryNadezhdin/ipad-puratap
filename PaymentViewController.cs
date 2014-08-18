@@ -147,7 +147,7 @@ namespace Puratap
 		*/
 
 		// private GetChoicesForObject ac;
-		
+		private bool isProceeding = false;
 		public double MoneyReceived = 0;
 		
 		public PaymentViewController (WorkflowNavigationController nav) : base ("PaymentViewController", null)
@@ -238,9 +238,10 @@ namespace Puratap
 
 			double displayedTotalToReceive = this.CalculateMoneyToCollect ();
 			((UILabel)GeneratedPdfView.ViewWithTag (8)).Text = "Total to receive (inc. GST): " + String.Format("$ {0:0.00}", displayedTotalToReceive); // + this.tfToBeCollected.Text;
-			((UILabel)GeneratedPdfView.ViewWithTag (9)).Text = "Received: " + String.Format("{0:0.00}", this.tfTotalMoneyReceived.Text);
 
-			double displayedBalance = (this.CalculateMoneyToCollect () - this.MoneyReceived - c.DepositAmount);
+			double invoiceAmount = this.GetInvoiceAmount ();
+			((UILabel)GeneratedPdfView.ViewWithTag (9)).Text = "Received: " + String.Format("{0:0.00}", this.MoneyReceived - invoiceAmount);
+			double displayedBalance = (this.CalculateMoneyToCollect () - this.MoneyReceived - c.DepositAmount + invoiceAmount);
 			((UILabel)GeneratedPdfView.ViewWithTag (24)).Text = "Balance: " + String.Format("$ {0:0.00}", displayedBalance);
 			if (displayedBalance > 0) 
 				((UILabel)GeneratedPdfView.ViewWithTag (24)).Font = UIFont.BoldSystemFontOfSize (20);
@@ -248,7 +249,7 @@ namespace Puratap
 
 			((UILabel)GeneratedPdfView.ViewWithTag (27)).Text = String.Format ("App version: {0}", MyConstants.AppVersion);
 
-			((UILabel)GeneratedPdfView.ViewWithTag (25)).Text = "Puratap representative: "+MyConstants.EmployeeName;
+			((UILabel)GeneratedPdfView.ViewWithTag (25)).Text = "Puratap representative: " + MyConstants.EmployeeName;
 			if (! this.SplitPaymentMode)
 				if (this._payments.Count == 0)
 					((UILabel)GeneratedPdfView.ViewWithTag (23)).Text = String.Format ("Payment method: {0}", MyConstants.OutputStringForValue (PaymentTypes.None)); // this.tfPaymentType.Text				
@@ -265,11 +266,15 @@ namespace Puratap
 			else ((UILabel)GeneratedPdfView.ViewWithTag (30)).Hidden = true;
 
 			bool tuInJobCluster = false;
-			if ((this.Summary.mainJob.Type.Code == "TUBINGUPGR" || this.Summary.mainJob.Type.Code == "HDTUBING") && (this.Summary.mainJob.Warranty == false))
+			if ((this.Summary.mainJob.Type.Code == "TUBING" ||
+				this.Summary.mainJob.Type.Code == "TUBINGUPGR" || 
+				this.Summary.mainJob.Type.Code == "HDTUBING") && (this.Summary.mainJob.Warranty == false))
 				tuInJobCluster = true;
 			else
 				foreach (Job child in this.Summary.mainJob.ChildJobs)
-					if ((child.Type.Code == "TUBINGUPGR" || child.Type.Code == "HDTUBING") && (child.Warranty == false))
+					if ((child.Type.Code == "TUBING" || 
+						child.Type.Code == "TUBINGUPGR" || 
+						child.Type.Code == "HDTUBING") && (child.Warranty == false))
 						{	tuInJobCluster = true; break; }
 
 			((UILabel)GeneratedPdfView.ViewWithTag (33)).Text = String.Format("Warranty on tubing components extended for another 3 years (until {0}) due to tubing upgrade. " +
@@ -295,16 +300,26 @@ namespace Puratap
 				for (int k = 0; k<jobCount; k++)
 				{
 					int labelTag = 10+k*2;
-					if (this.Summary.mainJob.Warranty)
-					{
-						((UILabel)GeneratedPdfView.ViewWithTag (labelTag)).Text = (k==0)? String.Format ("Job {0}: {1} (under warranty)", k+1, this.Summary.mainJob.Type.Description) : 
-																															String.Format ("Job {0}: {1} (under warranty)", k+1, this.Summary.mainJob.ChildJobs[k-1].Type.Description);
+					if (k == 0) {
+						// main job line
+						if (this.Summary.mainJob.Warranty) {
+							// warranty
+							((UILabel)GeneratedPdfView.ViewWithTag (labelTag)).Text = String.Format ("Job {0}: {1} (under warranty)", k + 1, this.Summary.mainJob.Type.Description);
+						} else {
+							// non-warranty
+							((UILabel)GeneratedPdfView.ViewWithTag (labelTag)).Text = String.Format ("Job {0}: {1}", k + 1, this.Summary.mainJob.Type.Description);
+						}
+					} else {
+						// child job lines
+						if (this.Summary.mainJob.ChildJobs [k - 1].Warranty) {
+							// warranty
+							((UILabel)GeneratedPdfView.ViewWithTag (labelTag)).Text = String.Format ("Job {0}: {1} (under warranty)", k + 1, this.Summary.mainJob.ChildJobs [k - 1].Type.Description);
+						} else {
+							// non-warranty
+							((UILabel)GeneratedPdfView.ViewWithTag (labelTag)).Text = String.Format ("Job {0}: {1}", k + 1, this.Summary.mainJob.ChildJobs [k - 1].Type.Description);
+						}
 					}
-					else
-					{
-						((UILabel)GeneratedPdfView.ViewWithTag (labelTag)).Text = (k==0)? String.Format ("Job {0}: {1}", k+1, this.Summary.mainJob.Type.Description) : 
-																															String.Format ("Job {0}: {1}", k+1, this.Summary.mainJob.ChildJobs[k-1].Type.Description);					
-					}
+
 					((UILabel)GeneratedPdfView.ViewWithTag (labelTag+1)).Text = (k==0)? String.Format ("$ {0:0.00}", this.Summary.mainJob.MoneyToCollect) : 
 																															String.Format ("$ {0:0.00}", this.Summary.mainJob.ChildJobs[k-1].MoneyToCollect);					
 				}
@@ -328,6 +343,16 @@ namespace Puratap
 			float lowestPdfPoint = paymentInfo.Frame.Y + paymentInfo.Frame.Height;
 			GeneratedPdfView.Frame = new RectangleF(GeneratedPdfView.Frame.X, GeneratedPdfView.Frame.Y, GeneratedPdfView.Frame.Width, lowestPdfPoint+10);
 			// MyConstants.PrintPDFFile (pdfFileName);
+		}
+
+		private double GetInvoiceAmount() {
+			double result = 0.0;
+			if (this._payments != null) {
+				foreach (JobPayment jp in this._payments) {
+					result += (jp.Type == PaymentTypes.Invoice) ? jp.Amount : 0.0;
+				}
+			}
+			return result;
 		}
 		
 		public void RedrawReceiptPDF(bool DocumentSigned)
@@ -504,6 +529,21 @@ namespace Puratap
 				}
 				break; 
 			}
+			case "TUBING" : { 
+					_navWorkflow._tabs._jobTubingUpgrade.ThisJob = _navWorkflow._tabs._jobRunTable.CurrentJob;
+					_navWorkflow._tabs._jobTubingUpgrade.LoadParts ();
+					_navWorkflow._tabs.SelectedViewController = _navWorkflow._tabs.ViewControllers[2];
+					if (_navWorkflow._tabs.UsedPartsNav.VisibleViewController is JobTubingUpgrade)
+					{
+						// do nothing
+					}
+					else 
+					{
+						if (_navWorkflow._tabs.UsedPartsNav.ViewControllers.Length > 1) _navWorkflow._tabs.UsedPartsNav.PopToRootViewController (false);
+						_navWorkflow._tabs.UsedPartsNav.PushViewController (_navWorkflow._tabs._jobTubingUpgrade, false);
+					}
+					break; 
+				}
 			case "HDTUBING" : { 
 				_navWorkflow._tabs._jobHDTubingUpgrade.ThisJob = _navWorkflow._tabs._jobRunTable.CurrentJob;
 				_navWorkflow._tabs._jobHDTubingUpgrade.LoadParts ();
@@ -574,24 +614,34 @@ namespace Puratap
 		
 		public bool ArePartsOK()
 		{
+			bool result = true;
+
 			var curj = this.selectedJob;
 			if (curj != null) {
 				if (curj.HasParent ())
 					curj = this._navWorkflow._tabs._jobRunTable.FindParentJob (curj);
-				
+
+				// uninstall, re-install and service jobs should be allowed to be performed without using any stock parts
 				if ((curj.Type.Code != "SER" && curj.Type.Code != "UNI" && curj.Type.Code != "REI")
-				    && (curj.UsedParts.Count == 0))
-					return false;
-				else {
-					// uninstall, re-install and service jobs should be allowed to be performed without using any stock parts
-					return true;
+				    && (curj.UsedParts.Count == 0) && (curj.UsedAssemblies.Count == 0)) {
+					// main job -- stock used list is empty -- no further checks, return false 
+					result = false;
+				} else {
+					foreach (Job child in curj.ChildJobs) {
+						if ((child.Type.Code != "SER" && child.Type.Code != "UNI" && child.Type.Code != "REI")
+							&& (child.UsedParts.Count == 0) && (child.UsedAssemblies.Count == 0))
+
+							result = false;
+					}
 				}
 			} else {
-				return true;
+				result = false;
 			}
+
+			return result;
 		}
 		
-		private void acProceed (NSObject sender)
+		private void acProceed ()
 		{
 			// analyze parts used for the jobs in the current cluster
 			bool partsOK = ArePartsOK();
@@ -599,6 +649,7 @@ namespace Puratap
 			{
 				var alert = new UIAlertView("Cannot proceed", "One or more of the jobs have empty lists of parts used for them. Please check the stock used for jobs and correct this.", null, "OK");
 				alert.Show ();
+				isProceeding = false;
 				return;
 			}
 
@@ -637,6 +688,7 @@ namespace Puratap
 						ReceivedZero.Dismissed += delegate(object _sender, UIButtonEventArgs e) {
 							if (e.ButtonIndex != ReceivedZero.CancelButtonIndex)
 								GoToSigning ();
+							else isProceeding = false;
 						};
 						ReceivedZero.Show ();
 					}
@@ -667,14 +719,17 @@ namespace Puratap
 				{
 					var choosePaymentMethodAlert = new UIAlertView("Cannot proceed", "Please choose a payment method first.", null, "OK");
 					choosePaymentMethodAlert.Show ();
+
 				}
+				isProceeding = false;
 			}
 		}
 
-		void HandleMoneyAlertDismissed (object sender, UIButtonEventArgs e)
+		private void HandleMoneyAlertDismissed (object sender, UIButtonEventArgs e)
 		{
 			if (e.ButtonIndex == (sender as UIAlertView).CancelButtonIndex)
 			{
+				isProceeding = false;
 				// user canceled
 			}
 			else 
@@ -705,35 +760,24 @@ namespace Puratap
 			}
 		}
 		
-		void GoToSigning()
+		private void GoToSigning()
 		{
-			if (! this.SplitPaymentMode)
-			{
-				if (_navWorkflow._tabs._jobRunTable.CurrentJob.Payments.Count == 0)
-					_navWorkflow._tabs._jobRunTable.CurrentJob.Payments.Add (new JobPayment());
-				else 
-				{
-					_navWorkflow._tabs._jobRunTable.CurrentJob.Payments[0].Amount = MoneyReceived;
+			// the goal seemed to be to copy the payments from this._payments to _navWorkflow._tabs._jobRunTable.CurrentJob.Payments
+			if (this._payments.Count == 1)
+				this._payments [0].Amount = MoneyReceived;
 
-					if (this._payments.Count == 0)					
-						_navWorkflow._tabs._jobRunTable.CurrentJob.Payments[0].Type = PaymentTypes.None;
-					else 
-						_navWorkflow._tabs._jobRunTable.CurrentJob.Payments[0].Type = this._payments[0].Type;
-				}
+			_navWorkflow._tabs._jobRunTable.CurrentJob.Payments = new List<JobPayment> ();
+			foreach (JobPayment jp in this._payments) {
+				_navWorkflow._tabs._jobRunTable.CurrentJob.Payments.Add (new JobPayment () {
+					Type = jp.Type,
+					Amount = jp.Amount,
+					PaymentCustomerNumber = jp.PaymentCustomerNumber,
+					ChequeNumber = jp.ChequeNumber,
+					CreditCardNumber = jp.CreditCardNumber,
+					CreditCardName = jp.CreditCardName,
+					CreditCardExpiry = jp.CreditCardExpiry
+				});
 			}
-			else {
-				// split payments
-
-				// TODO :: think of a way when this could be incorrect
-				// I see no reason to implement the below algorithms now, but I could be wrong
-
-				// determine the payment type chosen for payment 1
-				// look up the list of payments and set the amount to the text field value
-
-				// determine the payment type chosen for payment 2
-				// look up the list of payments and set the amount to the text field value
-			}
-
 
 			GenerateReceiptPDFPreview();
 			RedrawReceiptPDF(false);
@@ -745,8 +789,9 @@ namespace Puratap
 			_navWorkflow._tabs.SelectedViewController = _navWorkflow._tabs.ViewControllers[_navWorkflow._tabs.LastSelectedTab + 1];
 			if ( ! _navWorkflow._tabs._prePlumbView.IsDefault () )
 			{
-				// pop to fake root
-				_navWorkflow._tabs.SigningNav.PopToRootViewController (false);	
+				// pop to blank root
+				_navWorkflow._tabs.SigningNav.PopToRootViewController (false);
+				// display 'sign pre-plumbing check' view
 				_navWorkflow._tabs.SigningNav.PushViewController (_navWorkflow._tabs.SignPre, false);
 			}
 			else // no pre-plumbing to sign, trying service
@@ -783,11 +828,6 @@ namespace Puratap
 		{
 			Summary.ClearChildJobs ();
 		}
-		
-//		void acSetLoyalty (NSObject sender)
-//		{
-//			_navWorkflow._setLoyaltyPrices(sender, null);
-//		}
 		
 		void acAddAnotherJob (NSObject sender)
 		{
@@ -867,7 +907,7 @@ namespace Puratap
 				else ok = false;
 				tmp = newString.Substring (2,2); // tmp is year
 				if ( int.TryParse (tmp, out r) ) {
-					if (r < DateTime.Now.Date.Year % 100 ) ok = false;		// year must not be less than current , otherwise we're dealing with expired card
+					if (r < DateTime.Now.Date.Year % 100 ) ok = false;		// year must not be less than current, otherwise we're dealing with expired card
 				}
 				else ok=false;
 			}
@@ -927,7 +967,7 @@ namespace Puratap
 		
 		public void ShowPaymentChoiceOptions()
 		{
-			tfPaymentType.Hidden = false;
+			// tfPaymentType.Hidden = false;
 			HideChequePaymentOptions ();
 			HideCreditCardPaymentOptions ();
 		}
@@ -978,8 +1018,7 @@ namespace Puratap
 				tfCreditCardExpiry.Text = "";
 				tfCreditCardName.Text = "";
 				tfCreditCardNumber.Text = "";
-				tfInvoicePO.Text = "";
-				tfPaymentType.Text = "";
+				// tfPaymentType.Text = "";
 			}
 
 			if (this.SplitPaymentMode == true)
@@ -1039,6 +1078,7 @@ namespace Puratap
 
 		public override void ViewDidAppear (bool animated)
 		{
+			isProceeding = false;
 			if (selectedJob != null)
 			{
 				Job current = _navWorkflow._tabs._jobRunTable.CurrentJob;
@@ -1399,8 +1439,8 @@ namespace Puratap
 		
 		public override void DidReceiveMemoryWarning ()
 		{
-			this.UnloadEventHandlers ();
-			base.DidReceiveMemoryWarning ();
+			// this.UnloadEventHandlers ();
+			// base.DidReceiveMemoryWarning ();
 		}
 		
 		public void FormatInput(UITextField textField, NSRange range, string replacementString)
@@ -1572,10 +1612,10 @@ namespace Puratap
 			if (ok) 
 			{
 				tfSplitPaymentAmount1.Text = String.Format ("$ {0:0.00}", amount1);
-				tfSplitPaymentAmount2.Text = String.Format ("$ {0:0.00}", totalToReceive-amount1);
+				tfSplitPaymentAmount2.Text = String.Format ("$ {0:0.00}", totalToReceive - amount1);
 
 				this._payments[0].Amount = amount1;
-				this._payments[1].Amount = totalToReceive-amount1;
+				this._payments[1].Amount = totalToReceive - amount1;
 
 				selectedJob.Payments[0].Amount = amount1;
 				selectedJob.Payments[1].Amount = totalToReceive - amount1;
@@ -1588,13 +1628,23 @@ namespace Puratap
 			}
 		}
 
+		partial void acProceedClicked (NSObject sender)
+		{
+			if (!isProceeding) {
+				isProceeding = true;
+				this.acProceed();
+				// this.HandlebtnProceedClicked(sender, null);
+			}
+		}
+
 		private void LoadEventHandlers() 
 		{
+			// btnProceed.Clicked += HandlebtnProceedClicked;
+			btnSplitPayment.Clicked += HandleBtnSplitPaymentClicked;
+
 			btnBack.Clicked += HandlebtnBackClicked;
-			btnProceed.Clicked += HandlebtnProceedClicked;
 			btnClearChildJobs.Clicked += HandleBtnClearChildJobsClicked;
 			btnAddChildJob.Clicked += HandleBtnAddAnotherJobClicked;
-			btnSplitPayment.Clicked += HandleBtnSplitPaymentClicked;
 
 			scPaymentType.ValueChanged += HandlePaymentControlValueChanged;
 			scSplitPaymentMethod1.ValueChanged += HandleSplitMethod1ValueChanged;
@@ -1636,11 +1686,12 @@ namespace Puratap
 			tfToBeCollected.EditingDidEnd -= HandleTfToBeCollectedEditingDidEndOnExit;
 			tfTotalMoneyReceived.EditingDidEnd -= HandleTfTotalMoneyReceivedEditingDidEnd;
 
+			btnSplitPayment.Clicked -= HandleBtnSplitPaymentClicked;
+			// btnProceed.Clicked -= HandlebtnProceedClicked;
+
 			btnBack.Clicked -= HandlebtnBackClicked;
-			btnProceed.Clicked -= HandlebtnProceedClicked;
 			btnClearChildJobs.Clicked -= HandleBtnClearChildJobsClicked;
 			btnAddChildJob.Clicked -= HandleBtnAddAnotherJobClicked;		
-			btnSplitPayment.Clicked -= HandleBtnSplitPaymentClicked;
 
 			scPaymentType.ValueChanged -= HandlePaymentControlValueChanged;
 			scSplitPaymentMethod1.ValueChanged -= HandleSplitMethod1ValueChanged;
@@ -1672,11 +1723,9 @@ namespace Puratap
 				switch( (sender as UISegmentedControl).SelectedSegment )
 				{
 				case 0 : this._payments[0].Type = PaymentTypes.Cash; break;
-				case 1 : 
-					this._payments[0].Type = PaymentTypes.Cheque;
-					ShowChequePaymentOptions ();
-					break;
+				case 1 : this._payments[0].Type = PaymentTypes.Cheque; ShowChequePaymentOptions (); break;
 				case 2 : this._payments[0].Type = PaymentTypes.EFTPOS; break;
+				case 3: this._payments [0].Type = PaymentTypes.Invoice; break;
 				default : this._payments[0].Type = PaymentTypes.None; break;
 				}
 
@@ -1738,8 +1787,13 @@ namespace Puratap
 						_payments.Add (new JobPayment() { Type = PaymentTypes.EFTPOS, PaymentCustomerNumber = selectedJob.CustomerNumber });
 					else this._payments[1].Type = PaymentTypes.EFTPOS; 
 					break;
+				case 3:
+					if (_payments.Count < 2)
+						_payments.Add (new JobPayment () { Type = PaymentTypes.Invoice, PaymentCustomerNumber = selectedJob.CustomerNumber });
+					else this._payments [1].Type = PaymentTypes.Invoice;
+					break;
 				default : 
-					this._payments[0].Type = PaymentTypes.None; 
+					this._payments[0].Type = PaymentTypes.None;
 					break;
 				}
 
@@ -1905,7 +1959,7 @@ namespace Puratap
 					break;
 				case PaymentTypes.CCDetails:
 					HideAllPaymentOptions ();
-					tfPaymentType.Text = "";
+					// tfPaymentType.Text = "";
 					lbTip.Text = "Credit card will be drawn by accounting department. Tap \"Forward\" arrow to proceed.";
 					tfTotalMoneyReceived.Text = String.Format ("$ {0:0.00}", 0);
 					HandleTfTotalMoneyReceivedEditingDidEnd (this, null);
@@ -1914,7 +1968,7 @@ namespace Puratap
 				// default
 				case PaymentTypes.None :
 					HideAllPaymentOptions ();
-					tfPaymentType.Text = "";
+					// tfPaymentType.Text = "";
 					lbTip.Text = "Please specify how the customer paid for the job.";
 					break;
 				}	// end switch
@@ -1930,19 +1984,9 @@ namespace Puratap
 			this.acAddAnotherJob(null);
 		}
 
-		void HandlebtnSetLoyaltyClicked (object sender, EventArgs e)
-		{
-			// acSetLoyalty(null);
-		}
-
 		void HandleBtnClearChildJobsClicked (object sender, EventArgs e)
 		{
 			this.acClearChildJobs (null);
-		}
-
-		void HandlebtnProceedClicked (object sender, EventArgs e)
-		{
-			this.acProceed (null);
 		}
 
 		void HandlebtnBackClicked (object sender, EventArgs e)

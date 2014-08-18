@@ -44,18 +44,26 @@ namespace Puratap
 						using (var cmd = connection.CreateCommand())
 						{
 							connection.Open();
-							cmd.CommandText = "SELECT PARTS.PartNo, PARTS.PrtDesc, SUM(STOCKUSED.Num_Used) as USED_TODAY " +
-								"FROM STOCKUSED, PARTS WHERE STOCKUSED.PartNo=PARTS.PartNo GROUP BY PARTS.PartNo, PARTS.PrtDesc";
+							cmd.CommandText = "SELECT su.Element_Type as Type, su.Element_OID as ID, p.Part_Desc as Desc, SUM(su.Num_Used) as USED_TODAY " +
+												"FROM STOCKUSED su, PARTS p " + 
+												"WHERE su.Element_OID = p.Part_ID  " +
+													"AND su.Element_Type = 'P'  " +
+												"GROUP BY Element_Type, Element_OID, Part_Desc " +
+											"UNION SELECT su.Element_Type as Type, su.Element_OID as ID, a.Name as Desc, SUM(su.Num_Used) as USED_TODAY " +
+												"FROM STOCKUSED su, ASSEMBLIES a " +
+												"WHERE su.Element_OID = a.Assembly_ID  " +
+													"AND su.Element_Type = 'A'  " +
+											"GROUP BY Element_Type, Element_OID, Name";
 							using (var reader = cmd.ExecuteReader())
 							{
 								while ( reader.Read() )
 								{
-									double partnum = (double) (reader["partno"]);
-									string description = (string) reader["prtdesc"];
+									string id = (string)(reader["type"]) + Convert.ToString(reader["id"]);
+									string description = (string) reader["desc"];
 									double used = Convert.ToDouble (reader["used_today"]);
 
 									dvc.Root[0].Add ( new StyledStringElement(
-										partnum.ToString() + " " + description,
+										id + " " + description,
 										used.ToString(), 
 										UITableViewCellStyle.Value1));
 								}
@@ -241,26 +249,27 @@ namespace Puratap
 
 		public static bool IsEmpty()
 		{
-			if (File.Exists (ServerClientViewController.dbFilePath) )
-			{
+			if (File.Exists (ServerClientViewController.dbFilePath) ) {
 				// read the data from database here
-				using (var connection = new SqliteConnection("Data Source="+ServerClientViewController.dbFilePath) )
-				{
-					try 
-					{
-						using (var cmd = connection.CreateCommand())
-						{
+				using (var connection = new SqliteConnection("Data Source="+ServerClientViewController.dbFilePath) ) {
+					try {
+						using (var cmd = connection.CreateCommand()) {
 							connection.Open();
-							cmd.CommandText = "SELECT PARTS.PartNo, PARTS.PrtDesc, SUM(STOCKUSED.Num_Used) as USED_TODAY FROM STOCKUSED, PARTS WHERE STOCKUSED.PartNo=PARTS.PartNo GROUP BY PARTS.PartNo, PARTS.PrtDesc";
-							using (var reader = cmd.ExecuteReader())
-							{
-								if ( reader.Read() )
-								{
+							cmd.CommandText = "SELECT su.Element_Type as Type, su.Element_OID as ID, p.Part_Desc as Desc, SUM(su.Num_Used) as USED_TODAY " +
+												"FROM STOCKUSED su, PARTS p " + 
+												"WHERE su.Element_OID = p.Part_ID  " +
+													"AND su.Element_Type = 'P'  " +
+												"GROUP BY Element_Type, Element_OID, Part_Desc " +
+											"UNION SELECT su.Element_Type as Type, su.Element_OID as ID, a.Name as Desc, SUM(su.Num_Used) as USED_TODAY " +
+												"FROM STOCKUSED su, ASSEMBLIES a " +
+												"WHERE su.Element_OID = a.Assembly_ID  " +
+													"AND su.Element_Type = 'A'  " +
+											"GROUP BY Element_Type, Element_OID, Name";
+							using (var reader = cmd.ExecuteReader()) {
+								if ( reader.Read() ) {
 									reader.Close ();
 									return false;
-								}
-								else
-								{
+								} else {
 									reader.Close ();
 									return true;
 								}

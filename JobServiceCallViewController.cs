@@ -1094,6 +1094,7 @@ namespace Puratap
 			NavigationItem.HidesBackButton = true;
 			NavUsedParts = upnav;
 			NavWorkflow = nav;
+			DBAssemblies = new List<Assembly> ();
 			DBParts = new List<Part>();
 			DeactivateEditingMode ();
 			ThisJob = nav._tabs._jobRunTable.CurrentJob;
@@ -1169,6 +1170,7 @@ namespace Puratap
 
 		public void ResetToDefaults()
 		{
+			this.DeactivateEditingMode ();
 			foreach(Section section in Root)					
 				if (section is JobReportSection)
 				{
@@ -1184,6 +1186,7 @@ namespace Puratap
 					(section as JobReportSection).jrd.PointOID = 0;
 					(section.Elements[3] as StringElement).Value = "Not chosen";
 				}
+			ClearPartsList ();
 			ReloadData ();
 		}
 

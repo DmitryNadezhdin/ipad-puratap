@@ -11,8 +11,8 @@ namespace Puratap
 {
 	public class ProductsDVC : DialogViewController
 	{
-		static JobRunTable jrt;
-		static JobInstallationViewController jivc;
+		// static JobRunTable jrt;
+		private JobInstallationViewController jivc;
 
 		public static List<Product> dbProducts;
 		public static List<Product> ReadProducts()
@@ -50,7 +50,7 @@ namespace Puratap
 		public ProductsDVC(RootElement root, bool pushing, bool filling, JobRunTable JRT, JobInstallationViewController JIVC) : base (root, pushing)
 		{
 			jivc = JIVC;
-			jrt = JRT;
+			// jrt = JRT;
 			if (ProductsDVC.dbProducts == null || ProductsDVC.dbProducts.Count == 0)
 				dbProducts = ProductsDVC.ReadProducts ();
 
@@ -195,7 +195,7 @@ namespace Puratap
 	public class SaleOptionsDVC : DialogViewController
 	{
 		static JobRunTable jrt;
-		static JobInstallationViewController jivc;
+		private JobInstallationViewController jivc;
 
 		// this reads tap model data from DB
 
@@ -398,6 +398,7 @@ namespace Puratap
 
 					// add the part(s) associated with the option selected by user to the list
 					jivc.PartChosen ( Convert.ToInt32 (option.PartLink) );
+					jivc.ReloadData ();
 					// "tick" the chosen element
 					element.Accessory = UITableViewCellAccessory.Checkmark;
 
@@ -432,7 +433,7 @@ namespace Puratap
 				}
 			}
 			this.ReloadData ();
-			base.Selected ( indexPath);
+			base.Selected (indexPath);
 		}
 
 		public void ApplySurchargeForSaleOption(long optionID)
@@ -599,6 +600,7 @@ namespace Puratap
 		public void ResetToDefaults(bool resetFee)
 		{
 			ClearPartsList ();
+			this.DeactivateEditingMode ();
 
 			if (resetFee)
 				SetCurrentJobFeeToDefault ();
@@ -665,6 +667,7 @@ namespace Puratap
 			NavUsedParts = upnav;
 			NavWorkflow = nav;
 			DBParts = new List<Part>();
+			DBAssemblies = new List<Assembly> ();
 			dvcSO = new SaleOptionsDVC(null, false, true, this.NavUsedParts.Tabs._jobRunTable, this);
 			DeactivateEditingMode ();
 
@@ -826,17 +829,6 @@ namespace Puratap
 
 		public override void Selected (NSIndexPath indexPath)
 		{
-			/*
-			if (indexPath.Section == 0 && indexPath.Row == 0) {
-				var gc = new GetChoicesForObject("Please choose an installation type", InstallationType);
-				gc.Dismissed += delegate {
-					((StyledStringElement)Root[0].Elements[0]).Caption = "Installation type chosen";
-					((StyledStringElement)Root[0].Elements[0]).Value = InstallationType.OutputString ();
-					ReloadData();		
-				};
-				gc.ShowInView (this.View);
-			}*/
-
 			// we will have to handle adding parts in this class instead of its parent
 			base.Selected (indexPath); // this handles adding parts to list
 		}

@@ -19,8 +19,7 @@ namespace Puratap
 	[Register ("AppDelegate")]
 	public partial class AppDelegate : UIApplicationDelegate
 	{
-		// removed the following additional mtouch build parameters, since a release build would not start with them enabled:
-		// -nosymbolstrip -nostrip -cxx -gcc_flags "-lgcc_eh -L${ProjectDir} -ltestflight -ObjC"
+		// -nosymbolstrip -nostrip -cxx --registrar:oldstatic
 
 		// class-level declarations
 		UIWindow window;
@@ -113,7 +112,7 @@ namespace Puratap
 			try {
 				if (File.Exists(MyConstants.DBReceivedFromServer)) {
 					if (_tabs._jobRunTable._ds.TestDBIntegrity () ) {
-	//					// HACK temporary transitional code for updating from version 1.3c to 1.3d
+						// HACK temporary transitional code for updating from version 1.3c to 1.3d
 						// 1.3d requires IPAD_ORDERING field in PL_RECOR table
 						// some of the databases may not contain it if they were exported before the change was implemented
 	
@@ -140,7 +139,7 @@ namespace Puratap
 								}
 							} // end using dbCommand
 						} // end using dbConnection
-	//					// END HACK this code should be removed on 08.11.2013
+						// END HACK this code should be removed on 08.11.2013
 
 						// if database integrity check went ok, load customers and jobs from it
 						_tabs._jobRunTable._ds.LoadJobRun (1);
@@ -355,7 +354,7 @@ namespace Puratap
 							toCmd.ExecuteNonQuery ();
 							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_UNITNUM ON WSALES(UnitNum)";
 							toCmd.ExecuteNonQuery ();
-							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_MEMNUM ON WCMEMO(WMemNum)";
+							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_MEMOS ON WCMEMO(CusNum,WMemNum)";
 							toCmd.ExecuteNonQuery ();
 							toCmd.CommandText = "CREATE UNIQUE INDEX UNIQUE_JOURNAL ON JOURNAL(JDate,AccNum,JNum,CusNum,Debit,Credit)";
 

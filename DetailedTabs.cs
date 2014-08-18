@@ -15,6 +15,7 @@ using System.Drawing;
 using Mono.Data.Sqlite;
 using MonoTouch.Dialog;
 using MonoTouch.MapKit;
+using MonoTouch.MessageUI;
 
 namespace Puratap
 {
@@ -134,8 +135,6 @@ namespace Puratap
 		public SignServiceReportViewController SignService { get; set; }
 		public SignInvoiceViewController SignInvoice { get; set; }
 
-
-		
 		// public StockControlViewController _stockControl { get; set; } 	REPLACED BY UsedPartsViewControllers: ServiceUsedPartsViewController, FilterChangeViewController, JobInstallationViewController
 		// public UsedPartsViewController _jobFilter { get; set; }			REPLACED BY derived classes: ServiceUsedPartsViewController, FilterChangeViewController, JobInstallationViewController
 		// public InvoiceViewController _invoiceView { get; set; }			REPLACED BY PaymentViewController
@@ -381,7 +380,7 @@ namespace Puratap
 				                           	"Show in Google maps", 
 				                           	"Reprint docs for customer",
 				                           	"Reset jobs to default order",
-											"Run route",
+											"Compliance report",
 											"View manual"
 					 ) { 
 					Style = UIActionSheetStyle.BlackTranslucent
@@ -396,8 +395,8 @@ namespace Puratap
 						break; }
 
 						case 5: {
-							// calculate route -- calculate route, show it in a Monotouch.DialogViewController with multiline elements
-							this.SelectedViewController = this.ViewControllers[4];
+							// compliance report -- bring up an email template filled with details of the selected booking
+							this.SendComplianceReport ();
 						break; }
 
 						case 4: { 
@@ -594,9 +593,66 @@ namespace Puratap
 			this.Mode = DetailedTabsMode.Lookup;
 		}
 
+		private string GetComplianceMessageBodyTemplate(Customer c, Job j)
+		{
+			string template = String.Format("Customer info:\r\n\tCN#: {0}\r\n\tName: {1}\r\n\tAddress: {2}\r\n\r\n" +
+				"Booking info:\r\n\tID: {3}\r\n\tJob type: {4}\r\n\tPlumbing comments:\r\n{5}\r\n\r\n\r\n" +
+				"Issue description: ", 
+				c.CustomerNumber, c.FirstName+' '+c.LastName, c.Address+' '+c.Suburb, 
+				j.JobBookingNumber, j.Type.Description, j.JobPlumbingComments);
+			return template;
+		}
+
+		private void SendComplianceReport() {
+			// check if a booking is selected
+			if (this._jobRunTable.CurrentCustomer != null && this._jobRunTable.CurrentJob != null) {
+				// check if able to send emails
+				if (MFMailComposeViewController.CanSendMail) {
+					var mail = new MFMailComposeViewController(); 
+					NSAction act = delegate {	};
+
+					mail.SetToRecipients (new string[] { "compliancereports@puratap.com" });
+					mail.SetCcRecipients (new string[] { "nsmith@puratap.com", "lvictor@puratap.com" });
+
+					string subject = String.Format ("Compliance report: {0} CN# {1}, Booking {2}", 
+						MyConstants.DEBUG_TODAY.Substring(2,10), 
+						this._jobRunTable.CurrentJob.CustomerNumber,
+						this._jobRunTable.CurrentJob.JobBookingNumber);
+					mail.SetSubject (subject);
+
+					string msgBody = this.GetComplianceMessageBodyTemplate (
+						this._jobRunTable.CurrentCustomer, 
+						this._jobRunTable.CurrentJob);
+					mail.SetMessageBody (msgBody, false);
+
+					mail.Finished += delegate(object sender, MFComposeResultEventArgs e) {
+						if (e.Result == MFMailComposeResult.Sent) {
+							var alert = new UIAlertView("", "Email sent.\r\nThank you!", null, "OK");
+							alert.Show();				
+						} else {
+							var alert = new UIAlertView(e.Result.ToString(), "Email has not been sent.", null, "OK");
+							alert.Show();				
+						}
+
+						this.DismissViewController (true, act);				
+					};
+
+					this.PresentViewController (mail, true, act);
+				} else {
+					// unable to send emails -- display an alert
+					var alert = new UIAlertView ("Unable to send emails now", "Please check network settings and try again.", null, null, "OK");
+					alert.Show ();
+				}
+			} else {
+				// no booking selected -- display an alert
+				var alert = new UIAlertView ("No booking selected", "Please select a booking first.", null, null, "OK");
+				alert.Show ();
+			}
+		}
+
 		private void GenerateRunHtmlLayout() {
 			// TODO create an HTML file using Google Maps API and JavaScript to show markers at job points 
-			var nyi = new UIAlertView ("Not implemented yet", "", null, "OK");
+			var nyi = new UIAlertView ("Not implemented yet.", "", null, "OK");
 			nyi.Show ();
 		}
 
@@ -1026,20 +1082,25 @@ namespace Puratap
 						cmd.Parameters.Add("_wmemnum", System.Data.DbType.Double).Value = MyConstants.DUMMY_MEMO_NUMBER; 				// arbitrary large number to be replaced by a proper memo number when processing iPad data in FoxPro
 
 						cmd.CommandText = sql;
-						// TODO:: error handling here :: IMPORTANT since if INSERT statement won't execute for some weird reason, there will be discrepancy between database and displayed memo list (until an app restarts)
-						cmd.ExecuteNonQuery();
-						
-						// if the insert statement did execute correctly, we'll add the memo to a list customer's memos
-						Memo m = new Memo(_newMemoView.GetTextField (0).Text);
-						m.MemoCustomerNumber = _jobRunTable.CurrentCustomer.CustomerNumber;
-						m.MemoDateEntered  = DateTime.Now;
-						m.MemoTimeEntered = DateTime.Now;
-						m.MemoType = "FRC";
-						m.MemoDescription = "Entered on an iPad";
-						m.Editable = true;
-						
-						_jobRunTable.CurrentCustomer.CustomerMemos.Add (m);
-						_memosView.ReloadMemosTable();
+						try {
+							cmd.ExecuteNonQuery();
+							// if the insert statement did execute correctly, we'll add the memo to a list customer's memos
+							Memo m = new Memo(_newMemoView.GetTextField (0).Text);
+							m.MemoCustomerNumber = _jobRunTable.CurrentCustomer.CustomerNumber;
+							m.MemoDateEntered  = DateTime.Now;
+							m.MemoTimeEntered = DateTime.Now;
+							m.MemoType = "FRC";
+							m.MemoDescription = "Entered on an iPad";
+							m.Editable = true;
+
+							_jobRunTable.CurrentCustomer.CustomerMemos.Add (m);
+							_memosView.ReloadMemosTable();
+						} catch (Mono.Data.Sqlite.SqliteException exc) {
+							var customMemoExists = new UIAlertView ("Error", "Custom memo already exists for this customer. Please add the info there.", null, "OK");
+							this._jobRunTable._tabs._scView.Log (String.Format("Handle_newMemoViewWillDismiss: Exception: {0}\nStack trace: {1} ", exc.Message, exc.StackTrace));
+							customMemoExists.Show ();
+						}
+
 					}
 					
 				}
@@ -1065,31 +1126,13 @@ namespace Puratap
 			this.MyNavigationBar.BarStyle = UIBarStyle.Default; // .Black;
 			this.MyNavigationBar.Translucent = true;
 
-			// DEPRECATED
-//			if (MyConstants.iOSVersion >= 7) {
-//				this.MyNavigationBar.TintColor = UIColor.Blue;
-//				this.MyNavigationBar.BarTintColor = UIColor.FromRGBA (94, 94, 36, 255);
-//				this.MyNavigationBar.SetTitleTextAttributes (new UITextAttributes () {
-//					TextColor = UIColor.Black,
-//					TextShadowColor = UIColor.Clear
-//				});
-//			}
-
 			switch(mode) {
 				case NavigationButtonsMode.CustomerDetails: {
 					BtnEdit = new UIBarButtonItem("More actions", UIBarButtonItemStyle.Bordered, _editJobList);		// this button allows to rearrange cells in the table on the left
-					BtnStuff = new UIBarButtonItem("On same street", UIBarButtonItemStyle.Bordered, _searchCustomersByStreet);	// allows to look up customers on the same street
-
-//	* * * DEPRECATED
-//					if (_jobRunTable.CurrentJob == null) {
-//						BtnStuff.Enabled = false;
-//						// BtnEdit.Enabled = false;
-//					}
-//	* * * DEPRECATED
-
-					// if (NavigationBar.TopItem.LeftBarButtonItem == null) NavigationBar.TopItem.SetLeftBarButtonItem (BtnStartWorkflow, true); // .LeftBarButtonItem = BtnStartWorkflow;
 					BtnStartWorkflow = new UIBarButtonItem ("Start workflow", UIBarButtonItemStyle.Done, _startWorkflow); 
-					MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem [] { BtnStartWorkflow, /*BtnStuff,*/ BtnEdit }, true);		// adds the buttons to navigation bar			
+					// BtnStuff = new UIBarButtonItem("On same street", UIBarButtonItemStyle.Bordered, _searchCustomersByStreet);	// allows to look up customers on the same street
+
+					MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem [] { BtnStartWorkflow, BtnEdit }, true);		// adds the buttons to navigation bar			
 					break;			
 				}
 				case NavigationButtonsMode.CustomerMemos: {

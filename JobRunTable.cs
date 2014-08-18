@@ -440,11 +440,7 @@ namespace Puratap
 					cmd.Parameters.Add ("@OCode", DbType.Int16).Value = 0;	
 					cmd.Parameters.Add ("@Warranty", DbType.Int16).Value = 0;	
 					cmd.Parameters.Add ("@NoSearch", DbType.Int16).Value = 0;	
-					cmd.Parameters.Add ("@Attention", DbType.Int16).Value = 0;	
-
-					/*
-SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCode, Warranty, NoSearch, Attention
-					 */
+					cmd.Parameters.Add ("@Attention", DbType.Int16).Value = 0;
 
 					cmd.ExecuteNonQuery();		
 				}
@@ -520,6 +516,28 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			// Update the PhotosTakenToday and CustomerNumber values for _photosView
 			_tabs._photosView.PhotosCounter = c.PhotosTakenToday;
 			_tabs._photosView.CustomerNumber = c.CustomerNumber;			
+		}
+
+		public Customer FindCustomerForJob(Job j) {
+			Customer result = null;
+
+			foreach (Customer c in this.Customers) {
+				if (c.CustomerNumber == j.CustomerNumber) {
+					result = c;
+					break;
+				}
+			}
+
+			if (result == null) {
+				foreach (Customer c in this.UserAddedCustomers) {
+					if (c.CustomerNumber == j.CustomerNumber) {
+						result = c;
+						break;
+					}
+				}
+			}
+
+			return result;
 		}
 
 
@@ -620,56 +638,65 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 
 											// " AND wsales.cusnum=pl_recor.cusnum " +
 						cmd.CommandText = sql;
-						using (var reader = cmd.ExecuteReader())
-						{
-							while (reader.Read () )
+						try {
+							using (var reader = cmd.ExecuteReader())
 							{
-								// TODO :: put thorough error handling here (data type checks, default values, etc.)
-								long CustomerNumber = (long)reader["cusnum"];
-								long companyID = (long)reader ["coi_id"];
-								string companyName = (string)reader["wcomname"];
-								string Title = (string)reader["wctitle"];
-								string FirstName = (string)reader["wconame"];
-								string LastName = (string)reader["wcsname"];
-								string Address = (string)reader["street_address"];
-								string Suburb = (string)reader["wcadd2"];
-								
-								string PhoneAreaCode = (string)reader["wcacde||exdigit"];
-								if (PhoneAreaCode.Length>3)
-									PhoneAreaCode = PhoneAreaCode.Substring(0,3);
-								string PhoneNumber = (string)reader["wcphone"];
-								string MobilePrefix = (string)reader["mobpre"];
-								string MobileNumber = (string)reader["mobile"];
-								
-								string fbContact = String.Format ("{0} {1} {2}", (string)reader["wcstitle"], (string)reader["wcsoname"], (string)reader["wcssname"]);
-								string fbPhone = (string)reader["wccoacde"] + (string)reader["wccophone"];
-								string formattedFbPhone = (fbPhone.Length > 7) ? String.Format ("{0} {1} {2}", fbPhone.Substring(0,4), fbPhone.Substring(4,3), fbPhone.Substring(7)) : fbPhone;
+								while (reader.Read () )
+								{
+									// TODO :: put thorough error handling here (data type checks, default values, etc.)
+									long CustomerNumber = (long)reader["cusnum"];
+									long companyID = (long)reader ["coi_id"];
+									string companyName = (string)reader["wcomname"];
+									string Title = (string)reader["wctitle"];
+									string FirstName = (string)reader["wconame"];
+									string LastName = (string)reader["wcsname"];
+									string Address = (string)reader["street_address"];
+									string Suburb = (string)reader["wcadd2"];
+									
+									string PhoneAreaCode = (string)reader["wcacde||exdigit"];
+									if (PhoneAreaCode.Length>3)
+										PhoneAreaCode = PhoneAreaCode.Substring(0,3);
+									string PhoneNumber = (string)reader["wcphone"];
+									string MobilePrefix = (string)reader["mobpre"];
+									string MobileNumber = (string)reader["mobile"];
+									
+									string fbContact = String.Format ("{0} {1} {2}", (string)reader["wcstitle"], (string)reader["wcsoname"], (string)reader["wcssname"]);
+									string fbPhone = (string)reader["wccoacde"] + (string)reader["wccophone"];
+									string formattedFbPhone = (fbPhone.Length > 7) ? String.Format ("{0} {1} {2}", fbPhone.Substring(0,4), fbPhone.Substring(4,3), fbPhone.Substring(7)) : fbPhone;
 
-								double cLat = (double)reader ["coords_lat"];
-								double cLng = (double)reader ["coords_lng"];
+									double cLat = (double)reader ["coords_lat"];
+									double cLng = (double)reader ["coords_lng"];
 
-								DateTime lastInstallDate;
-								// DEBUG :: DateTime.TryParse((string)reader["max(wsales.wdateins)"], out lastInstallDate);
-								lastInstallDate = DateTime.Now.Date;
+									DateTime lastInstallDate;
+									// DEBUG :: DateTime.TryParse((string)reader["max(wsales.wdateins)"], out lastInstallDate);
+									lastInstallDate = DateTime.Now.Date;
 
-								bool tubingDone = (reader["tu_done"] == DBNull.Value) ? false : Convert.ToBoolean (reader["tu_done"]);
-								if (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber) tubingDone = true;
+									bool tubingDone = (reader["tu_done"] == DBNull.Value) ? false : Convert.ToBoolean (reader["tu_done"]);
+									if (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber) tubingDone = true;
 
-								string formattedPhone = ((PhoneAreaCode + PhoneNumber).Length > 4) ? (PhoneAreaCode + PhoneNumber).Substring(0,4) + " " + 
-									(PhoneAreaCode + PhoneNumber).Substring(4,3) + " " + (PhoneAreaCode + PhoneNumber).Substring(7) : PhoneAreaCode + PhoneNumber;
-								string formattedMobile = ((MobilePrefix + MobileNumber).Length > 4) ? (MobilePrefix + MobileNumber).Substring(0,4) + " " +
-									(MobilePrefix + MobileNumber).Substring(4,3) + " " + (MobilePrefix + MobileNumber).Substring(7) : MobilePrefix + MobileNumber;
-
-								Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, formattedPhone, formattedMobile,
-									// String.Format("{0} {1}", PhoneAreaCode, PhoneNumber), 
-									// String.Format("{0} {1}", MobilePrefix, MobileNumber),
-									lastInstallDate, fbContact, formattedFbPhone, 
-								                          					companyID, companyName, tubingDone, cLat, cLng);				
-								_table._customers.Add(c);
+									string formattedPhone = "";
+									string formattedMobile = "";
+									try {
+										formattedPhone = ((PhoneAreaCode + PhoneNumber).Length > 7) ? (PhoneAreaCode + PhoneNumber).Substring(0,4) + " " + 
+															(PhoneAreaCode + PhoneNumber).Substring(4,3) + " " + (PhoneAreaCode + PhoneNumber).Substring(7) : PhoneAreaCode + PhoneNumber;
+									} catch {
+										formattedPhone = PhoneAreaCode + PhoneNumber;
+									}
+									try {
+										formattedMobile = ((MobilePrefix + MobileNumber).Length > 7) ? (MobilePrefix + MobileNumber).Substring(0,4) + " " +
+															(MobilePrefix + MobileNumber).Substring(4,3) + " " + (MobilePrefix + MobileNumber).Substring(7) : MobilePrefix + MobileNumber;
+									} catch {
+										formattedMobile = MobilePrefix + MobileNumber;
+									}
+									Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, formattedPhone, formattedMobile,
+										lastInstallDate, fbContact, formattedFbPhone, companyID, companyName, tubingDone, cLat, cLng);				
+									_table._customers.Add(c);
+								}
+								if (! reader.IsClosed) reader.Close ();
 							}
-							if (! reader.IsClosed) reader.Close ();
+						} catch (Exception e) {
+							Console.WriteLine (e.Message);
 						}
-
 
 						
 						Job j;
@@ -773,7 +800,8 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 									{
 										string jStatus = (reader["installed"]==DBNull.Value)? "" : (string)reader["installed"];
 										if (! (jStatus.Contains ("Installed") || jStatus.Contains("Upgraded") || jStatus.Contains ("New Tap") || 
-										       jStatus.Contains ("Changed") || jStatus.Contains ("Service Done") || 	jStatus.Contains ("Uninstall")))
+											jStatus.Contains ("Changed") || jStatus.Contains ("Service Done") || jStatus.Contains ("Uninstall") ||
+											jStatus.Contains("Delivered") ))
 											j.Started = MyConstants.JobStarted.Other;
 										else j.Started = MyConstants.JobStarted.Yes;
 									}
@@ -894,19 +922,26 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								// two empty strings are SpecialInstructions and PlumbingComments
 								j = new Job(cusnum, jnum, unitnum, jTime, jDate, money, jbOn, jbBy, "", "", jType, parentnum, warranty, attention, cntct, attreason);
 								j.NotDoneComment = (colonCount >= 2) ? notDoneComment.Substring (MyConstants.GetNthIndex (notDoneComment, ':', 2)+2 ) : notDoneComment;
+
 								// getting job status values from database
 								int jDone = Convert.ToInt32 (reader["jdone"]);
 								j.JobDone = (jDone==1) ? true : false;	
-							
-								if (parentnum == -1) 
-								{
+
+								if (j.JobDone) {
+									string jStatus = (reader["installed"]==DBNull.Value)? "" : (string)reader["installed"];
+									if (! (jStatus.Contains ("Installed") || jStatus.Contains("Upgraded") || jStatus.Contains ("New Tap") || 
+										jStatus.Contains ("Changed") || jStatus.Contains ("Service Done") || 	jStatus.Contains ("Uninstall") ||
+										jStatus.Contains("Delivered") ))
+										j.Started = MyConstants.JobStarted.Other;
+									else j.Started = MyConstants.JobStarted.Yes;
+								}
+
+								if (parentnum == -1) {
 									_table.UserCreatedJobs.Add (j);
 								}
-								else 
-								{
+								else {
 									Job assumedMain = _table.FindParentJob(j);
-									if (assumedMain != null) // may happen if FindParentJob fails to find one, which in turn may happen with unfinished child jobs (iPad reboot, app restart, etc)
-									{
+									if (assumedMain != null) { // may happen if FindParentJob fails to find one, which in turn may happen with unfinished child jobs (iPad reboot, app restart, etc)								
 										if (assumedMain.ParentJobBookingNumber == -1) 
 											assumedMain.ChildJobs.Add (j);
 									}
@@ -1337,34 +1372,38 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							// this should do almost the same stuff that is done for section 0, just looking up customers and jobs in other lists
 							Customer c = _table.UserAddedCustomers [indexPath.Row];
 							cell.TextLabel.Text = (! c.isCompany) ? String.Format ("{0} {1}",	// FIXED :: was only checking UserCreatedJobs for being not null, but used to draw data from other objects as well (UserAddedCustomers) 
-						                                                      /*c.Title,*/c.FirstName, c.LastName) : c.CompanyName;
+						                                                      c.FirstName, c.LastName) : c.CompanyName;
 
 							cell.DetailTextLabel.Text = _table.UserCreatedJobs [indexPath.Row].JobTime.ToString ("h:mm tt") + "   " + c.Suburb + "\n" + 
-								c.Address; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
+								c.Address;
 							cell.DetailTextLabel.Lines = 2;
 
 							_table.UserAddedCustomers [indexPath.Row].HighLighted = false;
-							if (_table.UserCreatedJobs [indexPath.Row].JobDone) {
-								if (_table.UserCreatedJobs [indexPath.Row].Started == MyConstants.JobStarted.Yes) {
-									cell.AccessoryView = null;
-									cell.Accessory = UITableViewCellAccessory.Checkmark;
-								} else {
-									UIImageView view = new UIImageView (UIImage.FromBundle ("/Images/201-cross"));
-									cell.Accessory = UITableViewCellAccessory.None;
-									cell.AccessoryView = view;
-								}
-							} else {
-								cell.AccessoryView = null;
-								cell.Accessory = UITableViewCellAccessory.None;
-							}
 
-							if (_table.UserCreatedJobs [indexPath.Row].AttentionFlag)
-								cell.BackgroundColor = UIColor.Yellow;
-							else {
-								if (_table.UserAddedCustomers [indexPath.Row].TubingUpgradeDone)
-									cell.BackgroundColor = UIColor.White;
-								else
-									cell.BackgroundColor = UIColor.Cyan;
+							try {
+								if (_table.UserCreatedJobs [indexPath.Row].JobDone) {
+									if (_table.UserCreatedJobs [indexPath.Row].Started == MyConstants.JobStarted.Yes) {
+										cell.AccessoryView = new UIImageView (UIImage.FromFile ("Images/202-tick.png"));
+									}
+									else {
+										cell.AccessoryView = new UIImageView (UIImage.FromFile ("Images/201-cross.png"));
+									}
+								}
+								else {
+									cell.AccessoryView = null;
+								}
+
+								if (_table.UserCreatedJobs [indexPath.Row].AttentionFlag)
+									cell.BackgroundColor = UIColor.Yellow;
+								else {
+									if (_table.UserAddedCustomers [indexPath.Row].TubingUpgradeDone)
+										cell.BackgroundColor = UIColor.White;
+									else
+										cell.BackgroundColor = UIColor.Cyan;
+								}
+							} catch {
+								cell.BackgroundColor = UIColor.White;
+								cell.AccessoryView = null;
 							}
 
 						}
@@ -1373,12 +1412,12 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				case 0:
 					{
 						Customer c = _table._customers [indexPath.Row];
-						cell.TextLabel.Text = (c.isCompany) ? c.CompanyName : String.Format ("{0} {1}", /*c.Title,*/c.FirstName, c.LastName);
+						cell.TextLabel.Text = (c.isCompany) ? c.CompanyName : String.Format ("{0} {1}", c.FirstName, c.LastName);
 
 						if (_table.MainJobList.Count > 0) {
 							try {
 								cell.DetailTextLabel.Text = _table.MainJobList [indexPath.Row].JobTime.ToString ("h:mm tt") + "   " + c.Suburb + "\n" +
-									c.Address; // + "   (CN# " + c.CustomerNumber.ToString() + ")";
+									c.Address;
 							} catch {
 								cell.DetailTextLabel.Text = "Exception!";
 							}
@@ -1387,13 +1426,12 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						cell.DetailTextLabel.Lines = 2;
 
 						try {
-
 							if (_table._mainjoblist [indexPath.Row].JobDone) {
 								if (_table._mainjoblist [indexPath.Row].Started == MyConstants.JobStarted.Yes) {
-									cell.AccessoryView = new UIImageView (UIImage.FromBundle ("/Images/202-tick"));
+									cell.AccessoryView = new UIImageView (UIImage.FromFile ("Images/202-tick.png"));
 								}
 								else {
-									cell.AccessoryView = new UIImageView (UIImage.FromBundle ("/Images/201-cross"));
+									cell.AccessoryView = new UIImageView (UIImage.FromFile ("Images/201-cross.png"));
 								}
 							}
 							else {
@@ -1408,9 +1446,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 								else
 									cell.BackgroundColor = UIColor.Cyan;
 							}
-						} catch (Exception e) {
-							Console.WriteLine (e.Message);
-							cell.Accessory = UITableViewCellAccessory.None;
+						} catch {
+							// Console.WriteLine (e.Message);
+							cell.AccessoryView = null;
 							cell.BackgroundColor = UIColor.White;
 						}
 						break;
@@ -1548,23 +1586,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				default : return UITableViewCellEditingStyle.None;
 				}
 			}
-			
-			public override void WillDisplay (UITableView tableView, UITableViewCell cell, NSIndexPath indexPath)
-			{
-				if (tableView.IndexPathForSelectedRow != indexPath) // cell is not the selected cell
-				{
-					if (_table.HighlightedMode && _table._customers[indexPath.Row].HighLighted) {
-						cell.BackgroundColor = UIColor.Green;
-					}
-					else
-					{
-						if (cell.BackgroundColor == UIColor.Green)
-						{
-							cell.BackgroundColor = (_table.MainJobList[indexPath.Row].AttentionFlag)? UIColor.Orange : UIColor.White;
-						}
-					}
-				}
-			}
 
 			public void HighlightCustomerRecordsInSummary()
 			{
@@ -1572,8 +1593,6 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 				{
 					if ((_table._tabs.SelectedViewController as PaymentsSummaryNavigationController).TopViewController is PaymentsSummary)
 					{
-						// _table._tabs._scView.Log ("1");
-
 						_table._tabs._paySummaryView.ClearHighlightedRows ();
 						switch (_table._tabs._paySummaryView.SummaryMode)
 						{
@@ -1581,6 +1600,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 							_table._tabs._paySummaryView.HighlightCustomerRows ();
 							break;
 						case SummaryModes.Stock:
+							_table._tabs._paySummaryView.HighlightStockRows ();
+							break;
+						case SummaryModes.Float:
 							_table._tabs._paySummaryView.HighlightStockRows ();
 							break;
 						default : break;
@@ -1608,13 +1630,9 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 						_table._tabs._customersView.SetJobTimeDisabled ();
 						_table.ShowCustomerDetails (_table.Customers[row], _table.MainJobList[row]);
 						
-						if (_table._tabs.Popover != null) 
-						{
+						if (_table._tabs.Popover != null) {
 							_table._tabs.Popover.Dismiss(true);
 						}
-	
-						// DEBUG :: string msg = String.Format("JobRunTableDelegate: Row selected {0}:{1}: Job Booking Number: {2}", indexPath.Section, indexPath.Row, _table.MainJobList[row].JobBookingNumber);
-						// DEBUG :: _table._tabs._scView.Log (msg);
 
 						HighlightCustomerRecordsInSummary ();
 					} 
@@ -1944,6 +1962,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 	
 	public class Job 
 	{
+		public List<Assembly> UsedAssemblies;
 		public List<Part> UsedParts;  // ? This should probably be saved to and read from database because of potential application restarts
 			// On the other hand, the usual workflow goes like this: you start the job, then you either finish it or reset workflow
 			// if you reset, there's nothing to save to the database
@@ -2047,7 +2066,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			{
 				this.ParentJobBookingNumber = parentJobID;
 				/* 
-				 * THIS LOGIC HAS BEEN RECONSIDERED 15.11.2012
+				 * THIS LOGIC HAS BEEN RECONSIDERED by management 15.11.2012
 					if (this.Type.Code == "SER") { ShouldPayFee = false; }
 					else { 
 				 */
@@ -2056,6 +2075,7 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			
 			this.Payments = ReadPaymentsFromDatabase(cusnum, jnum); // this constructor reads payment data from database
 			this.UsedParts = ReadPartsFromDatabase(jnum); // this was supposed to read used parts data from database (it doesn't for now)
+			this.UsedAssemblies = ReadAssembliesFromDatabase (jnum);
 			this.JobDone = false; // IMPLEMENTED :: this is saved to & read from database (when?), as it is important enough
 
 			this.JobReportAttached = false;
@@ -2163,43 +2183,88 @@ SheetType, Sheett, Suburb, Time, TimeEntered, UnitNum, Code, Run, Rebooked, OCod
 			}
 			return result;
 		}
-		
-		public List<Part> ReadPartsFromDatabase(long jobID)
+
+		public List<Assembly> ReadAssembliesFromDatabase(long jobID)
 		{
-			var result = new List<Part>();
-			/*
-			// READING PARTS DATA
-			string dbPath = MyConstants.DBReceivedFromServer;
+			var result = new List<Assembly> ();
+			try {
+				string dbPath = MyConstants.DBReceivedFromServer;
+				if (File.Exists (dbPath)) {
+					using (var connection = new SqliteConnection ("Data Source=" + dbPath)) {
+						connection.Open ();
+						using (var cmd = connection.CreateCommand ()) {
+							string sql = "SELECT su.*, a.Name " +
+											" FROM StockUsed su, ASSEMBLIES a " +
+											" WHERE a.Assembly_ID = su.Element_OID " +
+												"AND su.Element_Type = 'A' " +
+												"AND su.BOOKNUM = "+jobID.ToString ();
+							cmd.CommandText = sql;
 
-			if (File.Exists(dbPath))
-			{
-				using (var connection = new SqliteConnection("Data Source="+dbPath) )
-				{
-					connection.Open ();
-					using (var cmd = connection.CreateCommand ())
-					{
-						sql = "SELECT StockUsed.* " +
-						" FROM StockUsed " +
-							" WHERE USE_DATE = DATE(" + dbDate + ") " +
-							" AND BOOKNUM = "+jobID.ToString ();
-						cmd.CommandText = sql;
-						cmd.Parameters.Clear ();
-						
-						using (var partsReader = cmd.ExecuteReader ())
-						{
-							while (partsReader.Read ())
-							{
-								double partNumber = (double)partsReader["partno"];
-								double quantity = (double)partsReader["num_used"];
-
-								foreach(Part dbPart in )
+							using (var asmReader = cmd.ExecuteReader ()) {
+								while (asmReader.Read ()) {
+									int asmID = Convert.ToInt32(asmReader["Element_OID"]);
+									double quantity = (double) asmReader["num_used"];
+									string dsc = (string) asmReader ["name"];
+									Assembly readAsm = new Assembly ();
+									readAsm.Quantity = quantity;
+									readAsm.aID = Convert.ToInt32(asmID);
+									readAsm.Description = dsc;
+									result.Add (readAsm);
+								}
+								if (!asmReader.IsClosed)
+									asmReader.Close ();
 							}
-							if (!partsReader.IsClosed) partsReader.Close ();
 						}
 					}
 				}
+			} catch (Exception e) {
+				Console.WriteLine (String.Format("Exception: {0}:\n {1}", e.Message, e.StackTrace));
 			}
-			*/
+			return result;
+		}
+
+		public List<Part> ReadPartsFromDatabase(long jobID)
+		{
+			var result = new List<Part>();
+			try {
+				// READING PARTS DATA
+				string dbPath = MyConstants.DBReceivedFromServer;
+
+				if (File.Exists(dbPath))
+				{
+					using (var connection = new SqliteConnection("Data Source="+dbPath) )
+					{
+						connection.Open ();
+						using (var cmd = connection.CreateCommand ())
+						{
+							string sql = "SELECT su.*, p.PrtDesc " +
+											" FROM StockUsed su, Parts p " +
+											" WHERE p.PartNo = su.Element_OID " +
+												" AND su.Element_Type = 'P' " +
+												" AND su.BOOKNUM = "+jobID.ToString ();
+							cmd.CommandText = sql;
+							
+							using (var partsReader = cmd.ExecuteReader ())
+							{
+								while (partsReader.Read ())
+								{
+									int partNumber = Convert.ToInt32 (partsReader["Element_OID"]);
+									double quantity = (double) partsReader["num_used"];
+									string dsc = (string) partsReader ["prtdesc"];
+									Part readPart = new Part ();
+									readPart.Quantity = quantity;
+									readPart.PartNo = partNumber;
+									readPart.Description = dsc;
+									result.Add (readPart);
+								}
+								if (!partsReader.IsClosed) partsReader.Close ();
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				Console.WriteLine (String.Format("Exception: {0}:\n {1}", e.Message, e.StackTrace));
+			}
 			return result;
 		}
 		

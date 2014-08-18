@@ -69,9 +69,13 @@ namespace Puratap
 				};
 
 				_ipc.Canceled += delegate {
-					_ipc.DismissViewController (true, null); // _ipc.DismissModalViewControllerAnimated (true);
-					_tabs.SelectedViewController = _tabs.ViewControllers [_tabs.LastSelectedTab];
+					if (! (_tabs.ViewControllers[_tabs.LastSelectedTab] is TakePhotosViewController))
+						_tabs.SelectedViewController = _tabs.ViewControllers [_tabs.LastSelectedTab];
+					else 
+						_tabs.SelectedViewController = _tabs.ViewControllers[0];
+
 					_tabs._jobRunTable.TableView.SelectRow (_tabs._jobRunTable.LastSelectedRowPath, true, UITableViewScrollPosition.None);
+					_ipc.DismissViewController (true, null);
 
 					// _ipc.Dispose (); _ipc = null;
 				};

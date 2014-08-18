@@ -79,10 +79,12 @@ namespace Puratap
 				SigningMode = true;
 
 				this.NavigationController.SetNavigationBarHidden (false, true);
-				this.NavigationItem.SetRightBarButtonItems (new UIBarButtonItem[] { 
-					new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning), 
-					new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Bordered, ClearSignature) }, true);
+				this.NavigationItem.SetLeftBarButtonItem(new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Bordered, ClearSignature), true);
+				this.NavigationItem.SetRightBarButtonItem(new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning), true);
 				this.NavigationController.SetToolbarHidden (true, true);
+				//				this.NavigationItem.SetRightBarButtonItems (new UIBarButtonItem[] { 
+				//					new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning), 
+				//					new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Bordered, ClearSignature) }, true);
 			};
 			
 			FinishSigning = delegate {
@@ -94,7 +96,8 @@ namespace Puratap
 						signing,				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						forward
 					}, true );
-				
+
+				this.NavigationItem.SetLeftBarButtonItems  (new UIBarButtonItem[] { }, true );
 				this.NavigationItem.SetRightBarButtonItems (new UIBarButtonItem[] { }, true );
 				this.NavigationController.SetToolbarHidden (false, true);
 				

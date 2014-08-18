@@ -1,4 +1,63 @@
-Updated to 1.4c -- Crosses and ticks
+1.4j -- Split payment button is back
+
+Re-introduced the split payment button.
+Fixed payment bug ("None" payment type)
+Implemented a separate unit upgrade build for plumbers.
+
+1.4i -- Hotfix for stock lists
+
+Fixed an issue where stock lists were not loading properly.
+
+1.4h -- Stock summaries, compliance reports, fixes
+
+Compliance report button is now available under "More actions" menu -- generates a template to send to call centre management to notify them about issues with bookings.
+Buttons for printing and emailing stock summaries have been added.
+Fixed occasional scrolling stutter issue.
+Fixed camera view controller bug (sometimes clicking "Cancel" would bring it up again).
+Fixed attachment naming bug when emailing summaries.
+Franchisee manual has been updated (07.07.2014)
+
+======================================
+
+1.4g -- Split payments gone, bug fixes
+
+Fixed a crash related to "Boxed delivery" job type.
+Fixed a crash related to adding extra jobs that had assemblies in their list of standard parts.
+Fixed a crash related to deleting an assembly from the stock list (using swipe gesture or "Edit stock list button").
+Fixed a bug where assembled filters and units would not be shown on "Sign stock used" sheet.
+Fixed a bug where the checks for empty stock lists were not working properly (one could end up entering a job with no stock used at all and the app would not generate a warning).
+Fixed a bug where an app crash would lead to job cell being "ticked" upon the next app start.
+
+Tubing upgrade jobs for franchisees will have default stock list pre-loaded (similar to filter change jobs). Plumbers would still have to select between "Option 1" and "Option 2" upgrades.
+"Split payment" button on the payment screen has been hidden for now, we will rework the payment screen interface in a future update before putting it back.
+
+======================================
+
+1.4f -- Stock float, assemblies and part pictures
+
+Stock "float" is now calculated (based on levels reported by the server whenever data exchange takes place) and reduced appropriately as jobs are done. To view stock float, switch to Summary tab, tap "Switch to stock", then tap "View stock float". Note that during the testing period your in-app float will be "replenished" to default levels daily. This is intended. Once we switch to new stock control system, float will be reported according to real data.
+Assemblies are now used in lists of stock (filters and units that are assembled in the warehouse).
+Part pictures are now contained within the app to reduce size of files exchanged with the server.
+
+======================================
+
+1.4e -- Manual updated
+
+Franchisee manual has been updated: changes to SOP0008
+New reference count extension has been implemented -- less memory consumption, crashes less likely
+Rewritten the "Next" button click handler on Payment screen to get rid of crashes caused by subscripting twice to the click event using += operator
+
+Known issues: when a job has been added to the cluster and warranty switch set to "ON", going back to selecting parts for this added job will result in warranty switch and pressure field not being displayed properly
+
+1.4d -- Fixes
+
+Ticks and crosses will now be displayed correctly for manually added jobs.
+Data noise in phone fields will now be handled correctly when reading run data ("Nothing to see here, move along" message will no longer be displayed).
+Resetting job data will now correctly clear all service report comments associated with it and its child jobs.
+
+======================================
+
+1.4c -- Crosses and ticks
 
 Comments for jobs that have not been done are now editable and persist between app restarts
 Job results are now communicated clearly (by ticks and crosses in job cells)

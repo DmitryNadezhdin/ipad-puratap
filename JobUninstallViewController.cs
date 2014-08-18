@@ -11,8 +11,8 @@ namespace Puratap
 		{
 			NavUsedParts = upnav;
 			NavWorkflow=nav;
-			//Parts = new List<Part>();
 			DBParts = new List<Part>();
+			DBAssemblies = new List<Assembly> ();
 			DeactivateEditingMode ();
 			
 			Section WarrantySection = new Section("");

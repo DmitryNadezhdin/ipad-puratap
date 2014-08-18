@@ -137,21 +137,24 @@ namespace Puratap
 				signing = new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning);
 				this.SetToolbarItems (new UIBarButtonItem[] {
 						back, 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-						clearSignature,	new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-						signing,				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
+						clearSignature,		new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
+						signing,			new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						skipSigning,		new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						forward
 					}, true );
-				
-				// Signature.Image = new UIImage();
+
 				Signature.Clear ();
 				hasBeenSigned = false;
 				SigningMode = true;
 
 				this.NavigationController.SetNavigationBarHidden (false, true);
-				this.NavigationItem.SetRightBarButtonItems (new UIBarButtonItem[] { 
-					new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning), 
-					new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Bordered, ClearSignature) }, true);
+				this.NavigationItem.SetLeftBarButtonItem(new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Bordered, ClearSignature), true);
+				this.NavigationItem.SetRightBarButtonItem(new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning), true);
+
+//				this.NavigationItem.SetRightBarButtonItems (new UIBarButtonItem[] { 
+//					new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning), 
+//					new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Bordered, ClearSignature) }, true);
+
 				this.NavigationController.SetToolbarHidden (true, true);
 			};
 			
@@ -161,11 +164,12 @@ namespace Puratap
 
 				this.SetToolbarItems (new UIBarButtonItem[] {
 						back, 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-						signing,				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
+						signing,			new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						skipSigning,		new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						forward
 					}, true );
 
+				this.NavigationItem.SetLeftBarButtonItems  (new UIBarButtonItem[] { }, true );
 				this.NavigationItem.SetRightBarButtonItems (new UIBarButtonItem[] { }, true );
 				this.NavigationController.SetToolbarHidden (false, true);
 				

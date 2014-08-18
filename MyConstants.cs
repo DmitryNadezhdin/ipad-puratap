@@ -352,7 +352,7 @@ namespace Puratap
 					UIGraphics.BeginPDFContext (pdfData, new RectangleF(0,0,myView.ContentSize.Width, myView.ContentSize.Height), null); // myView.Bounds
 					UIGraphics.BeginPDFPage ();
 
-						// render the view completely by "scrolling" through and rendering the graphics layer each time
+					// render the view completely by "scrolling" through and rendering the graphics layer each time
 					PointF currentOffset = new PointF(0, 0);
 					while (currentOffset.Y < myView.ContentSize.Height)
 					{
@@ -518,9 +518,7 @@ namespace Puratap
 			case PaymentTypes.EFTPOS: return "EFT POS";
 			case PaymentTypes.CCDetails: return "Credit card to be drawn";
 			case PaymentTypes.Invoice : return "Invoice";
-			case PaymentTypes.Split : return "Split"; // should never happen since split payment is essentially two payments for one job cluster
-			//case PaymentTypes.MobileCreditCard: return "Mobile Credit Card";
-			// case PaymentTypes.RefusedToPay : return "Refused to pay";
+			case PaymentTypes.Split : return "Split"; // should not happen under normal circumstances since split payment is essentially two payments for one job cluster
 			case PaymentTypes.None: return "None"; // should only happen if the job did not involve any payment
 			default: return "String not found in enumeration: PaymentTypes";
 			}

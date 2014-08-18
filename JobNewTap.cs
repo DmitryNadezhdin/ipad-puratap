@@ -12,6 +12,7 @@ namespace Puratap
 			NavUsedParts = upnav;
 			NavWorkflow = nav;
 			DBParts = new List<Part>();		
+			DBAssemblies = new List<Assembly> ();
 			DeactivateEditingMode ();
 
 			Section WarrantySection = new Section(" ");
@@ -114,7 +115,7 @@ namespace Puratap
 					if (e.ButtonIndex != ac.CancelButtonIndex)
 					{
 						ClearPartsList();
-						(Root[2] as PartsSection).ReadPartsFromDatabase(ServerClientViewController.dbFilePath);
+						PartsSection.ReadPartsFromDatabase(ServerClientViewController.dbFilePath);
 
 						string chosenButton = ac.ButtonTitle (e.ButtonIndex);
 						foreach(SaleOption so in saleOptions)
@@ -145,41 +146,6 @@ namespace Puratap
 							}
 						}
 					}
-
-						/* * * The tap models used to be hardcoded in like below which is less than accpetable
-						switch(e.ButtonIndex)
-						{
-						case 0: {  // Standard
-							foreach(Part part in DBParts)
-							{
-								if (part.PartNo == 145)
-								{
-									PartChosen (part);
-									break;
-								}
-							}
-							break; }
-						case 1: { // Imperial
-							foreach(Part part in DBParts)
-							{
-								if (part.PartNo == 147)
-								{
-									PartChosen (part);
-									break;
-								}
-							}
-							break; } 
-						case 2: { // Mark II
-							foreach(Part part in DBParts)
-							{
-								if (part.PartNo == 148)
-								{
-									PartChosen (part);
-									break;
-								}
-							}							
-							break; }
-						} */
 				};
 				
 				ac.ShowInView (this.View);

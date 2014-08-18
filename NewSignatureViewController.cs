@@ -78,122 +78,6 @@ namespace Puratap
 		}
 	}
 
-	/*
-	public class SignatureView : UIView
-	{		
-		NewSignatureViewController nsvc;
-
-		public void Clear ()
-		{
-			drawPath.Dispose ();
-			drawPath = new CGPath ();
-			fingerDraw = false;
-			SetNeedsDisplay ();			
-		}
-
-		public SignatureView (RectangleF frame, NewSignatureViewController root) : base(frame)
-		{
-			nsvc = root;
-			this.drawPath = new CGPath ();
-			this.BackgroundColor = UIColor.Yellow;
-			this.MultipleTouchEnabled = false;
-		}
-				
-		private bool fingerDraw;
-		private PointF touchLocation;
-		private PointF prevTouchLocation;
-		private CGPath drawPath;
-
-		public override void TouchesBegan (MonoTouch.Foundation.NSSet touches, UIEvent evt)
-		{
-			if (nsvc.SigningMode == true)
-			{
-				base.TouchesBegan (touches, evt);
-				
-				UITouch touch = touches.AnyObject as UITouch;
-				if ((touch.GestureRecognizers != null) && (touch.GestureRecognizers.Length > 0))
-				{
-					foreach (var tmpG in touch.GestureRecognizers)
-						tmpG.CancelsTouchesInView = false;
-				}
-
-				this.fingerDraw = true;
-				this.touchLocation = touch.LocationInView (this);
-				this.prevTouchLocation = touch.PreviousLocationInView (this);
-
-				this.drawPath.MoveToPoint (this.prevTouchLocation);
-				this.SetNeedsDisplay ();
-			}
-		}
-		
-		public override void TouchesMoved (MonoTouch.Foundation.NSSet touches, UIEvent evt)
-		{
-			if (nsvc.SigningMode == true)
-			{
-				base.TouchesMoved (touches, evt);
-				
-				UITouch touch = touches.AnyObject as UITouch;
-				if ((touch.GestureRecognizers != null) && (touch.GestureRecognizers.Length > 0))
-				{
-					foreach (var tmpG in touch.GestureRecognizers)
-						tmpG.CancelsTouchesInView = false;
-				}
-
-				this.touchLocation = touch.LocationInView (this);
-				this.prevTouchLocation = touch.PreviousLocationInView (this);
-				this.nsvc.hasBeenSigned = true;
-
-				this.drawPath.MoveToPoint (this.prevTouchLocation);
-				this.drawPath.AddLineToPoint (this.touchLocation);
-
-				this.SetNeedsDisplay ();
-			}
-		}
-
-		public override void TouchesCancelled (NSSet touches, UIEvent evt)
-		{
-			base.TouchesCancelled (touches, evt);
-			// Console.WriteLine (String.Format ("Touches cancelled event fired."));
-		}
-		
-		public UIImage GetDrawingImage ()
-		{
-			UIImage returnImg = null;
-
-			UIGraphics.BeginImageContext (this.Bounds.Size);			
-			using (CGContext context = UIGraphics.GetCurrentContext()) 
-			{
-				context.SetStrokeColor (UIColor.Black.CGColor);
-				context.SetLineWidth (5f);
-				context.SetLineJoin (CGLineJoin.Round);
-				context.SetLineCap (CGLineCap.Round);
-				context.AddPath (this.drawPath);
-				context.DrawPath (CGPathDrawingMode.Stroke);
-				returnImg = UIGraphics.GetImageFromCurrentImageContext ();
-			}
-			UIGraphics.EndImageContext ();
-			return returnImg;
-		}
-		
-		public override void Draw (RectangleF rect)
-		{
-			base.Draw (rect);
-			
-			if (this.fingerDraw) 
-			{
-				using (CGContext context = UIGraphics.GetCurrentContext()) 
-				{
-					context.SetStrokeColor (UIColor.Black.CGColor);
-					context.SetLineWidth (5f);
-					context.SetLineJoin (CGLineJoin.Round);
-					context.SetLineCap (CGLineCap.Round);
-					context.AddPath (this.drawPath);
-					context.DrawPath (CGPathDrawingMode.Stroke);
-				}
-			}   
-		}
-	} */
-
 	[Register]
 	public class BezierSignatureView : UIView
 	{		
@@ -549,7 +433,7 @@ namespace Puratap
 				}
 				
 				this.SetNeedsDisplay ();
-			} // end if the corresponding ciew controller is in Signing mode
+			} // end if the corresponding view controller is in Signing mode
 		}
 
 		[Export ("GLSignatureViewPan")]

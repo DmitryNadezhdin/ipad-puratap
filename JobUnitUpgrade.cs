@@ -11,8 +11,8 @@ namespace Puratap
 		{
 			NavUsedParts = upnav;
 			NavWorkflow = nav;
-			//Parts = new List<Part>();
 			DBParts = new List<Part>();		
+			DBAssemblies = new List<Assembly> ();
 			DeactivateEditingMode ();
 					
 			Section WarrantySection = new Section(" ");
@@ -107,8 +107,8 @@ namespace Puratap
 		public void SetPartsToStandardBuild()
 		{
 			// this should fill the list of chosen parts with the parts from the standard build
-			int buildNumber = 11; // standard build number for unit upgrades
-			SetPartsToBuildNumber(buildNumber);
+			int buildNumber = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee)? 11 : 33;
+			SetPartsToBuildNumber (buildNumber);
 		}
 				
 		public override void ViewWillAppear (bool animated)

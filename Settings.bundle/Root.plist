@@ -6,21 +6,23 @@
 	<array>
 		<dict>
 			<key>Key</key>
-				<string>PuratapServerIP</string>						<key>Type</key>
-				<string>PSTextFieldSpecifier</string>
+			<string>PuratapServerIP</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
 			<key>Title</key>
-				<string>iPad server IP address</string>
+			<string>iPad server IP address</string>
 			<key>DefaultValue</key>
-				<string>192.168.0.9</string>
-		</dict>		
+			<string>192.168.0.9</string>
+		</dict>
 		<dict>
 			<key>Key</key>
-				<string>PuratapServerPort</string>						<key>Type</key>
-				<string>PSTextFieldSpecifier</string>
+			<string>PuratapServerPort</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
 			<key>Title</key>
-				<string>iPad server port</string>
+			<string>iPad server port</string>
 			<key>DefaultValue</key>
-				<string>53213</string>
+			<string>53213</string>
 		</dict>
 	</array>
 </dict>
