@@ -269,78 +269,78 @@ namespace Puratap
 			return true;
 		}
 
-		[Obsolete]
-		public override bool HandleOpenURL (UIApplication application, MonoTouch.Foundation.NSUrl url)
-		{
-			// if in workflow, show a message that workflow has to be finished
-			if (_tabs.Mode == DetailedTabsMode.Workflow) {
-				var cannotUpdateDuringWorkflow = new UIAlertView ("Cannot add data during workflow.", "Please finish entering data for current job and try again.", null, "OK");
-				cannotUpdateDuringWorkflow.Show ();
-			} else {
-				// brach: extra job or full run replacing current database
-				if (url.Path.Contains ("Extra_Job")) {  // adding extra job
-					string[] temp = url.Path.Split ('/');
-					string fname = temp [temp.Length - 1];
-					var addJobPrompt = new UIAlertView ("Are you sure?", "Adding job data from file: " + fname, null, "No", "Yes");
-					addJobPrompt.Dismissed += delegate(object sender, UIButtonEventArgs e) {
-						if (e.ButtonIndex != addJobPrompt.CancelButtonIndex) {
-							// copy database entries from the extra db file to current database and delete the source
-							bool copyResult = SqliteCopyDataToDB(url.Path, MyConstants.DBReceivedFromServer);
-
-							if (copyResult == true) {
-								// reload the run so that the added job is displayed
-								_tabs._jobRunTable._ds.LoadJobRun(2);
-
-								// if data copying is successful, send the e-mail confirmation
-								if (MFMailComposeViewController.CanSendMail)
-									SendEmailConfirmationJobAccepted( url.Path.Substring(url.Path.LastIndexOf('/')+1) );
-								else 
-								{
-									var notEmailAble = new UIAlertView("iPad cannot send e-mails at this time.", "Please send the confirmation when able.", null, "OK");
-									notEmailAble.Show();
-								}			
-							}
-						}
-					};
-					addJobPrompt.Show ();
-
-				} else { // full run data replacement
-					string file = Path.GetFileNameWithoutExtension (url.Path);
-					var loadRunPrompt = new UIAlertView ("Are you sure?", "Load runs from file: " + file, null, "No", "Yes");
-					loadRunPrompt.Dismissed += delegate (object sender, UIButtonEventArgs e) {
-						if (e.ButtonIndex != loadRunPrompt.CancelButtonIndex) {
-							// move the file from Inbox to Documents folder
-							//// string fileName = Path.GetFileName (url.Path);
-							string fileName = Path.GetFileNameWithoutExtension (url.Path);
-							if (fileName.EndsWith ("-1"))
-								fileName = fileName.Remove (fileName.Length - 2, 2) + ".sqlite";
-							else
-								fileName = Path.GetFileName (url.Path);
-
-							// if file with that <name> existed, rename it to EXISTED_<name>
-							string openedFileName = Environment.GetFolderPath (Environment.SpecialFolder.Personal) + "/" + fileName; // Path.GetFileName (url.Path);
-							if (File.Exists (openedFileName)) {
-								// if file with EXISTED_<name> exists, delete it
-								File.Delete (openedFileName.Replace (fileName, "EXISTED_" + fileName));
-								File.Move (openedFileName, openedFileName.Replace (fileName, "EXISTED_" + fileName));
-							}
-							File.Move (url.Path, openedFileName);
-
-							// set the appropriate keys in the app so that this database becomes the current working one
-							MyConstants.DBReceivedFromServer = openedFileName;
-
-							// call LoadJobRun to reload the run
-							_tabs._jobRunTable._ds.LoadJobRun (2);
-						} else {
-							// delete the file that has been copied to Inbox folder of the app
-							File.Delete (url.Path);
-						}
-					};
-					loadRunPrompt.Show ();
-				} // endif -- check if it is one extra job or a full run replacement
-			} // endif -- check if in workflow
-			return true;
-		}
+//		[Obsolete]
+//		public override bool HandleOpenURL (UIApplication application, MonoTouch.Foundation.NSUrl url)
+//		{
+//			// if in workflow, show a message that workflow has to be finished
+//			if (_tabs.Mode == DetailedTabsMode.Workflow) {
+//				var cannotUpdateDuringWorkflow = new UIAlertView ("Cannot add data during workflow.", "Please finish entering data for current job and try again.", null, "OK");
+//				cannotUpdateDuringWorkflow.Show ();
+//			} else {
+//				// brach: extra job or full run replacing current database
+//				if (url.Path.Contains ("Extra_Job")) {  // adding extra job
+//					string[] temp = url.Path.Split ('/');
+//					string fname = temp [temp.Length - 1];
+//					var addJobPrompt = new UIAlertView ("Are you sure?", "Adding job data from file: " + fname, null, "No", "Yes");
+//					addJobPrompt.Dismissed += delegate(object sender, UIButtonEventArgs e) {
+//						if (e.ButtonIndex != addJobPrompt.CancelButtonIndex) {
+//							// copy database entries from the extra db file to current database and delete the source
+//							bool copyResult = SqliteCopyDataToDB(url.Path, MyConstants.DBReceivedFromServer);
+//
+//							if (copyResult == true) {
+//								// reload the run so that the added job is displayed
+//								_tabs._jobRunTable._ds.LoadJobRun(2);
+//
+//								// if data copying is successful, send the e-mail confirmation
+//								if (MFMailComposeViewController.CanSendMail)
+//									SendEmailConfirmationJobAccepted( url.Path.Substring(url.Path.LastIndexOf('/')+1) );
+//								else 
+//								{
+//									var notEmailAble = new UIAlertView("iPad cannot send e-mails at this time.", "Please send the confirmation when able.", null, "OK");
+//									notEmailAble.Show();
+//								}			
+//							}
+//						}
+//					};
+//					addJobPrompt.Show ();
+//
+//				} else { // full run data replacement
+//					string file = Path.GetFileNameWithoutExtension (url.Path);
+//					var loadRunPrompt = new UIAlertView ("Are you sure?", "Load runs from file: " + file, null, "No", "Yes");
+//					loadRunPrompt.Dismissed += delegate (object sender, UIButtonEventArgs e) {
+//						if (e.ButtonIndex != loadRunPrompt.CancelButtonIndex) {
+//							// move the file from Inbox to Documents folder
+//							//// string fileName = Path.GetFileName (url.Path);
+//							string fileName = Path.GetFileNameWithoutExtension (url.Path);
+//							if (fileName.EndsWith ("-1"))
+//								fileName = fileName.Remove (fileName.Length - 2, 2) + ".sqlite";
+//							else
+//								fileName = Path.GetFileName (url.Path);
+//
+//							// if file with that <name> existed, rename it to EXISTED_<name>
+//							string openedFileName = Environment.GetFolderPath (Environment.SpecialFolder.Personal) + "/" + fileName; // Path.GetFileName (url.Path);
+//							if (File.Exists (openedFileName)) {
+//								// if file with EXISTED_<name> exists, delete it
+//								File.Delete (openedFileName.Replace (fileName, "EXISTED_" + fileName));
+//								File.Move (openedFileName, openedFileName.Replace (fileName, "EXISTED_" + fileName));
+//							}
+//							File.Move (url.Path, openedFileName);
+//
+//							// set the appropriate keys in the app so that this database becomes the current working one
+//							MyConstants.DBReceivedFromServer = openedFileName;
+//
+//							// call LoadJobRun to reload the run
+//							_tabs._jobRunTable._ds.LoadJobRun (2);
+//						} else {
+//							// delete the file that has been copied to Inbox folder of the app
+//							File.Delete (url.Path);
+//						}
+//					};
+//					loadRunPrompt.Show ();
+//				} // endif -- check if it is one extra job or a full run replacement
+//			} // endif -- check if in workflow
+//			return true;
+//		}
 
 		private bool SqliteCopyDataToDB(string fromDB, string toDB) {
 			bool result = false;
