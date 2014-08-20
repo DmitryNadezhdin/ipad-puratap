@@ -216,7 +216,14 @@ namespace Puratap
 			{
 				if (_jobNotDone == null) // if this is the first time, we create the dialog
 				{
-					_jobNotDone = new UIAlertView("Please specify a reason", "", null, "Cancel",
+					_jobNotDone = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber)? new UIAlertView("Please specify a reason", "", null, "Cancel",
+																													"Customer not at home",
+																													"Cancelled by customer",
+																													"I wasn't there in time",
+																													"The address was wrong",
+																													"Roof job",
+																													"Other") :
+										new UIAlertView("Please specify a reason", "", null, "Cancel",
 				                               "Customer not at home",
 				                               "Cancelled by customer",
 				                               "I wasn't there in time",
@@ -242,7 +249,15 @@ namespace Puratap
 								case 2:	chosenOption = "Customer cancelled"; selectedJob.Started = MyConstants.JobStarted.CustomerCancelled; break;
 								case 3:	chosenOption = "Late"; selectedJob.Started = MyConstants.JobStarted.PuratapLate; break;
 								case 4:	chosenOption = "Wrong address"; selectedJob.Started = MyConstants.JobStarted.AddressWrong; break;
-								case 5:	chosenOption = "Other"; selectedJob.Started = MyConstants.JobStarted.Other; break;
+								case 5:	if (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee) {
+											chosenOption = "Other"; 
+											selectedJob.Started = MyConstants.JobStarted.Other; 
+										} else {
+											chosenOption = "Roof job"; 
+											selectedJob.Started = MyConstants.JobStarted.RoofJob; 
+										}
+									break;
+								case 6: chosenOption = "Other"; selectedJob.Started = MyConstants.JobStarted.Other; break;
 								default:	chosenOption = "Unknown?"; break;
 								}
 
