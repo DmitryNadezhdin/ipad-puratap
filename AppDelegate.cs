@@ -309,6 +309,9 @@ namespace Puratap
 //					var loadRunPrompt = new UIAlertView ("Are you sure?", "Load runs from file: " + file, null, "No", "Yes");
 //					loadRunPrompt.Dismissed += delegate (object sender, UIButtonEventArgs e) {
 //						if (e.ButtonIndex != loadRunPrompt.CancelButtonIndex) {
+//							// generate run summary for the current run
+//							if (_tabs._paySummaryView != null)
+//								_tabs._paySummaryView.GenerateAllSummaryFiles();
 //							// move the file from Inbox to Documents folder
 //							//// string fileName = Path.GetFileName (url.Path);
 //							string fileName = Path.GetFileNameWithoutExtension (url.Path);
