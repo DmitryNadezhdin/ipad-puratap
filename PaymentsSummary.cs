@@ -254,7 +254,7 @@ namespace Puratap
 					// to prevent the app from creating empty (or almost empty) summary files, which lead to issues with the data exchange
 				{
 					// write the generated SummaryData to a summary file here
-					string filePath = String.Format ("{0} {1} {2} Daily Summary.txt", MyConstants.EmployeeID, MyConstants.EmployeeName, date.Substring (2,10) );
+					string filePath = String.Format ("{0} {1} {2} Payments Summary.txt", MyConstants.EmployeeID, MyConstants.EmployeeName, date.Substring (2,10) );
 					filePath = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), filePath);
 					this.jrt._tabs._scView.Log (String.Format ("Writing summaries..."));
 

@@ -106,7 +106,7 @@ namespace Puratap
 
 		public static string DEBUG_TODAY = String.Format (" '{0}' ", DateTime.Now.Date.ToString ("yyyy-MM-dd")); // " '2012-06-28' ";
 		public static long DUMMY_MEMO_NUMBER = 999999999999;
-		public enum JobStarted { Yes, CustomerNotAtHome, CustomerCancelled, PuratapLate, AddressWrong, Other, None }
+		public enum JobStarted { Yes, CustomerNotAtHome, CustomerCancelled, PuratapLate, AddressWrong, RoofJob, Other, None }
 				
 		public static string NEW_DEVICE_GUID_STRING = "aaaabbbb-cccc-dddd-eeee-ffff00001111";
 		private static string DEVICE_ID_STRING = "PuratapDeviceID";

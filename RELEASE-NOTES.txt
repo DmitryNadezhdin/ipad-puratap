@@ -1,3 +1,12 @@
+1.4k -- Fixes
+
+Added "Roof Job" to the list of reasons for jobs not done for plumbers.
+Replaced TestFlight dynamic library with a new file bound to TestFlight SDK version 3.0.0.
+Daily summary files are now generated before loading an e-mailed country run file.
+Removed some obsolete methods that are deprecated in later iOS versions.
+
+======================================
+
 1.4j -- Split payment button is back
 
 Re-introduced the split payment button.
