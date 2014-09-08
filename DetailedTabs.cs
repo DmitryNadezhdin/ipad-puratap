@@ -78,9 +78,8 @@ namespace Puratap
 		// DEPRECATED :: the general idea is that DetailedTabs handles buttons on its NavigationBar (the top stripe), while WorkflowNavigationController handles the toolbar (bottom stripe)
 		
 		EventHandler _doneEditingJobList;
-		EventHandler _editJobList;
+		EventHandler _moreActions;
 		EventHandler _createNewMemo;
-		EventHandler _searchCustomersByStreet;
 		EventHandler _deleteSelectedMemo;
 		EventHandler _jobWasNotDoneClicked;
 		EventHandler _startWorkflow;
@@ -170,14 +169,10 @@ namespace Puratap
 		
 		public EventHandler EditJobList 
 		{
-			get { return _editJobList; }
-			set { _editJobList = value; }
+			get { return _moreActions; }
+			set { _moreActions = value; }
 		}
 
-		public EventHandler SearchCustomersByStreet {
-			get { return _searchCustomersByStreet; }
-			set { _searchCustomersByStreet = value; }
-		}
 		public EventHandler CreateNewMemo {
 			get { return _createNewMemo; }
 			set { _createNewMemo = value; }
@@ -335,24 +330,7 @@ namespace Puratap
 				}
 			};
 			
-			_searchCustomersByStreet = delegate {		// event handler for the rightmost button on the navigation bar: highlights customers ont the same street as currently selected customer
-				if (_jobRunTable.TableView.IndexPathForSelectedRow == null)
-				{
-					// shows alert that row must be selected for this functionality to work
-					using(var alert = new UIAlertView("Please", "Select a customer", null, "OK", null))
-					{
-						alert.Show();
-						return;
-					}
-				}
-				else 
-				{
-					_jobRunTable.HighlightedMode = true;
-					_jobRunTable.TableView.ReloadData();
-				}
-			};
-			
-			_doneEditingJobList = delegate {		// event handler for a button that allows rearranging of customers in the jobs table on the left-hand side of the screen
+			_doneEditingJobList = delegate {						// event handler for a button that allows rearranging of customers in the jobs table on the left-hand side of the screen
 																	// this handler is used when the table is in editing mode
 				UIView.BeginAnimations (null);
 				UIView.SetAnimationDuration (0.5);
@@ -361,7 +339,7 @@ namespace Puratap
 				{
 					item.Enabled = true;
 				}
-				_btnEdit = new UIBarButtonItem("More actions", UIBarButtonItemStyle.Bordered, _editJobList);	// the "done" button should revert to its original state
+				_btnEdit = new UIBarButtonItem("More actions", UIBarButtonItemStyle.Bordered, _moreActions);	// the "done" button should revert to its original state
 				MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem[] { BtnStartWorkflow, BtnEdit}, true);		// pushes new button objects into navigation bar
 				this.SelectedViewController.View.Alpha = 1;
 				this.SelectedViewController.View.UserInteractionEnabled = true;
@@ -372,7 +350,7 @@ namespace Puratap
 				UIView.CommitAnimations ();
 			};
 			
-			 _editJobList = delegate {			// event handler for a button that allows rearranging of customers in the jobs table on the left-hand side of the screen
+			_moreActions = delegate {			// event handler for a button that allows rearranging of customers in the jobs table on the left-hand side of the screen
 												// this handler is used when the table is in NOT editing mode
 				
 				var ac = new UIActionSheet("", null, null, null, "Rearrange jobs",
@@ -411,7 +389,7 @@ namespace Puratap
 						}
 						case 3: { DoReprintDocsForCustomer (); break; }
 						case 2: { DoShowCustomerGoogleMaps(); break; }
-						case 1: { DoShowCustomerAppleMaps(); break; } // not used anymore -- SearchCustomersByStreet(null, null); break; }
+						case 1: { DoShowCustomerAppleMaps(); break; }
 						case 0: { DoRearrange (); break; }
 					}
 					BtnEdit.Enabled = true;
@@ -612,7 +590,7 @@ namespace Puratap
 					NSAction act = delegate {	};
 
 					mail.SetToRecipients (new string[] { "compliancereports@puratap.com" });
-					mail.SetCcRecipients (new string[] { "nsmith@puratap.com", "lvictor@puratap.com" });
+					mail.SetCcRecipients (new string[] { "lvictor@puratap.com", "earcher@puratap.com" });
 
 					string subject = String.Format ("Compliance report: {0} CN# {1}, Booking {2}", 
 						MyConstants.DEBUG_TODAY.Substring(2,10), 
@@ -1020,7 +998,7 @@ namespace Puratap
 				string dbPath = ServerClientViewController.dbFilePath;
 				if (File.Exists( dbPath ))
 				{
-					string sql = 	"DELETE FROM Wcmemo WHERE wctime = :_timeentered AND cusnum=:_cn";	// Deleting memo in WCMEMO table
+					string sql = "DELETE FROM Wcmemo WHERE wctime = :_timeentered AND cusnum = :_cn";	// Deleting memo in WCMEMO table
 					
 					// create SQLite connection to file and write the data
 					SqliteConnection connection = new SqliteConnection("Data Source="+dbPath);
@@ -1128,9 +1106,8 @@ namespace Puratap
 
 			switch(mode) {
 				case NavigationButtonsMode.CustomerDetails: {
-					BtnEdit = new UIBarButtonItem("More actions", UIBarButtonItemStyle.Bordered, _editJobList);		// this button allows to rearrange cells in the table on the left
+					BtnEdit = new UIBarButtonItem("More actions", UIBarButtonItemStyle.Bordered, _moreActions);						// this button allows to rearrange cells in the table on the left
 					BtnStartWorkflow = new UIBarButtonItem ("Start workflow", UIBarButtonItemStyle.Done, _startWorkflow); 
-					// BtnStuff = new UIBarButtonItem("On same street", UIBarButtonItemStyle.Bordered, _searchCustomersByStreet);	// allows to look up customers on the same street
 
 					MyNavigationBar.TopItem.SetRightBarButtonItems(new UIBarButtonItem [] { BtnStartWorkflow, BtnEdit }, true);		// adds the buttons to navigation bar			
 					break;			

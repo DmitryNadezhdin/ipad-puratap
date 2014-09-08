@@ -726,7 +726,6 @@ namespace Puratap
 		
 		public void ResetToDefaultView()
 		{
-			// _tabs._jobRunTable.CurrentJob = null; --- this was a cause of many a crash, after removing this, the number of crash reports on TestFlight has diminished greatly
 			UIView.SetAnimationDuration (0.3f);
 			UIView.BeginAnimations (null);
 
@@ -809,12 +808,7 @@ namespace Puratap
 					_buttons = new UIBarButtonItem[] { _leftButton, _flexibleButtonSpace, _rightButton };
 					this.Toolbar.SetItems (_buttons, true);
 					return;
-/*				
-				case WorkflowToolbarButtonsMode.ServiceCallStockControl:
-					_buttons = new UIBarButtonItem[] {};
-					this.Toolbar.SetItems (_buttons, true);
-					return;
-*/				
+			
 				case WorkflowToolbarButtonsMode.FilterChange:
 					_leftButton = new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, _proceedToPayment);
 					_flexibleButtonSpace = new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace, null, null);
