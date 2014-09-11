@@ -12,7 +12,7 @@ namespace Puratap
 	public partial class ServerClientViewController : UIViewController
 	{
 		public DetailedTabs _tabs { get; set; }
-		public static ManualResetEvent _dataExchangeEvent = new ManualResetEvent(false);		// this event notifies the main application thread that data exchange with the Windows server has been completed
+		public static ManualResetEvent _dataExchangeEvent = new ManualResetEvent(false);	// this event notifies the main application thread that data exchange with the Windows server has been completed
 
 		// new implementation of data exchange does away with Bonjour and uses settings (NSUserDefaults.StandardUserDefaults) to determine server's IP address and port
 		private Reachability _reach;
@@ -21,9 +21,7 @@ namespace Puratap
 		public int PuratapServerPort { get; set; }
 
 		ClientServerDataExchange csde;
-		// NSNetServiceBrowser _netBrowser;
-		// public List<NSNetService> _serviceList;
-		// bool netBrowserStarted = false;
+
 		
 		public ServerClientViewController (DetailedTabs tabs) : base ("ServerClient", null)
 		{
@@ -47,61 +45,11 @@ namespace Puratap
 		
 		internal void StartNetBrowser() 
 		{
-//			if (! netBrowserStarted) 
-//			{
-//				_serviceList = new List<NSNetService> ();
-//				_netBrowser = new NSNetServiceBrowser ();
-//
-//				_netBrowser.SearchStarted += delegate(object sender, EventArgs e) {
-//					Log(String.Format("netBrowser: Search started..."));
-//				};
-//
-//				_netBrowser.SearchStopped += delegate(object sender, EventArgs e) {
-//					Log(String.Format("netBrowser: Search stopped..."));
-//				};
-//
-//				_netBrowser.NotSearched += delegate(object sender, NSNetServiceErrorEventArgs e) {
-//					Log(String.Format("netBrowser: \"Did not search\" event fired. Attempting to start the search again..."));
-//					_netBrowser.SearchForServices("_ipadService._tcp", "");
-//				};
-//
-//				_netBrowser.FoundService += delegate (object sender, NSNetServiceEventArgs e) 
-//				{
-//					if (_serviceList.Count == 0)		// only add a data exchange starter to the first service found
-//					{
-//						_serviceList.Add(e.Service);
-//						e.Service.AddressResolved += ServiceAddressResolved;
-//						Log ("ServiceFound event has been fired: Service added : " + e.Service.Name);
-//					}
-//					// SetDataExchangeButtonEnabled ();
-//				};
-//
-//				_netBrowser.ServiceRemoved += delegate(object sender, NSNetServiceEventArgs e) 
-//				{
-//					// var nsService = _serviceList.FindAll(s => s.Name.Equals (e.Service.Name));
-//					_serviceList.RemoveAll(s => s.Name.Equals (e.Service.Name));
-//					Log ("_netBrowser : ServiceRemoved event has been fired : Service removed : "+e.Service.Name);
-//
-//					// SetDataExchangeButtonDisabled ();
-//				};
-//
-//				_netBrowser.Schedule (MonoTouch.Foundation.NSRunLoop.Current, "NSDefaultRunLoopMode");
-//				_netBrowser.SearchForServices("_ipadService._tcp", "");	// this service is created by the Application Server running on Windows machine (IMPLEMENTED :: rewritten the app server to be a console application)
-//				// SetDataExchangeButtonDisabled ();
-//				netBrowserStarted = true;
-//				Log ("ServerClientViewController.ViewDidAppear : _netBrowser has been started.");
-//			}
-//			else {  }
+
 		}
 		
 		void ServiceAddressResolved (object sender, EventArgs e) {
-//			Log ("ServiceAddressResolved event has been fired");
-//			NSNetService ns = sender as NSNetService;
-//			if (ns != null) 
-//			{
-//				Log (String.Format ( "Service has been resolved: {0}.", ns.Name ));
-//				ExchangeFilesAndUpdateJobTableView (ns);
-//			}
+
 		}
 		
 		public void SetExchangeActivityHidden()
@@ -113,31 +61,7 @@ namespace Puratap
 		}
 		
 		void ExchangeFilesAndUpdateJobTableView(NSNetService ns)
-		{
-//			csde = new ClientServerDataExchange(this);
-//
-//			try { 
-//				int result = csde.CallServer (ns); // this starts another thread for data exchange
-//				if (result == 0)
-//				{
-//					SetExchangeActivityHidden ();
-//					_serviceList.Clear ();
-//					StopNetBrowser ();
-//					StartNetBrowser ();
-//				}
-//			}
-//			catch (Exception e) 
-//			{ 
-//				Log (String.Format ("ExchangeFilesAndUpdateJobTableView : Exception : ", e.Message));
-//				SetExchangeActivityHidden ();
-//				_serviceList.Clear ();
-//				StopNetBrowser ();
-//				StartNetBrowser ();
-//			}
-
-			// ClientServerDataExchange.fileExchangeDone.WaitOne (); // wait until file exchange with the server has been completed
-			// _tabs._jobRunTable._ds.GetCustomersFromDB();
-			// _tabs._jobRunTable.TableView.ReloadData();			
+		{		
 			
 		}
 		
@@ -146,10 +70,6 @@ namespace Puratap
 			InvokeOnMainThread ( delegate() {
 				UIView.SetAnimationDuration (0.3f);
 				UIView.BeginAnimations (null);
-//				btnDownload.Enabled = true;
-//				btnDownload.SetTitle ("Submit data", UIControlState.Normal);
-//				btnDownload.SetTitleColor(btnChangeDate.TitleColor (UIControlState.Normal), UIControlState.Normal);
-//				btnDownload.Frame = new RectangleF( btnDownload.Frame.X, btnDownload.Frame.Y, 160, btnDownload.Frame.Height);
 
 				aivConnectingToService.StopAnimating ();
 				btnResetDeviceID.Frame = new RectangleF( btnResetDeviceID.Frame.X, btnResetDeviceID.Frame.Y, 160, btnResetDeviceID.Frame.Height);

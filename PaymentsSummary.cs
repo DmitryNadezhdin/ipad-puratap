@@ -111,29 +111,6 @@ namespace Puratap
 				{
 					UIAlertView notYet = new UIAlertView("Not implemented yet...", "", null, "OK");
 					notYet.Show ();
-					/*
-					mail = new MFMailComposeViewController();
-					
-					string weekStartDate = DateTime.Now.AddDays (0-DateTime.Now.DayOfWeek).Date.ToString ("yyyy-MM-dd");
-					mail.AddAttachmentData( new NSData(), "application/pdf", String.Format ("{0} Weekly.pdf", weekStartDate) );
-					
-					mail.SetSubject (String.Format ("{0}'s invoice for week starting on {1}", MyConstants.EmployeeName, weekStartDate));
-					mail.SetToRecipients (new string[] { "accounting@puratap.com" });
-
-					NSAction act = delegate {	};
-					
-					mail.Finished += delegate(object sender, MFComposeResultEventArgs e) {
-						if (e.Result == MFMailComposeResult.Sent)
-						{
-							var alert = new UIAlertView("", "Mail sent", null, "OK");
-							alert.Show();				
-						}
-						
-						this.DismissViewController (true, act);				
-					};
-					
-					this.PresentModalViewController (mail, true);
-					*/
 				}	
 				else 
 				{
