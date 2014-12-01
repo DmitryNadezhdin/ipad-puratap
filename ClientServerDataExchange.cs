@@ -75,7 +75,7 @@ namespace Puratap
 									 * 
 									 * 		1. We should never assume that data piece, however small it may be, will come through the network synchronously
 									 * 			Therefore, every send or receive operation should be performed in async mode (!not the case currently!).
-									 * 		2. Device identification. We DO NOT rely on devices' serial numbers or ECIDs, we create a GUID on the device and 
+									 * 		2. Device identification. We CAN NOT rely on devices' serial numbers or ECIDs, we create a GUID on the device and 
 									 * 			tie those GUIDs to employee number (REPNUM in WREP or PLNUM in PLUMB) in FoxPro database.
 									 * 			When the device initiates the data exchange, it sends over its GUID. 
 									 * 			The server then checks the database to decide which file(s) should be transferred to the device.
@@ -789,17 +789,16 @@ namespace Puratap
 		
 		public bool SendFile(string fileName, FileTypes fType, NetworkStream netStream)
 		{
-			FileInfo fileInfo = new FileInfo(fileName);
-			//using (FileStream fileStream = File.OpenRead (fileName) ) {
 			using ( FileStream fileStream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Read) ) {
 				using( BinaryReader reader = new BinaryReader( File.OpenRead (fileName) ) ) {
 					try 
 					{
+						FileInfo fileInfo = new FileInfo(fileName);
 						StateObject state = new StateObject();
 						state.workStream = netStream;
 						state.fileType = fType;
 						state.buffer = new byte [fileInfo.Length];
-						state.buffer = reader.ReadBytes (state.buffer.Length); // WAS :: File.ReadAllBytes(fileName); reader.ReadBytes (state.buffer.Length);
+						state.buffer = reader.ReadBytes (state.buffer.Length); // WAS :: File.ReadAllBytes(fileName);
 						state.fileSize = state.buffer.Length;	
 		
 						// send file type

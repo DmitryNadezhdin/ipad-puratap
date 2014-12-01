@@ -1,3 +1,19 @@
+1.5b -- Emailing receipts, interface fixes for iOS 6 (!)
+
+Fixed the toolbar on pre-plumbing check screen on iOS 6
+Added a button to email receipts to customers. This will look up their email (if we have one already) and save the one that was used. It can save us printing a receipt in some cases.
+
+======================================
+
+1.5a -- Interface
+
+Taking photos fixed for iOS 7 and iOS 8
+Stock signing sheet height is now determined correctly
+
+1.5 -- Interface fixes for iOS 8 and iOS 8.1
+
+======================================
+
 1.4k -- Fixes
 
 Added "Roof Job" to the list of reasons for jobs not done for plumbers.

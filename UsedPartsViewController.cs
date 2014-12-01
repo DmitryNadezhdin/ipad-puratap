@@ -1360,7 +1360,7 @@ namespace Puratap
 			foreach (string fileName in fileNames) {
 				FileInfo fi = new FileInfo (fileName);
 				if (fi.Name.StartsWith (asmID)) {
-					foundImage = UIImage.FromBundle ("/Images/Parts/"+fi.Name);
+					foundImage = (MyConstants.iOSVersion > 7)? UIImage.FromBundle ("Images/Parts/"+fi.Name) : UIImage.FromBundle ("/Images/Parts/"+fi.Name);
 					break;
 				}
 			}
@@ -1470,7 +1470,7 @@ namespace Puratap
 			foreach (string fileName in fileNames) {
 				FileInfo fi = new FileInfo (fileName);
 				if (fi.Name.StartsWith (partID)) {
-					foundImage = UIImage.FromBundle ("/Images/Parts/"+fi.Name);
+					foundImage = (MyConstants.iOSVersion > 7)? UIImage.FromBundle ("Images/Parts/"+fi.Name) : UIImage.FromBundle ("/Images/Parts/"+fi.Name);
 					break;
 				}
 			}

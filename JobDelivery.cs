@@ -31,13 +31,13 @@ namespace Puratap
 
 			Root.Add (PartsUsedSection);
 
-			using (var image = UIImage.FromBundle ("/Images/19-gear") )	this.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle ("Images/19-gear") )	this.TabBarItem.Image = image;
 			this.Title = "Uninstallation";			
 
 			ToolbarItems = new UIBarButtonItem[] {
 				new UIBarButtonItem(UIBarButtonSystemItem.Reply),
 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-				new UIBarButtonItem("Clear parts list", UIBarButtonItemStyle.Bordered, delegate { ClearPartsList (); }),
+				new UIBarButtonItem("Clear parts list", UIBarButtonItemStyle.Plain, delegate { ClearPartsList (); }),
 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 				new UIBarButtonItem(UIBarButtonSystemItem.Action)			
 			};

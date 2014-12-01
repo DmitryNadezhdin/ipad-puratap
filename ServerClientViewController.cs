@@ -1,11 +1,12 @@
-using MonoTouch.UIKit;
-using System.Drawing;
-using System.Threading;
 using System;
 using System.IO;
+using System.Net;
+using System.Drawing;
+using System.Threading;
 using System.Collections.Generic;
-using MonoTouch.Foundation;
+using MonoTouch.UIKit;
 using Mono.Data.Sqlite;
+using MonoTouch.Foundation;
 
 namespace Puratap
 {
@@ -15,8 +16,12 @@ namespace Puratap
 		public static ManualResetEvent _dataExchangeEvent = new ManualResetEvent(false);	// this event notifies the main application thread that data exchange with the Windows server has been completed
 
 		// new implementation of data exchange does away with Bonjour and uses settings (NSUserDefaults.StandardUserDefaults) to determine server's IP address and port
-		private Reachability _reach;
-		public ReachabilityStatus CurrentReachabilityStatus { get { return _reach.CurrentStatus; } }
+		private Reachability _reachLocalServer;
+		public ReachabilityStatus CurrentReachabilityStatusLocalServer { get { return _reachLocalServer.CurrentStatus; } }
+
+		private Reachability _reachFTPServer;
+		public ReachabilityStatus CurrentReachabilityStatusFTPServer { get { return _reachFTPServer.CurrentStatus; } }
+
 		public string PuratapServerIP { get; set; }
 		public int PuratapServerPort { get; set; }
 
@@ -43,26 +48,12 @@ namespace Puratap
 			});
 		}
 		
-		internal void StartNetBrowser() 
-		{
-
-		}
-		
-		void ServiceAddressResolved (object sender, EventArgs e) {
-
-		}
-		
 		public void SetExchangeActivityHidden()
 		{
 			InvokeOnMainThread (delegate() {
 				aivActivity.Hidden = true;
 				aivActivity.StopAnimating ();
 			});
-		}
-		
-		void ExchangeFilesAndUpdateJobTableView(NSNetService ns)
-		{		
-			
 		}
 		
 		public void SetDataExchangeButtonEnabled()
@@ -87,23 +78,13 @@ namespace Puratap
 			InvokeOnMainThread ( delegate() {
 				UIView.SetAnimationDuration (0.3f);
 				UIView.BeginAnimations (null);
-//				btnDownload.Enabled = false;
-//				btnDownload.SetTitle ("Connecting to data service...", UIControlState.Normal);
-//				btnDownload.SetTitleColor (UIColor.Gray, UIControlState.Normal);
-//				btnDownload.Frame = new RectangleF( btnDownload.Frame.X, btnDownload.Frame.Y, 270, btnDownload.Frame.Height);
+
 				aivConnectingToService.StartAnimating ();
 				btnStartDataExchange.Frame = new RectangleF( btnStartDataExchange.Frame.X, btnStartDataExchange.Frame.Y, 270, btnStartDataExchange.Frame.Height);
 				btnResetDeviceID.Frame = new RectangleF( btnResetDeviceID.Frame.X, btnResetDeviceID.Frame.Y, 270, btnResetDeviceID.Frame.Height);
 
 				UIView.CommitAnimations ();
 			}); 
-		}
-		
-		public void StopNetBrowser()
-		{
-//			_serviceList.Clear ();
-//			_netBrowser.Stop ();
-//			netBrowserStarted = false;
 		}
 		
 		public static string dbFilePath 
@@ -131,7 +112,6 @@ namespace Puratap
 		public static string GetDBDirectoryPath()
 		{
 			return Environment.GetFolderPath (Environment.SpecialFolder.Personal);
-			// return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "NEWTESTDB.sqlite" /* WAS :: "TodaysJobDB.sqlite" */);
 		}
 		
 		public override void DidReceiveMemoryWarning ()
@@ -146,22 +126,16 @@ namespace Puratap
 		{
 			base.ViewDidAppear (animated);
 			this.NavigationController.SetToolbarHidden (true,true);
-//			StartNetBrowser();
 
 			_tabs.SetNavigationButtons (NavigationButtonsMode.ServerClient);
 			tvLog.ScrollRangeToVisible (new NSRange(tvLog.Text.Length, 0) );	
 
-			UpdateDataExchangeButtonText (_reach.CurrentStatus);		
+			UpdateLANDataExchangeButtonText (_reachLocalServer.CurrentStatus);		
 		}
 		
 		public override void ViewDidDisappear (bool animated)
 		{
 			base.ViewDidDisappear (animated);
-			if (this.NavigationController.ViewControllers.Length < 2) {
-				// StopNetBrowser ();
-				// SetDataExchangeButtonDisabled ();
-				// Log ("ServerClientViewController.ViewDidDisappear : _netBrowser has been stopped.");
-			}
 		}
 		
 		public override void ViewDidLoad ()
@@ -169,12 +143,12 @@ namespace Puratap
 			base.ViewDidLoad ();
 			
 			//any additional setup after loading the view, typically from a nib.
-			
-			btnDownload.TouchUpInside += HandleBtnDownloadTouchUpInside;
+
 			btnUpload.TouchUpInside += HandleBtnShowInfoTouchUpInside;
 			btnResetDeviceID.TouchUpInside += HandleBtnResetDeviceIDTouchUpInside;
 			btnChangeDate.TouchUpInside += HandleBtnChangeDateTouchUpInside;
-			btnStartDataExchange.TouchUpInside += HandleBtnStartDataExchangeTouchUpInside;
+			btnStartDataExchange.TouchUpInside += HandleBtnStartLANDataExchangeTouchUpInside;
+			btnFTPDataExchange.TouchUpInside += HandleBtnStartFTPDataExchangeTouchUpInside;
 
 			var settings = NSUserDefaults.StandardUserDefaults;
 			settings.Init ();
@@ -184,19 +158,49 @@ namespace Puratap
 				settings.SetString (MyConstants.DEFAULT_IPAD_SERVER_PORT, "PuratapServerPort");
 			settings.Synchronize ();
 
-			_reach = new Reachability ( settings.StringForKey ("PuratapServerIP") );
-			_reach.ReachabilityUpdated += HandleReachabilityUpdated;
+			_reachFTPServer = new Reachability ("puratap.com.au");
+			_reachFTPServer.ReachabilityUpdated += HandleFTPReachabilityUpdated;
+
+			_reachLocalServer = new Reachability ( settings.StringForKey ("PuratapServerIP") );
+			_reachLocalServer.ReachabilityUpdated += HandleLocalReachabilityUpdated;
 		}
 
-		protected virtual void HandleReachabilityUpdated(object sender, ReachabilityEventArgs e)
+		protected virtual void HandleLocalReachabilityUpdated(object sender, ReachabilityEventArgs e)
 		{
-			Log ("ReachabilityUpdated event fired.");
-			UpdateDataExchangeButtonText (e.Status);
+			UpdateLANDataExchangeButtonText (e.Status);
 		}
 
-		protected virtual void UpdateDataExchangeButtonText( ReachabilityStatus status )
+		protected virtual void HandleFTPReachabilityUpdated(object sender, ReachabilityEventArgs e)
 		{
-			Log (String.Format("Updated connectivity status: {0}", status.ToString()));
+			Log ("Local ReachabilityUpdated event fired.");
+			Log (String.Format("Updated LAN connectivity status: {0}", e.Status.ToString()));
+			UpdateFTPDataExchangeButtonText (e.Status);
+		}
+
+		protected virtual void UpdateFTPDataExchangeButtonText( ReachabilityStatus status)
+		{
+			Log ("FTP Reachability event fired.\nFTP Reachability status: " + status);
+			switch (status) {
+			case ReachabilityStatus.NotReachable:
+					btnFTPDataExchange.SetTitle ("FTP: Server unreachable", UIControlState.Normal);
+					btnFTPDataExchange.SetTitleColor (UIColor.Gray, UIControlState.Normal);
+					btnFTPDataExchange.Enabled = false;
+					break;
+				case ReachabilityStatus.ViaWiFi:
+					btnFTPDataExchange.SetTitle ("FTP: Send/receive data", UIControlState.Normal);
+					btnFTPDataExchange.SetTitleColor (btnChangeDate.TitleColor (UIControlState.Normal), UIControlState.Normal);
+					btnFTPDataExchange.Enabled = true;
+					break;
+				case ReachabilityStatus.ViaWWAN: 
+					btnFTPDataExchange.SetTitle ("FTP: Send/receive data", UIControlState.Normal);
+					btnFTPDataExchange.SetTitleColor (btnChangeDate.TitleColor (UIControlState.Normal), UIControlState.Normal);
+					btnFTPDataExchange.Enabled = true;
+					break;
+			}
+		}
+
+		protected virtual void UpdateLANDataExchangeButtonText( ReachabilityStatus status )
+		{
 			InvokeOnMainThread (delegate() {
 				switch (status) {
 					case ReachabilityStatus.ViaWiFi:
@@ -205,14 +209,6 @@ namespace Puratap
 						btnStartDataExchange.Enabled = true;
 						aivConnectingToService.Hidden = true;
 					break;
-
-					// WWAN does not really make data exchange possible -- not just yet
-//					case ReachabilityStatus.ViaWWAN:
-//						btnStartDataExchange.SetTitle("Send/receive data", UIControlState.Normal);
-//						btnStartDataExchange.SetTitleColor( btnChangeDate.TitleColor (UIControlState.Normal), UIControlState.Normal);
-//						btnStartDataExchange.Enabled = true;
-//						aivConnectingToService.Hidden = true;
-//					break;
 
 					default:
 						btnStartDataExchange.SetTitle("Connecting to data service", UIControlState.Normal);
@@ -225,7 +221,7 @@ namespace Puratap
 		}
 
 		public void UpdateDataExchangeButtonWithCurrentStatus() {
-			UpdateDataExchangeButtonText (CurrentReachabilityStatus);
+			UpdateLANDataExchangeButtonText (CurrentReachabilityStatusLocalServer);
 		}
 
 		private void SetDataExchangeInProgress() {
@@ -240,13 +236,154 @@ namespace Puratap
 			});
 		}
 
-		void HandleBtnStartDataExchangeTouchUpInside (object sender, EventArgs e)
+		private string GetDatabaseFileName() {
+			string employeeType = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Plumber) ? "PLU" : "FRA";
+			string result = String.Format ("{0} {1} {2} {3}.sqlite.gz", employeeType, MyConstants.EmployeeID,
+											MyConstants.EmployeeName, DateTime.Now.Date.ToString("yyyy-MM-dd"));
+			return result;
+		}
+
+		void HandleBtnStartFTPDataExchangeTouchUpInside (object sender, EventArgs e)
+		{
+			bool uploadSuccess = UploadDataToFTP ();
+
+			if (uploadSuccess == true) {
+				string fileName = GetDatabaseFileName ();
+				string fullPath = "ftp://puratap.com.au" + "/IPAD%20DATA/DATA.OUT/" + fileName.Replace (" ", "%20");
+				DateTime FTPExchangeStarted = DateTime.Now;
+				GetDataFileFromFTP (fileName, fullPath);
+
+				TimeSpan ts = DateTime.Now - FTPExchangeStarted;
+				Log (String.Format ("FTP data exchange took {0:F} seconds to complete.", ts.TotalSeconds));
+			}
+		}
+
+		bool UploadDataToFTP () 
+		{
+			bool result = true;
+			try {
+				// push stock signing if necessary
+
+				// get a list of files to be sent
+
+				// gzip each file
+
+				// upload each file
+
+			} catch (Exception e) {
+				Log (String.Format ("Exception during FTP data upload: \n{0} \n{1}", e.Message, e.StackTrace));
+				result = false;
+			}
+			return result;
+		}
+
+		bool GetDataFileFromFTP (string fileName, string fullPath) 
+		{
+
+			const string FTPUserName = "dmitry@puratap.com.au";
+			const string FTPPassword = "D4770AMVB0";
+			FtpWebRequest request = (FtpWebRequest)WebRequest.Create (fullPath);
+			request.Credentials = new NetworkCredential (FTPUserName, FTPPassword);
+			request.Method = WebRequestMethods.Ftp.DownloadFile;
+
+			FtpWebResponse response = null;
+			bool downloadResult = false;
+			try {
+				Stream responseStream = null;
+				BinaryReader bnrResponseStreamReader;
+
+				response = (FtpWebResponse)request.GetResponse();
+				responseStream = response.GetResponseStream();
+
+				if (responseStream != null) {
+					bnrResponseStreamReader = new BinaryReader(responseStream);
+					try {
+						string savePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), fileName);
+						using (FileStream fs = new FileStream(savePath, FileMode.Create, FileAccess.ReadWrite)) {
+							BinaryWriter bnrResponseStreamWriter = new BinaryWriter(fs);
+							using (var ms = new MemoryStream()) {
+								byte[] buffer = new byte[4096];
+								int byteCount;
+								while ((byteCount = bnrResponseStreamReader.Read(buffer, 0, buffer.Length)) != 0) {								
+									ms.Write(buffer, 0, byteCount);
+								}
+								bnrResponseStreamWriter.Write(ms.ToArray());
+								bnrResponseStreamWriter.Flush();
+								bnrResponseStreamWriter.Close();
+							}
+						}
+
+						bool decompressResult;
+						FileInfo dfi = new FileInfo(savePath);
+						decompressResult = DecompressDataFile(dfi);
+							
+						downloadResult = true && decompressResult;
+						if (downloadResult == true) {
+							string decompressedFilePath = savePath.Remove(savePath.Length - 3);
+							MyConstants.DBReceivedFromServer = decompressedFilePath;
+							MyConstants.LastDataExchangeTime = DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss");
+						}
+
+					} catch (Exception ex) {
+						Console.WriteLine(String.Format("{0}\r\n{1}", ex.Message, ex.StackTrace));
+					} finally {
+						if (bnrResponseStreamReader != null)
+							bnrResponseStreamReader.Close();
+					}
+				}
+			} catch (Exception e) {
+				downloadResult = false;
+				Log (e.Message);
+			} finally {
+				if (response != null)
+					response.Close ();
+			}
+			return downloadResult;
+		}
+
+		public bool DecompressDataFile(FileInfo dfi)
+		{
+			bool result;
+			try {
+				// Get the stream of the source file.
+				using (FileStream inFile = dfi.OpenRead())
+				{
+					// Get original file extension, by removing ".gz" from Data.sqlite.gz
+					string curFile = dfi.FullName;
+					string origName = curFile.Remove(curFile.Length - dfi.Extension.Length);
+
+					//Create the decompressed file.
+					using (FileStream outFile = File.Create(origName))
+					{
+						using (System.IO.Compression.GZipStream Decompress = new System.IO.Compression.GZipStream(inFile,
+							System.IO.Compression.CompressionMode.Decompress))
+						{
+							byte[] tmp = new byte[4];
+							inFile.Read(tmp, 0, 4);
+							inFile.Seek(0, SeekOrigin.Begin);
+							// Copy the decompression stream into the output file. 
+							Decompress.CopyTo(outFile);
+							result = true;
+							Console.WriteLine("Decompressed: {0}", dfi.Name);
+
+						}
+					}
+				}
+			} catch (Exception e) {
+				Console.WriteLine (String.Format("Exception: {0}\n{1}", e.Message, e.StackTrace));
+				result = false;
+			}
+		
+			return result;
+		}
+
+		void HandleBtnStartLANDataExchangeTouchUpInside (object sender, EventArgs e)
 		{
 			var settings = NSUserDefaults.StandardUserDefaults;
 
 			Log (String.Format("Puratap iPad Server IP = {0}", settings.StringForKey ("PuratapServerIP")));
 			Log (String.Format("Puratap iPad Server port = {0}", settings.StringForKey ("PuratapServerPort")));
-			Log (String.Format ("Connectivity status: {0}", _reach.CurrentStatus.ToString ()));
+			Log (String.Format ("Connectivity status: {0}", _reachLocalServer.CurrentStatus.ToString ()));
 
 			PuratapServerIP = settings.StringForKey ("PuratapServerIP");
 			int serverPort = 0;
@@ -262,8 +399,8 @@ namespace Puratap
 
 			// summaries
 			try {
-				// this should generate summaries for all runs in the database, not just the current run
-				if (this._tabs._paySummaryView.GenerateAllSummaryFiles ()) { // .GenerateDailySummaryFiles ();
+				// this generates summaries for all runs in the database, not just the current run
+				if (this._tabs._paySummaryView.GenerateAllSummaryFiles ()) {
 					Log ("Summary files generated.");
 				}
 				else {
@@ -336,7 +473,7 @@ namespace Puratap
 
 		void HandleBtnResetDeviceIDTouchUpInside (object sender, EventArgs e) {
 			UIAlertView resetAlert = new UIAlertView("Warning", "Resetting Device ID is permanent and irreversible. Are you sure you want to do this?", null, "Yes", "No");
-			// note that the "Cancel" button says "Yes" and the "default" (highlighted) button is "No", trying to tell the user again that resetting is not to be done lightly
+			// the "default" (highlighted) button is "No", trying to tell the user again that resetting is not to be done lightly
 			
 			resetAlert.Dismissed += HandleResetAlertDismissed;
 			resetAlert.Show ();
@@ -346,7 +483,10 @@ namespace Puratap
 			if (e.ButtonIndex != 1) // if user pressed the "Cancel" button that has index=0
 			{
 				Log ("Resetting Device ID in UserDefaults database.");
-				try { MyConstants.DeviceID = ""; }
+				try { 
+					// MyConstants.DeviceID = ""; 
+					MyConstants.DeviceID = MyConstants.NEW_DEVICE_GUID_STRING; 
+				}
 				catch (Exception ex) {
 					Log (String.Format ("Device ID Reset: Exception: {0}", ex.Message));
 				}
@@ -373,210 +513,6 @@ namespace Puratap
 			{
 				Log (String.Format ("Current working database: '{0}'",  MyConstants.DBReceivedFromServer));
 			}
-		}
-
-		void HandleBtnDownloadTouchUpInside (object sender, EventArgs e)
-		{
-//			// InitDataExchange ();
-//			this._tabs._app.myLocationManager.StopUpdatingLocation ();
-//			this._tabs._app.myLocationManager.StopMonitoringSignificantLocationChanges ();
-//
-//			// Log ("Generating daily payments summary files..."); -- moved to corresponding method
-//
-//			bool summariesGenerated = false;
-//			try {
-//				// this should generate summaries for all runs in the database, not just the current run
-//				if (this._tabs._paySummaryView.GenerateAllSummaryFiles ()) { // .GenerateDailySummaryFiles ();
-//					Log ("Summary files generated.");
-//					summariesGenerated = true;
-//				}
-//				else {
-//					Log ("Error : An exception was raised while generating summary files!");
-//					summariesGenerated = false;
-//				}
-//			}
-//			catch (Exception exc) {
-//				this._tabs._scView.Log (String.Format ("Daily Summary Failed To Generate: {0}, stack trace: {1}", exc.Message, exc.StackTrace));
-//			}
-//
-//			try {
-//				this._tabs._jobRunTable.TableView.ReloadData ();
-//			} catch (Exception ex) {
-//				this._tabs._scView.Log (String.Format ("Failed to reload JobRunTable data: {0}, stack trace: {1}", ex.Message, ex.StackTrace));
-//			}
-//
-//			try {
-//				this._tabs._app.myLocationDelegate.DumpLocationsBufferToDatabase ();
-//			} catch (Exception exc) {
-//				this._tabs._scView.Log (String.Format ("Failed to write iPad locations buffer to database: {0}, stack trace: {1}", exc.Message, exc.StackTrace));
-//			}
-//
-//			if (summariesGenerated)
-//			{
-//				this._tabs.MyNavigationBar.Hidden = true;
-//				this.NavigationController.NavigationBarHidden = false;
-//
-//				bool DataInputCompletedForRun;
-//				if ( string.IsNullOrEmpty(MyConstants.DBReceivedFromServer) || (!File.Exists(Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), MyConstants.DBReceivedFromServer))) ) {
-//					DataInputCompletedForRun = true; // it is not, but we don't want the warning message to pop up
-//				}
-//				else DataInputCompletedForRun = this._tabs._jobRunTable.AllJobsDone;
-//
-//				if (! DataInputCompletedForRun)
-//				{
-//					var alert = new UIAlertView("Warning", "Data has not been input for some of the jobs.\nStart data exchange anyway?", null, "No", "Yes");
-//					alert.Dismissed += delegate(object _sender, UIButtonEventArgs ev) {
-//						if (ev.ButtonIndex != alert.CancelButtonIndex)
-//						{
-//							if ( ! SignDailyStockUsed.IsEmpty ())
-//								this.NavigationController.PushViewController (new SignDailyStockUsed(this._tabs), true);
-//							else
-//								InitDataExchange ();
-//						}
-//					};
-//
-//					alert.Show ();
-//				}
-//				else 
-//				{
-//					if ( ! SignDailyStockUsed.IsEmpty ())
-//						this.NavigationController.PushViewController (new SignDailyStockUsed(this._tabs), true);
-//					else
-//						InitDataExchange ();
-//				}
-//			}
-//			else
-//			{
-//				// alert the user that something bad happened, but still allow to start data transfer
-//				var alert = new UIAlertView("Warning", "An exception occurred when generating daily summary files.\nStart data exchange anyway?", null, "No", "Yes");
-//				alert.Dismissed += delegate(object _sender, UIButtonEventArgs ev) {
-//					if (ev.ButtonIndex != alert.CancelButtonIndex)
-//					{
-//						InitDataExchange ();
-//					}
-//				};
-//				alert.Show ();
-//			}
-		}
-
-		/*public void HandleServiceResolutionFailed(object sender, NSNetServiceErrorEventArgs e)
-		{
-
-		}*/
-
-		public void InitDataExchange()
-		{
-//			// TestFlightSdk.TestFlight.PassCheckpoint (String.Format ("DataExchangeInitiated : {0} {1}", MyConstants.EmployeeID, MyConstants.EmployeeName));
-//			InvokeOnMainThread (delegate { 
-//				this.View.BringSubviewToFront(aivActivity);
-//				aivActivity.Hidden = false;
-//				aivActivity.StartAnimating ();
-//			});
-//
-//			// check if all jobs for the previous day have been marked
-//			bool isDone = IsAllDone ();
-//			isDone = true; // FIXME :: DEBUG :: remove this line, shoud be --- If(isDone) { }
-//
-//			if (isDone) 
-//			{
-//				// _tabs._jobRunTable.Customers.Clear ();
-//				if (_serviceList.Count == 0) 
-//				{
-//					var alert = new UIAlertView("iPad Bonjour service not found on the network", "Make sure your iPad is connected to Puratap's WiFi network (SSID: Wireless-Ptap) and signal strength is acceptable. If it JUST DOESN'T WORK, call for help!", null, "OK");
-//					InvokeOnMainThread (delegate { 
-//						alert.Show ();
-//						SetExchangeActivityHidden ();
-//					});
-//				}
-//				else 
-//				{
-//					foreach (NSNetService ns in _serviceList)
-//					{
-//						if (ns.HostName == null)
-//						{
-//							btnDownload.Enabled = false;
-//							ns.ResolveFailure += delegate(object sender, NSNetServiceErrorEventArgs e) {
-//								Log (String.Format ("Service resolution failed. Error messages below."));
-//								for (int i = 0; i<e.Errors.Count; i++)
-//								{
-//									Log (String.Format ("{0}: {1}", e.Errors.Keys[i].ToString (), e.Errors.Values[i].ToString ()));
-//								}
-//
-//								InvokeOnMainThread (delegate {
-//									SetExchangeActivityHidden ();
-//									var resolveFailureAlert = new UIAlertView("Error", "Data exchange with the server failed because the data service could not be resolved.\n" +
-//									                                          "Please check wireless network connectivity and try again (switch to another tab and back)", null, "OK");
-//									resolveFailureAlert.Show ();
-//
-//									//_netBrowser.SearchForServices("_ipadService._tcp", "");
-//									// _serviceList.Clear ();
-//									// SetDataExchangeButtonDisabled();
-//
-//									this.btnDownload.Enabled = false;
-//									btnDownload.SetTitle ("Connecting to data service...", UIControlState.Normal);
-//									btnDownload.SetTitleColor (UIColor.Gray, UIControlState.Normal);
-//									btnDownload.Frame = new RectangleF( btnDownload.Frame.X, btnDownload.Frame.Y, 270, btnDownload.Frame.Height);
-//									aivConnectingToService.StartAnimating ();
-//								});
-//							};
-//							ns.Resolve(60);		// data exhange with server will be handled inside ns.Resolve() call
-//							Log ("DataService.Resolve has been called.");
-//						}
-//						else 
-//						{
-//							Log(ns.Name+" : Hostname = "+ns.HostName+" : Service resolution skipped.");
-//							btnDownload.Enabled = false;
-//							// data exhange with server here
-//							ExchangeFilesAndUpdateJobTableView (ns);
-//						}
-//					}
-//				}
-//				// we cannot attempt to resolve the service and then immidiately update the view
-//				// it will take some time to get the data, therefore the main thread must wait for a notification that the data exhange has been completed
-//				// the data exchange happens on a separate thread, then the main thread is notified by an instance of ManualResetEvent object
-//				
-//				// The two lines below were used when debugging
-//				// What these do should actually happen after data exchange, not here
-//				// _tabs._jobRunTable._ds.GetCustomersFromDB();
-//				// _tabs._jobRunTable.TableView.ReloadData();
-//			}
-//			else 
-//			{
-//				var notAllJobsMarked = new UIAlertView("Cannot upload incomplete data to server", "Please input data for every job in the jobs list.", null, "OK");
-//				notAllJobsMarked.Show ();
-//				SetExchangeActivityHidden ();
-//			}
-		}
-		
-//		public bool IsAllDone()
-//		{
-//			bool result = true;
-//			
-//			if (_tabs._jobRunTable.MainJobList != null)
-//			foreach (Job j in _tabs._jobRunTable.MainJobList)
-//			{ if (j.JobDone == false) result = false; }
-//			
-//			if (_tabs._jobRunTable.UserCreatedJobs != null)
-//			{
-//				foreach (Job j in _tabs._jobRunTable.UserCreatedJobs)
-//				{ if (j.JobDone == false) result = false; }
-//			}
-//			return result; // DEBUG :: return true;
-//		}
-
-		[Obsolete]
-		public override void ViewDidUnload ()
-		{
-			// Release any retained subviews of the main view.
-			ReleaseDesignerOutlets ();
-			// base.ViewDidUnload ();			
-		}
-
-		[Obsolete]
-		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
-		{
-			// Return true for supported orientations
-			return (toInterfaceOrientation == UIInterfaceOrientation.LandscapeLeft || toInterfaceOrientation == UIInterfaceOrientation.LandscapeRight);
 		}
 	}
 }

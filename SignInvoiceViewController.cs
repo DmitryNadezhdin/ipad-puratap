@@ -1,9 +1,12 @@
 using System;
 using System.Drawing;
 using MonoTouch.UIKit;
+using MonoTouch.MessageUI;
 using MonoTouch.Foundation;
 using System.IO;
 using System.Threading;
+using System.Text.RegularExpressions;
+using Mono.Data.Sqlite;
 
 namespace Puratap
 {
@@ -14,6 +17,7 @@ namespace Puratap
 		public EventHandler SkipSigning { get; set; }
 		public EventHandler StartSigning { get; set; }
 		public EventHandler FinishSigning { get; set; }
+		public EventHandler DoSendReceiptEmail { get; set; }
 		
 		public bool SkippedSigning { get; set; }
 		
@@ -22,11 +26,15 @@ namespace Puratap
 		UIBarButtonItem skipSigning;		
 		UIBarButtonItem signing;		
 		UIBarButtonItem clearSignature;
+		UIBarButtonItem email;
 
 		UIAlertView skipAlert;
+		UIAlertView getEmailAddressView;
+		private static string emailRecepients { get; set; }
+		private bool sendingEmailCancelled { get; set; }
 
 		private volatile bool printOK;
-		// public ManualResetEvent AllPrintingDone = new ManualResetEvent(false);
+
 		public ManualResetEvent PrePlumbingPrintingDone = new ManualResetEvent(false);
 		public ManualResetEvent ReceiptPrintingDone = new ManualResetEvent(false);
 
@@ -148,7 +156,7 @@ namespace Puratap
 				SigningMode = true;
 
 				this.NavigationController.SetNavigationBarHidden (false, true);
-				this.NavigationItem.SetLeftBarButtonItem(new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Bordered, ClearSignature), true);
+				this.NavigationItem.SetLeftBarButtonItem(new UIBarButtonItem("Clear Signature", UIBarButtonItemStyle.Plain, ClearSignature), true);
 				this.NavigationItem.SetRightBarButtonItem(new UIBarButtonItem("Done", UIBarButtonItemStyle.Done, FinishSigning), true);
 
 //				this.NavigationItem.SetRightBarButtonItems (new UIBarButtonItem[] { 
@@ -160,11 +168,12 @@ namespace Puratap
 			
 			FinishSigning = delegate {
 				SigningMode = false;
-				signing = new UIBarButtonItem("Start signing", UIBarButtonItemStyle.Bordered, StartSigning);				
+				signing = new UIBarButtonItem("Start signing", UIBarButtonItemStyle.Plain, StartSigning);				
 
 				this.SetToolbarItems (new UIBarButtonItem[] {
 						back, 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						signing,			new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
+						email,			new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						skipSigning,		new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 						forward
 					}, true );
@@ -189,24 +198,184 @@ namespace Puratap
 
 				if (iv != null) { iv.Dispose (); iv = null; }
 				if (im != null) { im.Dispose (); im = null; }
-			};			
+			};
+				
+			DoSendReceiptEmail = delegate {
+				if (MFMailComposeViewController.CanSendMail) {
+					// check if there is an existing email address on file
+					string existingEmail = Tabs._jobRunTable.CurrentCustomer.EmailAddress;
+					if (ValidateEmailAddress(existingEmail)) {
+						// there is an email address on file
+						var alertUseExistingEmail = new UIAlertView("Use this email address?", existingEmail, null, "No", "Yes");
+						alertUseExistingEmail.Dismissed += delegate (object sender, UIButtonEventArgs e) {
+							if (e.ButtonIndex == 1) {
+								// user confirmed using existing email
+								emailRecepients = existingEmail;
+								SaveEmailAndPresentMailComposingView();
+							} else {
+								// user declined using existing email, collect email address
+								PresentGetEmailAddressView();
+							}
+						};
+						alertUseExistingEmail.Show();
+					} else {
+						// collect email address
+						PresentGetEmailAddressView();
+					}
+				} else {
+					var alertCannotSendEmails = new UIAlertView ("", "It seems like this iPad cannot send e-mails at the time. Please check the network settings and try again", null, "OK");
+					alertCannotSendEmails.Show ();					
+				}
+			};
 			
 			back = new UIBarButtonItem(UIBarButtonSystemItem.Reply);
-			signing = new UIBarButtonItem("Start signing", UIBarButtonItemStyle.Bordered, StartSigning);
-			skipSigning = new UIBarButtonItem("Skip signing", UIBarButtonItemStyle.Bordered, SkipSigning);
+			signing = new UIBarButtonItem("Start signing", UIBarButtonItemStyle.Plain, StartSigning);
+			email = new UIBarButtonItem ("Email receipt", UIBarButtonItemStyle.Plain, DoSendReceiptEmail);
+			skipSigning = new UIBarButtonItem("Skip signing", UIBarButtonItemStyle.Plain, SkipSigning);
 			forward = new UIBarButtonItem(UIBarButtonSystemItem.Action);
-			clearSignature = new UIBarButtonItem("Clear signature", UIBarButtonItemStyle.Bordered, ClearSignature);
+			clearSignature = new UIBarButtonItem("Clear signature", UIBarButtonItemStyle.Plain, ClearSignature);
 			
 			ToolbarItems = new UIBarButtonItem[] {
 				back, 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-				signing,				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
+				signing,			new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
+				email,				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 				skipSigning,		new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 				forward
 			};
 			
 			back.Clicked += GoBack;
-			forward.Clicked += GoForward;		
+			forward.Clicked += GoForward;
 		}
+
+		bool ValidateEmailAddress(string addressString) {
+			try {
+				return !String.IsNullOrEmpty(addressString) &&
+					Regex.IsMatch(addressString, 
+						@"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@" +
+						@"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", 
+					RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+
+						// This is one less complex, but still not allowing i+me@you.com
+				// return Regex.IsMatch(addressString, REGEX_EXPRESSION, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250)
+				// @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@" +
+				// @"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+
+						// This is from MSDN as of 01.12.2014
+					// @"^(?("")("".+?(?<!\\)""@)|(([0-9a-z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-z])@))" +
+					// @"(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9][\-a-z0-9]{0,22}[a-z0-9]))$",
+			}
+			catch (RegexMatchTimeoutException) {
+				return false;
+			}
+		}
+
+		void PresentGetEmailAddressView () {
+			// collect the recepient's email address (through a separate dialog window)
+			getEmailAddressView = new UIAlertView("Please enter email address\n"+
+				"\nCustomer #"+Tabs._jobRunTable.CurrentCustomer.CustomerNumber, "", null, "Cancel", "OK");
+			getEmailAddressView.AlertViewStyle = UIAlertViewStyle.PlainTextInput;
+			getEmailAddressView.Dismissed += Handle_GetEmailAddressViewWillDismiss;
+			getEmailAddressView.Show ();
+		}
+			
+		void Handle_GetEmailAddressViewWillDismiss (object sender, UIButtonEventArgs e) {
+			if (e.ButtonIndex == 1) {
+				SignInvoiceViewController.emailRecepients = this.getEmailAddressView.GetTextField (0).Text;
+				// validate e-mail address
+				bool emailValid = ValidateEmailAddress (SignInvoiceViewController.emailRecepients);
+
+				if (emailValid) {
+					SaveEmailAndPresentMailComposingView ();
+				} else {
+					// email did not pass validation
+					SignInvoiceViewController.emailRecepients = "";
+					var emailInvalidAlert = new UIAlertView ("Sorry",  "The email appears to be invalid. Please try again.", null, "OK");
+					emailInvalidAlert.Show ();
+				}						
+			} else { // user cancelled
+				this.sendingEmailCancelled = true;
+			}
+		}
+
+		void SaveEmailAndPresentMailComposingView () {
+			// save email address to SQLite database
+			UpdateCustomerEmail (Tabs._jobRunTable.CurrentCustomer.CustomerNumber, emailRecepients);
+
+			// get data for the attachment
+			string receiptFilePath = (this.NavigationController as SigningNavigationController).Tabs._payment.pdfReceiptFileName;
+			string receiptFileName = Path.GetFileName (receiptFilePath);
+			NSData fileContents = NSData.FromFile (receiptFilePath);
+
+			// display mail composition view controller
+			MFMailComposeViewController mail = new MFMailComposeViewController ();
+			if (fileContents != null) {
+				mail.AddAttachmentData (fileContents, "application/pdf", receiptFileName);
+
+				NSAction emptyAction = delegate { };
+				mail.SetToRecipients (new string[] { emailRecepients });
+				mail.SetSubject (String.Format ("Puratap receipt: CN# {0} {1}", Tabs._jobRunTable.CurrentCustomer.CustomerNumber, MyConstants.DEBUG_TODAY));
+				mail.SetMessageBody (String.Format ("Dear customer,\n\nPlease find attached your receipt.\n\nKind regards, \n   Puratap"), false);
+
+				mail.Finished += delegate(object _sender, MFComposeResultEventArgs _e) {
+					if (_e.Result == MFMailComposeResult.Sent) {
+						var alert = new UIAlertView ("", "Email sent to: " + SignInvoiceViewController.emailRecepients, null, "OK");
+						alert.Show ();				
+					} else {
+						var alert = new UIAlertView (_e.Result.ToString (), "Email has not been sent.", null, "OK");
+						alert.Show ();				
+					}
+					this.DismissViewController (true, emptyAction);				
+				};
+				this.PresentViewController (mail, true, emptyAction);
+			}		}
+
+		void UpdateCustomerEmail(long CN, string email) {
+			// updates WCLIENT table in SQLite
+			try {
+				if (File.Exists (ServerClientViewController.dbFilePath)) {
+					// UPDATE the customer record in WCLIENT, setting EMAILAD field
+					using (var connection = new SqliteConnection ("Data Source=" + ServerClientViewController.dbFilePath)) {
+						connection.Open ();
+						var cmd = connection.CreateCommand ();
+						cmd.CommandText = "UPDATE WCLIENT SET EmailAd = ?" +
+											" WHERE CusNum = ?";
+						cmd.Parameters.AddWithValue ("@EmailAddress", email);
+						cmd.Parameters.AddWithValue ("@CustomerID", CN);
+						cmd.ExecuteNonQuery ();
+					}
+
+					SaveEmailUpdateToCustomerDetailUpdates(CN, Tabs._jobRunTable.CurrentJob.JobBookingNumber, email);
+				}
+			} catch {
+			}
+		}
+
+		void SaveEmailUpdateToCustomerDetailUpdates (long customerID, long jobID, string email) {
+			try {
+				Tabs._customersView.UpdateCustomerInfo(CustomerDetailsUpdatableField.Email, 
+					Tabs._jobRunTable.CurrentCustomer.EmailAddress, email, customerID, jobID);
+				Tabs._jobRunTable.CurrentCustomer.EmailAddress = email;
+			} catch {
+			}
+		}
+
+//		void GetEmailRecepients (long CN, UIView view) {
+//			// NOTE :: this does not work since iOS 6, because
+//					// XPC infrastructure along with remote view controllers is used by mail composition
+//					// we will have to collect email address before presenting the mail view controller
+//			if (view is UITextField) {
+//				if ((view as UITextField).Text.Contains ("@")) {
+//					emailRecepients = (view as UITextField).Text;
+//					return;
+//				}
+//			}
+//
+//			if (view.Subviews.Length > 0) {
+//				foreach (UIView subView in view.Subviews) {
+//					GetEmailRecepients (CN, subView);
+//				}
+//			}
+//		}
 
 		void BeginPrinting()
 		{

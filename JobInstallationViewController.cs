@@ -108,8 +108,7 @@ namespace Puratap
 
 							if (type.Image == null)
 							{
-								// using (var image = UIImage.FromBundle ("/Images/puratap-logo"))
-									type.Image = UIImage.FromBundle ("/Images/puratap-logo"); //image;
+								type.Image = UIImage.FromBundle ("Images/puratap-logo"); //image;
 							}
 
 							result.Add (type);
@@ -232,7 +231,10 @@ namespace Puratap
 								if (option.Image == null)
 								{
 									// using (var image = UIImage.FromBundle ("/Images/puratap-logo"))
-									option.Image = UIImage.FromBundle ("/Images/puratap-logo"); // image;
+									if (MyConstants.iOSVersion > 7) {
+										option.Image = UIImage.FromBundle ("Images/puratap-logo.png"); 
+									}
+									else option.Image = UIImage.FromBundle ("/Images/puratap-logo"); // image;
 								}
 
 								result.Add (option);
@@ -489,10 +491,6 @@ namespace Puratap
 						}
 					}
 				}
-
-				if (!found) {
-					// Bad things have happened
-				}
 			}
 		}		
 
@@ -729,7 +727,7 @@ namespace Puratap
 			Root.Add (UsedPartsSection);
 			
 			this.Title = "Installation";
-			using (var image = UIImage.FromBundle ("/Images/181-hammer") ) this.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle ("Images/181-hammer") ) this.TabBarItem.Image = image;
 			
 			ToolbarItems = new UIBarButtonItem[] {
 				new UIBarButtonItem(UIBarButtonSystemItem.Reply),

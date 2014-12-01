@@ -11,6 +11,7 @@ using System.Threading;
 using MonoTouch.TestFlight; 
 using MonoTouch.MessageUI;
 
+
 namespace Puratap
 {
 	// The UIApplicationDelegate for the application. This class is responsible for launching the 
@@ -45,6 +46,8 @@ namespace Puratap
 			// this still does not allow TestFlight website to identify devices properly
 			// MonoTouch.TestFlight.TestFlight.SetDeviceIdentifier (MyConstants.DeviceID);
 
+
+			// Xamarin.Insights.Initialize ("20b7565ad9a4eee1d56492b26841b0bf70fbb5ed");
 			MonoTouch.TestFlight.TestFlight.TakeOffThreadSafe("f1e1ead5-5ee8-4a3c-a52b-a18e7919b06d");
 			InitializeLocationObjects();
 

@@ -266,18 +266,19 @@ namespace Puratap
 					string s = String.Format ("{0} {1} {2}", 	_jobRunTable.CurrentCustomer.Title,
 					                          										_jobRunTable.CurrentCustomer.FirstName,
 					                          										_jobRunTable.CurrentCustomer.LastName);
+					// the trick with having multiple NewLine characters no longer works
+					// TODO :: use a MonoTouch.DialogViewController here instead
 					_newMemoView = new UIAlertView("Create a new memo for\n"+s+
 					                               "\nCustomer #"+_jobRunTable.CurrentCustomer.CustomerNumber+"\n\n\n\n\n", "", null, "Cancel", "OK");
-
 					_newMemoView.AlertViewStyle = UIAlertViewStyle.PlainTextInput;
+					_newMemoView.Show ();
+					_newMemoView.WillDismiss += Handle_newMemoViewWillDismiss;
 
+					// Adding subviews no longer works
 //					UITextField memoText = new UITextField(new RectangleF(12,95,260,25));
 //					memoText.BackgroundColor = UIColor.White;
 //					memoText.Placeholder = "Enter memo text here";
 //					_newMemoView.AddSubview (memoText);
-					
-					_newMemoView.Show ();
-					_newMemoView.WillDismiss += Handle_newMemoViewWillDismiss;
 				}
 			};
 			
@@ -410,14 +411,14 @@ namespace Puratap
 
 			PrePlumbNav = new PrePlumbingCheckNavigationController (this);
 			PrePlumbNav.Title = NSBundle.MainBundle.LocalizedString ("Pre-plumbing check", "Pre-plumbing check");
-			using (var image = UIImage.FromBundle("/Images/117-todo")) PrePlumbNav.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle("Images/117-todo")) PrePlumbNav.TabBarItem.Image = image;
 			PrePlumbNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			PrePlumbNav.NavigationBar.Translucent = true;
 			PrePlumbNav.NavigationBar.Hidden = true;
 
 			ServiceNav = new ServiceNavigationController(this);
 			ServiceNav.Title = NSBundle.MainBundle.LocalizedString ("Service", "Service");
-			using(var image = UIImage.FromBundle ("/Images/157-wrench") ) ServiceNav.TabBarItem.Image = image;
+			using(var image = UIImage.FromBundle ("Images/157-wrench") ) ServiceNav.TabBarItem.Image = image;
 			ServiceNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			ServiceNav.NavigationBar.Translucent = true;
 			ServiceNav.NavigationBarHidden = true;
@@ -427,7 +428,7 @@ namespace Puratap
 		
 			UsedPartsNav = new UsedPartsNavigationController(this);
 			UsedPartsNav.Title = "Parts";
-			using(var image = UIImage.FromBundle ("/Images/20-gear2") ) UsedPartsNav.TabBarItem.Image = image;
+			using(var image = UIImage.FromBundle ("Images/20-gear2") ) UsedPartsNav.TabBarItem.Image = image;
 			UsedPartsNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			UsedPartsNav.NavigationBar.Translucent = true;
 			UsedPartsNav.Toolbar.BarStyle = UIBarStyle.Black;
@@ -436,7 +437,7 @@ namespace Puratap
 
 			SigningNav = new SigningNavigationController(this);
 			SigningNav.Title = "Sign";
-			using(var image = UIImage.FromBundle ("/Images/187-pencil") ) SigningNav.TabBarItem.Image = image;
+			using(var image = UIImage.FromBundle ("Images/187-pencil") ) SigningNav.TabBarItem.Image = image;
 			SigningNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			SigningNav.NavigationBar.Translucent = true;
 			SigningNav.Toolbar.BarStyle = UIBarStyle.Black;
@@ -446,7 +447,7 @@ namespace Puratap
 
 			SummaryNav = new PaymentsSummaryNavigationController(this);
 			SummaryNav.TabBarItem.Title = "Summary";
-			using(var image = UIImage.FromBundle ("/Images/162-receipt") ) SummaryNav.TabBarItem.Image = image;
+			using(var image = UIImage.FromBundle ("Images/162-receipt") ) SummaryNav.TabBarItem.Image = image;
 			SummaryNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			SummaryNav.NavigationBar.Translucent = true;
 			SummaryNav.Toolbar.BarStyle = UIBarStyle.Black;
@@ -454,7 +455,7 @@ namespace Puratap
 			SummaryNav.Toolbar.Hidden = false;
 
 			ServerNav = new ServerClientNavigatonController(this);
-			using(var image = UIImage.FromBundle ("/Images/174-imac") ) ServerNav.TabBarItem.Image = image;
+			using(var image = UIImage.FromBundle ("Images/174-imac") ) ServerNav.TabBarItem.Image = image;
 			ServerNav.TabBarItem.Title = "Server/Client";
 			ServerNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			ServerNav.NavigationBar.Translucent = true;
@@ -463,7 +464,7 @@ namespace Puratap
 			ServerNav.Toolbar.Hidden = false;
 
 			CustomerNav =  new  CustomerNavigationController(this);
-			using(var image = UIImage.FromBundle ("/Images/111-user") ) CustomerNav.TabBarItem.Image = image;
+			using(var image = UIImage.FromBundle ("Images/111-user") ) CustomerNav.TabBarItem.Image = image;
 			CustomerNav.TabBarItem.Title = "Customer";
 			CustomerNav.NavigationBar.BarStyle = UIBarStyle.Black;
 			CustomerNav.NavigationBar.Translucent = true;
@@ -474,7 +475,7 @@ namespace Puratap
 
 			RunRouteNav = new RunRouteNavigationController(this);
 			RunRouteNav.Title = "Run route";
-			using (var image = UIImage.FromBundle("/Images/103-map")) RunRouteNav.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle("Images/103-map")) RunRouteNav.TabBarItem.Image = image;
 
 			// Create views corresponding to each of the tabs
 			_customersView = new CustomersViewController(this);
@@ -507,7 +508,7 @@ namespace Puratap
 			_jobService = new JobServiceCallViewController(_navWorkflow, ServiceNav);
 			_serviceParts = new ServiceUsedPartsViewController(new RootElement(""), _navWorkflow, UsedPartsNav, true);
 			_serviceParts.Title = "Service parts";
-			using(var image = UIImage.FromBundle ("/Images/20-gear2") ) _serviceParts.TabBarItem.Image = image;
+			using(var image = UIImage.FromBundle ("Images/20-gear2") ) _serviceParts.TabBarItem.Image = image;
 
 			_vcRunRoute = new RunRouteViewController(this);
 
@@ -590,7 +591,7 @@ namespace Puratap
 					NSAction act = delegate {	};
 
 					mail.SetToRecipients (new string[] { "compliancereports@puratap.com" });
-					mail.SetCcRecipients (new string[] { "lvictor@puratap.com", "earcher@puratap.com" });
+					mail.SetCcRecipients (new string[] { "earcher@puratap.com" });
 
 					string subject = String.Format ("Compliance report: {0} CN# {1}, Booking {2}", 
 						MyConstants.DEBUG_TODAY.Substring(2,10), 

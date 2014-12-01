@@ -34,7 +34,7 @@ namespace Puratap
 			AdditionalPartsSection.Add (new StyledStringElement("Tap here to add a part"));
 
 			Root.Add (AdditionalPartsSection);
-			using (var image = UIImage.FromBundle ("/Images/19-gear") ) this.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle ("Images/19-gear") ) this.TabBarItem.Image = image;
 			this.Title = "New tap";			
 
 			ToolbarItems = new UIBarButtonItem[] {

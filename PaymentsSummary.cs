@@ -179,11 +179,11 @@ namespace Puratap
 			
 			ToolbarItems = new UIBarButtonItem[] {
 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-				new UIBarButtonItem("Print this summary", UIBarButtonItemStyle.Bordered, PrintDailySummary),
+				new UIBarButtonItem("Print this summary", UIBarButtonItemStyle.Plain, PrintDailySummary),
 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-				new UIBarButtonItem("Email this summary", UIBarButtonItemStyle.Bordered, EmailDailySummary),
+				new UIBarButtonItem("Email this summary", UIBarButtonItemStyle.Plain, EmailDailySummary),
 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
-				new UIBarButtonItem("Switch to stock", UIBarButtonItemStyle.Bordered, SwitchToStock),
+				new UIBarButtonItem("Switch to stock", UIBarButtonItemStyle.Plain, SwitchToStock),
 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
 			};
 		}
@@ -834,7 +834,7 @@ namespace Puratap
 			base.ViewDidLoad ();
 			this.Title = "Summary";
 
-			using (var image = UIImage.FromBundle ("/Images/162-receipt") )	this.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle ("Images/162-receipt") )	this.TabBarItem.Image = image;
 		}
 	}
 }

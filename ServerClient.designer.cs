@@ -22,7 +22,7 @@ namespace Puratap
 		MonoTouch.UIKit.UIButton btnChangeDate { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnDownload { get; set; }
+		MonoTouch.UIKit.UIButton btnFTPDataExchange { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UIButton btnResetDeviceID { get; set; }
@@ -38,9 +38,34 @@ namespace Puratap
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (btnDownload != null) {
-				btnDownload.Dispose ();
-				btnDownload = null;
+			if (aivActivity != null) {
+				aivActivity.Dispose ();
+				aivActivity = null;
+			}
+
+			if (aivConnectingToService != null) {
+				aivConnectingToService.Dispose ();
+				aivConnectingToService = null;
+			}
+
+			if (btnChangeDate != null) {
+				btnChangeDate.Dispose ();
+				btnChangeDate = null;
+			}
+
+			if (btnFTPDataExchange != null) {
+				btnFTPDataExchange.Dispose ();
+				btnFTPDataExchange = null;
+			}
+
+			if (btnResetDeviceID != null) {
+				btnResetDeviceID.Dispose ();
+				btnResetDeviceID = null;
+			}
+
+			if (btnStartDataExchange != null) {
+				btnStartDataExchange.Dispose ();
+				btnStartDataExchange = null;
 			}
 
 			if (btnUpload != null) {
@@ -51,31 +76,6 @@ namespace Puratap
 			if (tvLog != null) {
 				tvLog.Dispose ();
 				tvLog = null;
-			}
-
-			if (btnResetDeviceID != null) {
-				btnResetDeviceID.Dispose ();
-				btnResetDeviceID = null;
-			}
-
-			if (aivActivity != null) {
-				aivActivity.Dispose ();
-				aivActivity = null;
-			}
-
-			if (btnChangeDate != null) {
-				btnChangeDate.Dispose ();
-				btnChangeDate = null;
-			}
-
-			if (aivConnectingToService != null) {
-				aivConnectingToService.Dispose ();
-				aivConnectingToService = null;
-			}
-
-			if (btnStartDataExchange != null) {
-				btnStartDataExchange.Dispose ();
-				btnStartDataExchange = null;
 			}
 		}
 	}

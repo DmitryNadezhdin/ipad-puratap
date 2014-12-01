@@ -43,7 +43,7 @@ namespace Puratap
 			PartsUsedSection.Add (new StyledStringElement("Tap here to add a part"));
 
 			Root.Add (PartsUsedSection);
-			using (var image = UIImage.FromBundle ("/Images/19-gear") )	this.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle ("Images/19-gear") )	this.TabBarItem.Image = image;
 			this.Title = "Tubing upgrade";			
 		
 			ToolbarItems = new UIBarButtonItem[] {

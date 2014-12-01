@@ -164,7 +164,7 @@ namespace Puratap
 					// if it exists, the user should have added to his job cluster, show a message explaining that
 					Customer c = new Customer(result, "Mr.", "FirstName", "LastName", "Address", "Suburb", 
 									      					String.Format("({0}){1}", "000", "000-0000"), 
-									                        String.Format("({0}){1}", "000", "000-0000"), DateTime.Now, 
+									                        String.Format("({0}){1}", "000", "000-0000"), "Email", DateTime.Now, 
 					                          				"", "", 0, "", true, 0, 0);
 					c.JobHistory = new List<HistoryJob>();
 					c.CustomerMemos = new List<Memo>();
@@ -553,7 +553,7 @@ namespace Puratap
 				
 				Customer c = new Customer(999999999, "Mr.", "FirstName", "LastName", "Address", "Suburb", 
 								                          String.Format("({0}){1}", "PhoneAreaCode", "PhoneNumber"), 
-								                          String.Format("({0}){1}", "MobileCode", "MobileNumber"), 
+								                          String.Format("({0}){1}", "MobileCode", "MobileNumber"), "Email",
 				                          				  DateTime.Now, "", "", 0, "", true, 0, 0); // dummy customer
 				_table._customers = new List<Customer> {c};
 				
@@ -596,22 +596,19 @@ namespace Puratap
 										reader.Close ();
 										return false;
 									}
-									else	
-									{
+									else {
 										reader.Close ();
 										return true;
 									}
 								}
 							}
-							catch
-							{
+							catch {
 								return false;
 							}
 						}
 					}
 				}
-				catch
-				{
+				catch {
 					return false;
 				}
 			}
@@ -627,16 +624,14 @@ namespace Puratap
 						string sql = 	"SELECT " +  // "MAX(wsales.wdateins), " +
 											" wclient.cusnum, wctitle, wconame, wcsname, wcomname, " +
 											" wcadd1 || \" \" || wcadd11 as street_address, wcadd2, wcacde||exdigit, wcphone, mobpre, mobile, " +
-											" wcstitle, wcsoname, wcssname, wccoacde, wccophone, tu_done, coi_id, coords_lat, coords_lng " +
+											" wcstitle, wcsoname, wcssname, wccoacde, wccophone, emailAd, tu_done, coi_id, coords_lat, coords_lng " +
 											" FROM wclient, pl_recor " + // , wsales " +
 											" WHERE pl_recor.plappdate= " + dbDate +
 												" AND wclient.cusnum=pl_recor.cusnum " +
-												" AND pl_recor.cusnum != 72077 " + // getting rid of dummy records ( Mr. Puratap )
 												" AND wclient.wcclcde != 'CREATEDONIPAD' " +
 												" AND pl_recor.parentnum < 1 AND pl_recor.parentnum != -1 " +
 										" ORDER BY PL_RECOR.iPad_Ordering, PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";		
 
-											// " AND wsales.cusnum=pl_recor.cusnum " +
 						cmd.CommandText = sql;
 						try {
 							using (var reader = cmd.ExecuteReader())
@@ -652,6 +647,7 @@ namespace Puratap
 									string LastName = (string)reader["wcsname"];
 									string Address = (string)reader["street_address"];
 									string Suburb = (string)reader["wcadd2"];
+									string Email = (string)reader["emailad"];
 									
 									string PhoneAreaCode = (string)reader["wcacde||exdigit"];
 									if (PhoneAreaCode.Length>3)
@@ -689,7 +685,7 @@ namespace Puratap
 										formattedMobile = MobilePrefix + MobileNumber;
 									}
 									Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, formattedPhone, formattedMobile,
-										lastInstallDate, fbContact, formattedFbPhone, companyID, companyName, tubingDone, cLat, cLng);				
+										Email, lastInstallDate, fbContact, formattedFbPhone, companyID, companyName, tubingDone, cLat, cLng);				
 									_table._customers.Add(c);
 								}
 								if (! reader.IsClosed) reader.Close ();
@@ -710,8 +706,6 @@ namespace Puratap
 											  	" LEFT OUTER JOIN wcmemo ON pl_recor.booknum = wcmemo.booknum AND wcmemo.wmtype = 'PLU' " +
 												" LEFT OUTER JOIN followups ON pl_recor.booknum = followups.job_id AND followups.reason_id = 10 " +
 								" WHERE pl_recor.plAppDate = " + dbDate +		// IMPLEMENTED :: was a hardcoded date, has been replaced by something a bit more flexible
-									// " AND wsales.unitnum != 0 " +				// getting rid of older WSALES records that cannot be used to determine the sale price
-									" AND pl_recor.cusnum != 72077 " +			// getting rid of dummy records ( Mr. Puratap )
 								" AND pl_recor.parentnum != -1 " +				// getting rid of manually created jobs 
 									" AND (NOT EXISTS (SELECT booknum FROM pl_recor plr WHERE plr.booknum=pl_recor.parentnum AND plr.parentnum=-1)) " + // getting rid of child jobs of manually created jobs
 								" ORDER BY PL_RECOR.iPad_Ordering, PL_RECOR.TIME_START asc, PL_RECOR.TIME asc, booknum desc";	
@@ -832,11 +826,10 @@ namespace Puratap
 						// Get user created customers
 						sql = 	"SELECT wclient.cusnum, wclient.wcclcde, wcomname, wctitle, wconame, wcsname, " + // used to be :: SELECT DISTINCT
 												" wcadd1, wcadd2, wcacde||exdigit, wcphone, mobpre, mobile,  " +
-												" wcstitle, wcsoname, wcssname, wccoacde, wccophone, coi_id  " +
+												" wcstitle, wcsoname, wcssname, wccoacde, wccophone, coi_id, emailAd  " +
 												" FROM wclient, pl_recor " +
 												" WHERE pl_recor.plappdate= " + dbDate +
 												"	AND wclient.cusnum=pl_recor.cusnum  " +
-												"	AND pl_recor.cusnum != 72077 " +
 												"	AND pl_recor.parentnum = -1 " + // wclient.wcclcde = 'CREATEDONIPAD' " +
 												" ORDER BY pl_recor.time";
 
@@ -854,6 +847,7 @@ namespace Puratap
 									string LastName = (reader["wcsname"] != DBNull.Value) ? (string)reader["wcsname"] : ""; // (string)reader["wcsname"];
 									string Address = (reader["wcadd1"] != DBNull.Value) ? (string)reader["wcadd1"] : ""; // (string)reader["wcadd1"];
 									string Suburb = (reader["wcadd2"] != DBNull.Value) ? (string)reader["wcadd2"] : ""; // (string)reader["wcadd2"];
+									string Email = (reader["emailad"] != DBNull.Value) ? (string)reader["emailad"] : "";
 									
 									string PhoneAreaCode = (reader["wcacde||exdigit"] != DBNull.Value)? (string)reader["wcacde||exdigit"] : "";
 									if (PhoneAreaCode.Length>3)
@@ -878,7 +872,7 @@ namespace Puratap
 									Customer c = new Customer(CustomerNumber, Title, FirstName, LastName, Address, Suburb, 
 									String.Format("{0} {1}", PhoneAreaCode, PhoneNumber), 
 									String.Format("{0} {1}", MobilePrefix, MobileNumber),
-								                          						lastInstallDate, fbContact, fbPhone, CompanyID, CompanyName, tubingDone, 0, 0);
+								              					Email, lastInstallDate, fbContact, fbPhone, CompanyID, CompanyName, tubingDone, 0, 0);
 									
 									if (_table.UserAddedCustomers == null) _table.UserAddedCustomers = new List<Customer> {c};
 									else _table.UserAddedCustomers.Add (c);
@@ -892,7 +886,6 @@ namespace Puratap
 									" FROM pl_recor " +
 										" LEFT OUTER JOIN followups ON pl_recor.booknum = followups.job_id AND followups.reason_id = 10 " +
 									" WHERE pl_recor.plAppDate = " + dbDate +		// DEBUG :: was almost a hard-coded date, has been replaced by something a bit more flexible
-										" AND pl_recor.cusnum != 72077 " +		// getting rid of dummy records ( Mr. Puratap )
 										" AND (pl_recor.parentnum = -1 OR (pl_recor.parentnum > 0 AND pl_recor.parentnum < 1001)) " + 		// reading only user created jobs and their child jobs
 									" ORDER BY pl_recor.time asc, parentnum asc, booknum desc";
 						cmd.CommandText = sql;
@@ -1753,6 +1746,7 @@ namespace Puratap
 		public string Suburb { get; set; }
 		public string PhoneNumber { get; set; }
 		public string MobileNumber { get; set; }
+		public string EmailAddress { get; set; }
 
 		public bool TubingUpgradeDone { get; set; }
 		public string AttentionReason { get; set; }
@@ -1779,22 +1773,13 @@ namespace Puratap
 		public string FallbackContact { get; set; }
 		public string FallbackPhoneNumber { get; set; }
 		
-		public int PhotosTakenToday; // defaults to 0
+		public int PhotosTakenToday = 0; // defaults to 0
 		public List<string> FilesToPrint { get; set; }
-
-		
-		public string GetStreet()
-		{
-			string s = this.Address.Substring(this.Address.IndexOf (" ")+1);
-			if (s.IndexOf (" ") > 0)
-				s = s.Substring (0, s.IndexOf(" ") );
-			return s;
-		}
 		
 		public Customer(long customernumber, 
 		                string title, string firstname, string lastname, 
 		                string address, string suburb, // postcode ? probably unnecessary
-		                string phonenumber, string mobilenumber, 
+		                string phonenumber, string mobilenumber, string email,
 		                DateTime lastinstalldate, string fbcontact, 
 		                string fbphone, long companyID, string companyName, bool tubingDone, 
 		                double cLat, double cLng)
@@ -1809,6 +1794,7 @@ namespace Puratap
 			this.PhoneNumber = phonenumber;
 			this.MobileNumber = mobilenumber;
 			// this.LastInstallDate = lastinstalldate;
+			this.EmailAddress = email;
 			this.FallbackContact = fbcontact;
 			this.FallbackPhoneNumber = fbphone;
 			this.CompanyID = companyID;
@@ -1910,7 +1896,7 @@ namespace Puratap
 									{
 										DateTime.TryParse ( ((DateTime)reader["wmdate"]).ToString(), out d);
 									}
-									catch (System.FormatException e) {
+									catch (System.FormatException) {
 										d = new DateTime(1990,1,1);
 										// Console.WriteLine (String.Format ("{0}: Exception when reading WCMEMO: MemoNumber = {1}, error: {2}", DateTime.Now.ToString("HH:mm:ss"), m.MemoNumber, e.Message));
 									}
@@ -1946,7 +1932,7 @@ namespace Puratap
 
 		public bool CheckIfInvoiceChargesWaived()
 		{
-			// this is a stub that serves no purpose now
+			// this is a stub that serves no purpose now -- to be removed
 			// this logic layer was removed along with the invoice charges
 			return true;
 		}
@@ -1963,14 +1949,7 @@ namespace Puratap
 	public class Job 
 	{
 		public List<Assembly> UsedAssemblies;
-		public List<Part> UsedParts;  // ? This should probably be saved to and read from database because of potential application restarts
-			// On the other hand, the usual workflow goes like this: you start the job, then you either finish it or reset workflow
-			// if you reset, there's nothing to save to the database
-			// if you finish it, UsedParts are saved when the workflow finishing events fire up
-			// when the job has been finished, you CANNOT go in and just have a look (which is when reading the parts from database might come handy)
-			// you may, however, reset the workflow which promptly rolls back all the changes made in the database for that job and clears this UsedParts list as well
-			// so it seems like there's no reason to implement reading this from database, it simply will not come up
-		
+		public List<Part> UsedParts;  // This is saved to and read from database because of potential application restarts
 		public List<Job> ChildJobs;
 		
 		public long ParentJobBookingNumber { get; set; }

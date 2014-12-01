@@ -345,7 +345,7 @@ namespace Puratap
 				lbContactPerson.Hidden = true;
 
 				int iOSversion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split('.')[0]);
-				int newY = (iOSversion == 7)? 45+18 : 45;
+				int newY = (iOSversion == 7 || iOSversion == 8)? 45+18 : 45;
 
 				cSpecialInstructions.Frame = new System.Drawing.RectangleF(10, newY, 690, 352);
 				this._tabs._jobRunTable.TableView.UserInteractionEnabled = false;
@@ -367,7 +367,7 @@ namespace Puratap
 				lbContactPerson.Hidden = true;
 
 				int iOSversion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split('.')[0]);
-				int newY = (iOSversion == 7)? 45+18 : 45;
+				int newY = (iOSversion == 7 || iOSversion == 8)? 45+18 : 45;
 
 				cAttentionReason.Frame = new System.Drawing.RectangleF(10, newY, 690, 352);
 				this._tabs._jobRunTable.TableView.UserInteractionEnabled = false;
@@ -382,13 +382,16 @@ namespace Puratap
 			cAttentionReason.Ended += HandleAttentionReasonEditingEnded;
 			cSpecialInstructions.Ended += HandleSpecialInstructionsEditingEnded;
 
-
-			this.btnTUDone.SetImage ( UIImage.FromBundle ("/Images/uicheckbox_unchecked"), UIControlState.Normal);
-			this.btnTUDone.SetImage ( UIImage.FromBundle ("/Images/uicheckbox_checked"), UIControlState.Selected);
+			string imgLocation = (MyConstants.iOSVersion == 8) ? "Images/uicheckbox_unchecked" : "/Images/uicheckbox_unchecked";
+			this.btnTUDone.SetImage ( UIImage.FromBundle (imgLocation), UIControlState.Normal);
+			imgLocation = (MyConstants.iOSVersion == 8) ? "Images/uicheckbox_checked" : "/Images/uicheckbox_checked";
+			this.btnTUDone.SetImage ( UIImage.FromBundle (imgLocation), UIControlState.Selected);
 			this.btnTUDone.TouchUpInside += btnTUDoneHandleTouchUpInside;
 
-			this.btnAttention.SetImage ( UIImage.FromBundle ("/Images/uicheckbox_unchecked"), UIControlState.Normal);
-			this.btnAttention.SetImage ( UIImage.FromBundle ("/Images/uicheckbox_checked"), UIControlState.Selected);
+			imgLocation = (MyConstants.iOSVersion == 8) ? "Images/uicheckbox_unchecked" : "/Images/uicheckbox_unchecked";
+			this.btnAttention.SetImage ( UIImage.FromBundle (imgLocation), UIControlState.Normal);
+			imgLocation = (MyConstants.iOSVersion == 8) ? "Images/uicheckbox_checked" : "/Images/uicheckbox_checked";
+			this.btnAttention.SetImage ( UIImage.FromBundle (imgLocation), UIControlState.Selected);
 			this.btnAttention.TouchUpInside += HandleBtnAttentionTouchUpInside;
 		}
 
@@ -440,7 +443,7 @@ namespace Puratap
 			// bring the text view down
 			UIView.BeginAnimations (null);
 			UIView.SetAnimationDuration (0.3);
-			cAttentionReason.Frame = new System.Drawing.RectangleF(22,657,537,32);
+			cAttentionReason.Frame = new System.Drawing.RectangleF(156,657,403,32);
 			cCompanyName.Hidden = false;
 			lbCompanyName.Hidden = false;
 			cCompanyName.Hidden = false;
@@ -464,7 +467,7 @@ namespace Puratap
 			// bring the text view down
 			UIView.BeginAnimations (null);
 			UIView.SetAnimationDuration (0.3);
-			cSpecialInstructions.Frame = new System.Drawing.RectangleF(355,465,328,141);
+			cSpecialInstructions.Frame = new System.Drawing.RectangleF(355,454,328,195);
 			cCompanyName.Hidden = false;
 			cContactPerson.Hidden = false;
 			lbCompanyName.Hidden = false;
@@ -895,6 +898,11 @@ namespace Puratap
 							cmd.Parameters.Add ("@tubingDone", DbType.String).Value = NewValue;
 							break;
 						}
+						case CustomerDetailsUpdatableField.Email : {
+							cmd.CommandText = "UPDATE Wclient SET EmailAd = ? WHERE Cusnum = ?";
+							cmd.Parameters.Add ("@EmailAddress", DbType.String).Value = NewValue;
+							break;
+						}
 					}
 					cmd.Parameters.Add ("@CustomerID", DbType.Int32).Value = CustomerNumber;
 					if (field != CustomerDetailsUpdatableField.JobPriceTotal)
@@ -926,7 +934,6 @@ namespace Puratap
 	
 		void acPrinterTest (NSObject sender)
 		{	
-			//UIImage img = UIImage.FromBundle("/Images/puratap-logo");
 			CGPDFDocument pdfDoc = CGPDFDocument.FromFile (Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), "100605 PrePlumbingPDF_Signed.pdf"));
 			UIImage img = MyConstants.ImageFromPDF(pdfDoc, 1);			
 

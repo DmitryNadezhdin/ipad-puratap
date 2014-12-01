@@ -41,7 +41,7 @@ namespace Puratap
 			Root.Add (UsedPartsSection);
 			
 			this.Title = "Re-installation";
-			using (var image = UIImage.FromBundle ("/Images/181-hammer") ) this.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle ("Images/181-hammer") ) this.TabBarItem.Image = image;
 			
 			ToolbarItems = new UIBarButtonItem[] {
 				new UIBarButtonItem(UIBarButtonSystemItem.Reply),

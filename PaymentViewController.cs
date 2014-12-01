@@ -214,7 +214,7 @@ namespace Puratap
 			NSArray a = NSBundle.MainBundle.LoadNib ("ReceiptPDFView", this, null);
 			GeneratedPdfView = (UIView)MonoTouch.ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
 			// Getting a Puratap logo on the receipt
-			using (var image = UIImage.FromBundle("/Images/puratap-logo") )
+			using (var image = UIImage.FromBundle("Images/puratap-logo") )
 				((UIImageView)GeneratedPdfView.ViewWithTag(MyConstants.ReceiptPDFTemplateTags.Logo)).Image = image;
 			//Getting the current job's info into the labels on the template
 			((UILabel)GeneratedPdfView.ViewWithTag (2)).Text = "Receipt for Job # "+this.Summary.mainJob.JobBookingNumber.ToString();
@@ -1518,6 +1518,13 @@ namespace Puratap
 				RectangleF current = this.myToolbar.Frame;
 
 				this.myToolbar.Frame = new RectangleF (current.X, current.Y+14, current.Width, current.Height);
+				this.myToolbar.SetNeedsLayout ();
+			}
+			// if iOS 7 -- bring the toolbar down 40 pixels -- tested on Greg D.'s iPad -- not many iOS 6 devices left
+			if (UIDevice.CurrentDevice.SystemVersion.Split ('.')[0] == "6") {
+				RectangleF current = this.myToolbar.Frame;
+
+				this.myToolbar.Frame = new RectangleF (current.X, current.Y+40, current.Width, current.Height);
 				this.myToolbar.SetNeedsLayout ();
 			}
 						

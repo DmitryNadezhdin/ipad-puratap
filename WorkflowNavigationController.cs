@@ -671,19 +671,6 @@ namespace Puratap
 				_tabs._jobRunTable.AllJobsDone = allDone;
 			}
 		}
-		/*
-		public WorkflowNavigationController (UIViewController root)
-		{
-			this.Title = NSBundle.MainBundle.LocalizedString ("Workflow", "Workflow");
-			this.ToolbarHidden = false;
-			using(var image = UIImage.FromBundle ("Images/117-todo") ) this.TabBarItem.Image = image;
-			this.NavigationBar.BarStyle = UIBarStyle.Black;
-			this.Toolbar.BarStyle = UIBarStyle.Black;
-			this.NavigationBar.Translucent = true;
-			this.Toolbar.Translucent = true;
-			this.PushViewController (root, false);
-		}
-		*/
 		
 		public void ResetViewControllersToDefaults(bool resetInstallFees)
 		{

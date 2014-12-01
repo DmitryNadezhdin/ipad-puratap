@@ -159,9 +159,9 @@ namespace Puratap
 			};
 
 			back = new UIBarButtonItem(UIBarButtonSystemItem.Reply);
-			signing = new UIBarButtonItem("Start signing", UIBarButtonItemStyle.Bordered, StartSigning);
+			signing = new UIBarButtonItem("Start signing", UIBarButtonItemStyle.Plain, StartSigning);
 			forward = new UIBarButtonItem(UIBarButtonSystemItem.Action);
-			clearSignature = new UIBarButtonItem("Clear signature", UIBarButtonItemStyle.Bordered, ClearSignature);
+			clearSignature = new UIBarButtonItem("Clear signature", UIBarButtonItemStyle.Plain, ClearSignature);
 			
 			ToolbarItems = new UIBarButtonItem[] {
 				back, 				new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace),
@@ -193,7 +193,7 @@ namespace Puratap
 
 			// if (dvc.Root[0].Count > 17)
 			{
-				float calculatedHeight = dvc.Root[0].Count * dvc.TableView.RowHeight+44;
+				float calculatedHeight = dvc.Root[0].Count * Math.Max(dvc.TableView.RowHeight, 44) + 44;
 				GeneratedPDFView.Frame = new RectangleF(GeneratedPDFView.Frame.X, GeneratedPDFView.Frame.Y, GeneratedPDFView.Frame.Width, usedStock.TableView.Frame.Y+calculatedHeight+114); 
 				usedStock.TableView.Frame = new RectangleF(usedStock.TableView.Frame.X, usedStock.TableView.Frame.Y, usedStock.TableView.Frame.Width, calculatedHeight);
 

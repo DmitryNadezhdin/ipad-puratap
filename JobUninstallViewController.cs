@@ -30,7 +30,7 @@ namespace Puratap
 
 			Root.Add (PartsUsedSection);
 
-			using (var image = UIImage.FromBundle ("/Images/19-gear") )	this.TabBarItem.Image = image;
+			using (var image = UIImage.FromBundle ("Images/19-gear") )	this.TabBarItem.Image = image;
 			this.Title = "Uninstallation";			
 
 			ToolbarItems = new UIBarButtonItem[] {

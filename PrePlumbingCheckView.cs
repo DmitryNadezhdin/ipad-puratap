@@ -425,7 +425,7 @@ namespace Puratap
 			_generatedPdfView = (UIView)MonoTouch.ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
 			
 			UIImageView imgv = (UIImageView)_generatedPdfView.ViewWithTag (MyConstants.PrePlumbingPDFTemplateTags.PuratapLogo);
-			using (var image = UIImage.FromBundle ("/Images/puratap-logo") ) imgv.Image = image;
+			using (var image = UIImage.FromBundle ("Images/puratap-logo") ) imgv.Image = image;
 			
 			UILabel tl = (UILabel)_generatedPdfView.ViewWithTag (MyConstants.PrePlumbingPDFTemplateTags.CustomerNumber);
 			tl.Text = "Customer Number: "+c.CustomerNumber;
@@ -721,7 +721,8 @@ namespace Puratap
 		partial void officeFollowupTouchDown (NSObject sender)
 		{
 			ac = new UIActionSheet("Is office follow-up required for this?", null, "Cancel", null, "Yes", "No");
-			ac.WillDismiss += delegate(object _sender, UIButtonEventArgs e) {
+			// WillDismiss
+			ac.Dismissed += delegate(object _sender, UIButtonEventArgs e) {
 				const int i = 2; // ac.CancelButtonIndex;
 				switch (e.ButtonIndex)
 				{
@@ -808,7 +809,6 @@ namespace Puratap
 			base.ViewDidAppear (animated);
 
 
-
 			/* OLD LOGIC
 			if (_navWorkflow.Toolbar.Hidden) { _navWorkflow.SetToolbarHidden (false, animated); }
 			_navWorkflow.SetToolbarButtons (WorkflowToolbarButtonsMode.PrePlumbingCheck);
@@ -839,6 +839,7 @@ namespace Puratap
 			base.ViewDidLoad ();
 
 			int systemVersion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split ('.') [0]);
+
 			// if iOS 7 -- bring the toolbar down 14 pixels
 			if (systemVersion == 7) {
 				RectangleF current = this.ppcToolbar.Frame;
@@ -846,6 +847,15 @@ namespace Puratap
 				this.ppcToolbar.Frame = new RectangleF (current.X, current.Y+14, current.Width, current.Height);
 				this.ppcToolbar.SetNeedsLayout ();
 			}
+
+			// if iOS 6 -- bring the toolbar down 60 pixels -- tested on Greg D.'s iPad -- not many iOS 6 devices left
+			if (systemVersion == 6) {
+				RectangleF current = this.ppcToolbar.Frame;
+
+				this.ppcToolbar.Frame = new RectangleF (current.X, current.Y+60, current.Width, current.Height);
+				this.ppcToolbar.SetNeedsLayout ();
+			}
+
 
 			this.commentsTextView.ShouldBeginEditing = delegate {
 				MovedViewY = commentsTextView.Frame.Y;

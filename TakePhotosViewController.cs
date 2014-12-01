@@ -15,7 +15,9 @@ namespace Puratap
 		public int PhotosCounter { get { return _photosCounter; } set { _photosCounter = value; } }
 		public long CustomerNumber { get { return _customerNumber; } set { _customerNumber = value; } }
 
-		private UIImagePickerController _ipc;
+		UIImagePickerController _ipc;
+		Action<UIImagePickerController, NSDictionary> HandleFinishedPickingMedia;
+		Action<UIImagePickerController> HandleCanceledPickingMedia;
 		
 		public TakePhotosViewController (DetailedTabs tabs) : base ("TakePhotosViewController", null)
 		{
@@ -27,66 +29,66 @@ namespace Puratap
 		public override void ViewDidLoad ()
 		{
 			base.ViewDidLoad ();
-
-			if (Runtime.Arch != Arch.SIMULATOR) {
-				this._ipc = new UIImagePickerController ();
-				_ipc.SourceType = UIImagePickerControllerSourceType.Camera;
-				_ipc.Delegate = _ipc;
-				_ipc.AllowsEditing = false;
-
-				_ipc.FinishedPickingMedia += delegate(object sender, UIImagePickerMediaPickedEventArgs e) {
-					NSString k = new NSString ("UIImagePickerControllerOriginalImage");
-					UIImage im = (UIImage)e.Info.ObjectForKey (k);
+			HandleFinishedPickingMedia = new Action<UIImagePickerController, NSDictionary> (
+				delegate(UIImagePickerController picker, NSDictionary info) {
+					UIImage im = (UIImage)info.ObjectForKey(UIImagePickerController.OriginalImage);
 					NSError err;
 					string path = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), 
-						              String.Format ("{0}_{1}_{2}.jpg", _customerNumber.ToString (), 
-							              DateTime.Now.Date.ToString ("yyyy-MM-dd"),
-							              _photosCounter.ToString ()));
+						String.Format ("{0}_{1}_{2}.jpg", _customerNumber.ToString (), 
+							DateTime.Now.Date.ToString ("yyyy-MM-dd"),
+							_photosCounter.ToString ()));
 					_photosCounter++;
 					im.AsJPEG ().Save (path, true, out err);
 					im.SaveToPhotosAlbum (null);
+					im.Dispose (); im = null;
 
 					// error handling here according to NSError err
 					if (err != null) {
 						using (var alert = new UIAlertView ("Error:" + err.LocalizedDescription, "Unable to save image to: " + path, null, "OK", null)) {
 							alert.Show ();
 						}
-					}
-
-					_ipc.DismissViewController (true, null); // _ipc.DismissModalViewControllerAnimated (true);
-					im.Dispose ();
-					k.Dispose ();
-					im = null;
-					k = null; 
-					// _ipc.Dispose (); _ipc = null;
-
-					if (err != null) {
 						err.Dispose ();
 						err = null;
 					}
+
+					picker.DismissViewController (true, null); // _ipc.DismissModalViewControllerAnimated (true);
 					_tabs.SelectedViewController = _tabs.ViewControllers [_tabs.LastSelectedTab];
 					_tabs._jobRunTable.TableView.SelectRow (_tabs._jobRunTable.LastSelectedRowPath, true, UITableViewScrollPosition.None);
-				};
+				});
 
-				_ipc.Canceled += delegate {
+			HandleCanceledPickingMedia = new Action<UIImagePickerController> (
+				delegate(UIImagePickerController picker) {
 					if (! (_tabs.ViewControllers[_tabs.LastSelectedTab] is TakePhotosViewController))
 						_tabs.SelectedViewController = _tabs.ViewControllers [_tabs.LastSelectedTab];
 					else 
 						_tabs.SelectedViewController = _tabs.ViewControllers[0];
 
 					_tabs._jobRunTable.TableView.SelectRow (_tabs._jobRunTable.LastSelectedRowPath, true, UITableViewScrollPosition.None);
-					_ipc.DismissViewController (true, null);
-
-					// _ipc.Dispose (); _ipc = null;
-				};
-			}
+					picker.DismissViewController(true, null);
+			});
 		}
 		
 		public override void ViewDidAppear (bool animated)
 		{
 			base.ViewDidAppear (animated);
-			if (Runtime.Arch != Arch.SIMULATOR) 
-				this.PresentViewController (_ipc, true, null);
+			 
+			if (Runtime.Arch != Arch.SIMULATOR) {
+				_ipc = new UIImagePickerController ();
+				_ipc.ModalPresentationStyle = UIModalPresentationStyle.FullScreen;
+				_ipc.SourceType = UIImagePickerControllerSourceType.Camera;
+				_ipc.ShowsCameraControls = true;
+				_ipc.AllowsEditing = false;
+				_ipc.Delegate = new ImagePickerDelegate (HandleFinishedPickingMedia, HandleCanceledPickingMedia);
+
+				this.PresentViewController (_ipc, animated, null);
+			}
+		}
+
+		public override void ViewWillDisappear (bool animated)
+		{
+			if (Runtime.Arch != Arch.SIMULATOR) {
+
+			}
 		}
 
 		[Obsolete]
@@ -103,6 +105,28 @@ namespace Puratap
 		{
 			// Return true for supported orientations
 			return (toInterfaceOrientation == UIInterfaceOrientation.LandscapeLeft || toInterfaceOrientation == UIInterfaceOrientation.LandscapeRight);
+		}
+	}
+
+	public class ImagePickerDelegate : UIImagePickerControllerDelegate {
+		private readonly Action<UIImagePickerController, NSDictionary> _captureEvent;
+		private readonly Action<UIImagePickerController> _cancelEvent;
+
+		public ImagePickerDelegate(Action<UIImagePickerController, NSDictionary> captureEvent, 
+									Action<UIImagePickerController>cancelEvent)
+		{
+			_captureEvent = captureEvent;
+			_cancelEvent = cancelEvent;
+		}
+
+		public override void FinishedPickingMedia(UIImagePickerController picker, NSDictionary info)
+		{
+			_captureEvent(picker, info);
+		}
+
+		public override void Canceled (UIImagePickerController picker)
+		{
+			_cancelEvent (picker);
 		}
 	}
 }

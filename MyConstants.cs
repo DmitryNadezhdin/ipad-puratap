@@ -24,7 +24,8 @@ namespace Puratap
 		Phone = 5, MobilePhone = 6, 
 		FallbackContact = 7, FallbackPhone = 8, 
 		JobPriceTotal = 9, CompanyName = 10, 
-		SpecialComments = 11, AttentionReason = 12, TubingUpgradeDone = 13  };
+		SpecialComments = 11, AttentionReason = 12, 
+		TubingUpgradeDone = 13, Email = 14  };
 	public enum SignableDocuments { None, PrePlumbingCheck, ServiceReport, Receipt };
 	
 	public enum FollowUpsRequired {
@@ -71,9 +72,15 @@ namespace Puratap
 				{
 					// save just the filename to the result string
 					result = result.Substring (result.LastIndexOf ('/')+1);
+
 					// if we can locate the file in the current bundle's "Documents" folder, we will return that
-					if (File.Exists ( Path.Combine (Environment.CurrentDirectory.Substring (0,Environment.CurrentDirectory.LastIndexOf ('/')), "Documents/"+result)))
-						result = Path.Combine (Environment.CurrentDirectory.Substring (0,Environment.CurrentDirectory.LastIndexOf ('/')), "Documents/"+result);
+					if (iOSVersion < 8) {
+						if (File.Exists (Path.Combine (Environment.CurrentDirectory.Substring (0, Environment.CurrentDirectory.LastIndexOf ('/')), "Documents/" + result)))
+							result = Path.Combine (Environment.CurrentDirectory.Substring (0, Environment.CurrentDirectory.LastIndexOf ('/')), "Documents/" + result);
+					} else {
+						if (File.Exists (Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/" + result))
+							result = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/" + result;
+					}
 				}
 				return result;
 			} 
