@@ -9,7 +9,7 @@
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Puratap</RootNamespace>
-    <ReleaseVersion>1.5b</ReleaseVersion>
+    <ReleaseVersion>1.5c</ReleaseVersion>
     <SynchReleaseVersion>False</SynchReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
@@ -101,6 +101,9 @@
     </Reference>
     <Reference Include="TestFlight">
       <HintPath>TestFlight.dll</HintPath>
+    </Reference>
+    <Reference Include="BTProgressHUD">
+      <HintPath>..\Components\btprogresshud-1.14\lib\ios\BTProgressHUD.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -346,9 +349,22 @@
     <BundleResource Include="Images\Parts\P79. Thread Tape.jpg" />
     <BundleResource Include="Images\Parts\P85. Quarter-inch copper tube.jpg" />
     <BundleResource Include="Images\Parts\P151. Standard tap.jpg" />
+    <BundleResource Include="Resources\error.png" />
+    <BundleResource Include="Resources\error%402x.png" />
+    <BundleResource Include="Resources\error_7.png" />
+    <BundleResource Include="Resources\error_7%402x.png" />
+    <BundleResource Include="Resources\success.png" />
+    <BundleResource Include="Resources\success_7.png" />
+    <BundleResource Include="Resources\success_7%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Settings.bundle\" />
     <Folder Include="Images\Parts\" />
+  </ItemGroup>
+  <ItemGroup>
+    <XamarinComponentReference Include="btprogresshud">
+      <Version>1.14</Version>
+      <Visible>False</Visible>
+    </XamarinComponentReference>
   </ItemGroup>
 </Project>

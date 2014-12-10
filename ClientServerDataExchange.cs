@@ -764,7 +764,7 @@ namespace Puratap
 			
 			for (int i = 0; i<fileNames.Length; i++)
 			{
-				if ( !fileNames [i].StartsWith ("Franchisee Manual") ) {
+				if ( !fileNames [i].Contains ("Manual") ) {
 					FileInfo f = new FileInfo (fileNames [i]);
 					if (f.LastAccessTime.Date < DateTime.Now.Date.Subtract (TimeSpan.FromDays (7))) {
 						_controller.Log (String.Format ("Found an old file: {0}, last access time: {1}, deleted", f.Name, f.LastAccessTime.ToString ("yyyy-MM-dd HH:mm:ss")));

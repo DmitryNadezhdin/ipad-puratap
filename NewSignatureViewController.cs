@@ -593,6 +593,7 @@ namespace Puratap
 			UIImage result = this.Snapshot ();
 			this.generatingImage = false;
 			this.SetNeedsDisplay ();
+
 			return result;
 		}
 

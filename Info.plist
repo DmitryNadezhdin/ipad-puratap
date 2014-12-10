@@ -39,7 +39,7 @@
 		<string>Images/Puratap_logo_50.png</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1.5b</string>
+	<string>1.5c</string>
 	<key>MinimumOSVersion</key>
 	<string>5.0</string>
 	<key>UIDeviceFamily</key>

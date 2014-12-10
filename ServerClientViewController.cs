@@ -1,12 +1,16 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Drawing;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using MonoTouch.UIKit;
 using Mono.Data.Sqlite;
 using MonoTouch.Foundation;
+
+using BigTed; // BTProgressHud component
 
 namespace Puratap
 {
@@ -37,7 +41,7 @@ namespace Puratap
 		
 		public void Log(string text) {
 			this.InvokeOnMainThread (delegate {
-				// Console.WriteLine(DateTime.Now.ToString ("HH:mm:ss")+": "+text);
+				Console.WriteLine(DateTime.Now.ToString ("HH:mm:ss")+": "+text);
 				if (tvLog != null)
 				{
 					tvLog.Text = tvLog.Text + DateTime.Now.ToString ("HH:mm:ss")+": "+text+"\n";
@@ -141,8 +145,13 @@ namespace Puratap
 		public override void ViewDidLoad ()
 		{
 			base.ViewDidLoad ();
+
+			// additional setup after loading the view
 			
-			//any additional setup after loading the view, typically from a nib.
+			ProgressHUD.Shared.RingThickness = 4.0f;
+			ProgressHUD.Shared.Ring.Color = UIColor.FromRGB(50, 150, 255);
+			ProgressHUD.Shared.Ring.BackgroundColor = UIColor.White;
+			ProgressHUD.Shared.SetNeedsLayout ();
 
 			btnUpload.TouchUpInside += HandleBtnShowInfoTouchUpInside;
 			btnResetDeviceID.TouchUpInside += HandleBtnResetDeviceIDTouchUpInside;
@@ -245,31 +254,181 @@ namespace Puratap
 
 		void HandleBtnStartFTPDataExchangeTouchUpInside (object sender, EventArgs e)
 		{
-			bool uploadSuccess = UploadDataToFTP ();
+			// TODO :: push stock signing if necessary
+			ProgressHUD.Shared.Show ("Starting FTP data exchange...", 0, ProgressHUD.MaskType.Gradient, 1000);
+			PrepareForDataExchange ();		// generate summaries, stop updating location, write locations buffer to database
+			bool DataInputCompletedForRun = CheckDataInputCompletedForRun();
 
-			if (uploadSuccess == true) {
-				string fileName = GetDatabaseFileName ();
-				string fullPath = "ftp://puratap.com.au" + "/IPAD%20DATA/DATA.OUT/" + fileName.Replace (" ", "%20");
-				DateTime FTPExchangeStarted = DateTime.Now;
-				GetDataFileFromFTP (fileName, fullPath);
-
-				TimeSpan ts = DateTime.Now - FTPExchangeStarted;
-				Log (String.Format ("FTP data exchange took {0:F} seconds to complete.", ts.TotalSeconds));
+			if (!DataInputCompletedForRun) {
+				ProgressHUD.Shared.Dismiss ();
+				var confirmStart = new UIAlertView("Warning", "Data has not been input for some of the jobs.\nStart data exchange anyway?", null, "No", "Yes");
+				confirmStart.Dismissed += delegate(object _sender, UIButtonEventArgs ev) {
+					if (ev.ButtonIndex != confirmStart.CancelButtonIndex) {
+						StartFTPDataExchange ();
+					} else {
+						this._tabs._app.myLocationManager.StartUpdatingLocation ();
+						this._tabs._app.myLocationManager.StartMonitoringSignificantLocationChanges ();
+					}
+				};
+				confirmStart.Show ();
+			} else {
+				StartFTPDataExchange ();
 			}
 		}
+
+		async void StartFTPDataExchange() {
+			DateTime FTPUploadStarted = DateTime.Now;
+			bool uploadSuccess = await UploadDataToFTPAsync ();
+			if (uploadSuccess == true) {
+				DateTime FTPDownloadStarted = DateTime.Now;
+				ProgressHUD.Shared.Show ("FTP data exchange in progress (uploading)...", 0, ProgressHUD.MaskType.Gradient);
+				bool downloadResult = await DownloadDataFromFTPAsync ();
+				if (downloadResult == true) {
+					TimeSpan foo = DateTime.Now - FTPUploadStarted;
+					TimeSpan bar = DateTime.Now - FTPDownloadStarted;
+					Log (String.Format ("Download successful: {0}", GetDatabaseFileName ()));
+
+					ProgressHUD.Shared.ShowContinuousProgress ("Purging old files...", ProgressHUD.MaskType.Gradient);
+					PurgeOldFiles ();
+					PurgeUnsignedPDFFiles ();
+
+					Log (String.Format ("FTP download took {0:F} seconds to complete.", bar.TotalSeconds));
+					Log (String.Format ("FTP data exchange took {0:F} seconds to complete.", foo.TotalSeconds));
+
+					BTProgressHUD.Dismiss ();
+					BTProgressHUD.ShowSuccessWithStatus ("Done!", 1000);
+					this._tabs._jobRunTable._ds.LoadJobRun (2);
+				} else {
+					BTProgressHUD.Dismiss ();
+					BTProgressHUD.Show (" [:-( ", delegate() { } , "Upload has been successful.\nDownload has failed.", -1, ProgressHUD.MaskType.Gradient);
+				}
+			} else {
+				BTProgressHUD.Dismiss ();
+				BTProgressHUD.Show (" [:-( ", delegate() { } , "Upload has failed for one or more files.", -1, ProgressHUD.MaskType.Gradient);
+			}		}
+
+		async Task<bool> UploadDataToFTPAsync () {
+			return await Task.Run ( () => {
+				bool uploadSuccess = UploadDataToFTP ();
+				return uploadSuccess;
+			} );
+		}
+
+		async Task<bool> DownloadDataFromFTPAsync () {
+			return await Task.Run ( () => {
+				string fileName = GetDatabaseFileName ();
+				string fullPath = String.Format ("{0}/{1}/{2}", FTPServerPathDataOut, 
+					DateTime.Now.Date.ToString("yyyy-MM-dd"), fileName.Replace (" ", "%20")); 
+				bool downloadResult = GetDataFileFromFTP (fileName, fullPath);
+				return downloadResult;
+			} );
+		}
+
+		void CreateDirectoriesOnFtp() {
+				for (int i = 0; i < 4; i++) {
+					string directory = FTPServerPathDataIn;
+					switch (i) {
+						case 0: { directory += "SQLite%20DBs/"; break; }
+						case 1: { directory += "PDFs/"; break; }
+						case 2: { directory += "Photos/"; break; }
+						case 3: { directory += "Summaries/"; break; }
+					}
+					directory += DateTime.Now.Date.ToString ("yyyy-MM-dd");
+					FtpWebRequest createDirectoryRequest = (FtpWebRequest)WebRequest.Create (directory);
+					createDirectoryRequest.Credentials = new NetworkCredential (FTPUserName, FTPPassword);
+					createDirectoryRequest.Method = WebRequestMethods.Ftp.MakeDirectory;
+					createDirectoryRequest.UseBinary = true;
+
+					try {
+						using (var response = (FtpWebResponse)createDirectoryRequest.GetResponse ()) {
+							Console.WriteLine (String.Format("Creating directory: {0}\n" +
+									"Response status code: {1}\n" +
+									"Status description: {2}", directory, response.StatusCode, response.StatusDescription));
+						}
+					} catch (System.Net.WebException e) {
+						if (e.Message.Contains ("550 Can't create directory: File exists")) {
+							// 550 directory exists
+							Log (String.Format ("Directory already exists: {0}", directory));
+						} else {
+							Log (String.Format ("Exception: {0}\n{1}", e.Message, e.StackTrace));
+						}
+					}
+				}
+			
+		}
+
+		float uploadProgress = 0.0f;
+		float totalUploadSize = 0.0f;
+		float dowloadProgress = 0.0f;
+		float downloadSize = 1000.0f;
 
 		bool UploadDataToFTP () 
 		{
 			bool result = true;
 			try {
-				// push stock signing if necessary
+				// reset upload size and upload progress
+				uploadProgress = 0.0f;
+				totalUploadSize = 0.0f;
+
+				// create directories
+				CreateDirectoriesOnFtp();
 
 				// get a list of files to be sent
+				string[] fileNames = Directory.GetFiles ( Environment.GetFolderPath(Environment.SpecialFolder.Personal) );
+				int count = fileNames.Length;
 
-				// gzip each file
+				// exclude UPLOADED files, NEWTESTDB and documents that are NOT SIGNED
+				FileInfo f;
+				for (int i = fileNames.Length; i>0; i--) {
+					f = new FileInfo(fileNames[i-1]);
+					if ( (f.Name.StartsWith ("UPLOADED")) || (f.Name.StartsWith ("tmp")) 
+							|| f.Name.StartsWith("NEWTESTDB") || f.Name.Contains("Manual") 
+							|| f.Name.Contains ("_Not_Signed") || f.Name.Contains ("_NOT_Signed") ) {
+						fileNames[i-1] = "";
+						count --;
+					} else {
+						totalUploadSize += (f.Length / 1024);
+					}
+				}
 
-				// upload each file
+				string fileName = "";
+				for (int i = 0; i < fileNames.Length; i++) {
+					if (!String.IsNullOrEmpty(fileNames[i])) {
+						// gzip the file
+						fileName = fileNames[i];
+						FileInfo fi = new FileInfo(fileName);
+						string compressedFileName;
+						if (fi.Extension == ".sqlite") {
+							compressedFileName = CompressFile(fileName);
+							FileInfo cfi = new FileInfo(compressedFileName);
+							totalUploadSize = totalUploadSize - (fi.Length / 1024) + (cfi.Length / 1024);
+						} else {
+							compressedFileName = fileName;
+						}
+						// upload the file
+						DateTime fileTransferStarted = DateTime.Now;
+						bool uploadResult = UploadFileToFTP (compressedFileName);
 
+						result = result && uploadResult;
+						if (uploadResult == true) {
+							// rename uploaded file
+							FileInfo cfi = new FileInfo(compressedFileName);
+							string uploadedFileName = cfi.DirectoryName + "/UPLOADED-" + cfi.Name;
+							if (File.Exists(uploadedFileName))
+								File.Delete(uploadedFileName);
+							File.Move (compressedFileName, uploadedFileName);
+							
+							// delete the original (uncompressed) sqlite file
+							if (File.Exists(fileName))
+								File.Delete (fileName);
+						}
+
+						// log the upload time
+						TimeSpan ts = DateTime.Now - fileTransferStarted;
+						Log (String.Format("Uploaded file: {0} in {1:F} seconds.", fileName, ts.TotalSeconds));
+						
+					}
+				}
 			} catch (Exception e) {
 				Log (String.Format ("Exception during FTP data upload: \n{0} \n{1}", e.Message, e.StackTrace));
 				result = false;
@@ -277,11 +436,71 @@ namespace Puratap
 			return result;
 		}
 
+		string CompressFile(string fileName) {
+			FileInfo fi = new FileInfo(fileName);
+			using (FileStream fs = fi.OpenRead ()) {
+				using (FileStream compressedFS = File.Create (fi.FullName + ".gz")) {
+					using (GZipStream compressionStream = new GZipStream (compressedFS,  CompressionMode.Compress)) {
+						fs.CopyTo (compressionStream);
+					}
+				}
+			}
+			string result = fi.FullName + ".gz";
+			fi = null;
+			return result;
+		}
+
+		const string FTPServerPathDataIn = "ftp://puratap.com.au/IPAD%20DATA/DATA.IN/";
+		const string FTPServerPathDataOut = "ftp://puratap.com.au/IPAD%20DATA/DATA.OUT/";
+		const string FTPUserName = "dmitry@puratap.com.au";
+		const string FTPPassword = "D4770AMVB0";
+
+		bool UploadFileToFTP(string fileName) {
+			// uploading to different directories on FTP Server depending on file type and date
+
+			// determine the directory first
+			FileInfo fi = new FileInfo (fileName);
+			string directory = FTPServerPathDataIn;
+			switch (fi.Extension) {
+				case ".gz": { directory += "SQLite%20DBs/"; break; }
+				case ".sqlite": { directory += "SQLite%20DBs/"; break; }
+				case ".pdf": { directory += "PDFs/"; break; }
+				case ".jpg": { directory += "Photos/"; break; }
+				case ".txt": { directory += "Summaries/"; break; }
+				default: return true;
+			}
+			directory = directory + DateTime.Now.Date.ToString ("yyyy-MM-dd") + "/";
+			string encodedFileName = (directory + fi.Name).Replace(" ", "%20");
+
+			FtpWebRequest request = (FtpWebRequest)WebRequest.Create (encodedFileName);
+			request.Credentials = new NetworkCredential (FTPUserName, FTPPassword);
+			request.Method = WebRequestMethods.Ftp.UploadFile;
+			request.UseBinary = true;
+
+			using (FileStream fs = File.OpenRead (fileName)) {
+				using (Stream requestStream = request.GetRequestStream ()) {
+					byte[] buffer = new byte[4096];
+					int byteCount;
+					int j = 0;
+					while ((byteCount = fs.Read (buffer, 0, buffer.Length)) != 0) {
+						j++;
+						requestStream.Write (buffer, 0, buffer.Length);
+						uploadProgress += (4 / totalUploadSize);
+						ProgressHUD.Shared.Show ("FTP data exchange in progress (uploading)...", uploadProgress, ProgressHUD.MaskType.Gradient);
+						Console.WriteLine (String.Format("Upload progress: {0:F}", uploadProgress));
+					}
+				}
+				fs.Close ();
+			}
+
+			return true;
+		}
+			
 		bool GetDataFileFromFTP (string fileName, string fullPath) 
 		{
+			dowloadProgress = 0.0f;
+			downloadSize = 1000.0f;
 
-			const string FTPUserName = "dmitry@puratap.com.au";
-			const string FTPPassword = "D4770AMVB0";
 			FtpWebRequest request = (FtpWebRequest)WebRequest.Create (fullPath);
 			request.Credentials = new NetworkCredential (FTPUserName, FTPPassword);
 			request.Method = WebRequestMethods.Ftp.DownloadFile;
@@ -304,12 +523,21 @@ namespace Puratap
 							using (var ms = new MemoryStream()) {
 								byte[] buffer = new byte[4096];
 								int byteCount;
+								int j = 0;
 								while ((byteCount = bnrResponseStreamReader.Read(buffer, 0, buffer.Length)) != 0) {								
 									ms.Write(buffer, 0, byteCount);
+									j ++;
+									if (j % 10 == 0) {
+										dowloadProgress += (40 / downloadSize);
+										ProgressHUD.Shared.Show ("FTP data exchange in progress (downloading)...", dowloadProgress, ProgressHUD.MaskType.Gradient);
+										Console.WriteLine (String.Format("Download progress: {0:F}", dowloadProgress));
+									}
 								}
 								bnrResponseStreamWriter.Write(ms.ToArray());
 								bnrResponseStreamWriter.Flush();
 								bnrResponseStreamWriter.Close();
+								ProgressHUD.Shared.Show ("FTP data exchange in progress (downloading)...", 1, ProgressHUD.MaskType.Gradient);
+								downloadResult = true;
 							}
 						}
 
@@ -317,9 +545,10 @@ namespace Puratap
 						FileInfo dfi = new FileInfo(savePath);
 						decompressResult = DecompressDataFile(dfi);
 							
-						downloadResult = true && decompressResult;
+						downloadResult = downloadResult && decompressResult;
 						if (downloadResult == true) {
 							string decompressedFilePath = savePath.Remove(savePath.Length - 3);
+							File.Delete (savePath);
 							MyConstants.DBReceivedFromServer = decompressedFilePath;
 							MyConstants.LastDataExchangeTime = DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss");
 						}
@@ -377,6 +606,63 @@ namespace Puratap
 			return result;
 		}
 
+		public void PurgeOldFiles() {
+			Log ("Purging old files.");
+			string[] fileNames = Directory.GetFiles ( Environment.GetFolderPath(Environment.SpecialFolder.Personal), "*", SearchOption.AllDirectories );
+
+			for (int i = 0; i<fileNames.Length; i++)
+			{
+				if ( !fileNames [i].Contains ("Manual") ) {
+					FileInfo f = new FileInfo (fileNames [i]);
+					if (f.LastAccessTime.Date < DateTime.Now.Date.Subtract (TimeSpan.FromDays (7))) {
+						Log (String.Format ("Found an old file: {0}, last access time: {1}, deleted", f.Name, f.LastAccessTime.ToString ("yyyy-MM-dd HH:mm:ss")));
+						File.Delete (f.FullName);
+					}
+				}
+			}
+		}
+
+		public void PurgeUnsignedPDFFiles() {
+			Log ("Purging unsigned PDF files.");
+			string[] fileNames = Directory.GetFiles ( Environment.GetFolderPath(Environment.SpecialFolder.Personal), "*.pdf", SearchOption.AllDirectories );
+
+			for (int i = 0; i < fileNames.Length; i++) {
+				if (fileNames [i].ToUpper().Contains ("_NOT_SIGNED") ) {
+					FileInfo f = new FileInfo (fileNames [i]);
+					File.Delete (f.FullName);
+					Log (String.Format ("Deleted unsigned file: {0}", f.Name));
+				}
+			}
+		}
+
+		void PrepareForDataExchange() {
+			this._tabs._app.myLocationManager.StopUpdatingLocation ();
+			this._tabs._app.myLocationManager.StopMonitoringSignificantLocationChanges ();		
+
+			try {		// generate summaries for all runs in the database, not just the current run
+				if (this._tabs._paySummaryView.GenerateAllSummaryFiles ()) {
+					Log ("Summary files generated.");
+				} else {
+					Log ("Error : An exception was raised while generating summary files!");
+				}
+			}
+			catch (Exception exc) {
+				this._tabs._scView.Log (String.Format ("Daily Summary Failed To Generate: {0}, stack trace: {1}", exc.Message, exc.StackTrace));
+			}
+
+			try {		// reload job run table data
+				this._tabs._jobRunTable.TableView.ReloadData ();
+			} catch (Exception ex) {
+				this._tabs._scView.Log (String.Format ("Failed to reload JobRunTable data: {0}, stack trace: {1}", ex.Message, ex.StackTrace));
+			}
+
+			try {		// write locations buffer to database
+				this._tabs._app.myLocationDelegate.DumpLocationsBufferToDatabase ();
+			} catch (Exception exc) {
+				this._tabs._scView.Log (String.Format ("Failed to write iPad locations buffer to database: {0}, stack trace: {1}", exc.Message, exc.StackTrace));
+			}
+		}
+
 		void HandleBtnStartLANDataExchangeTouchUpInside (object sender, EventArgs e)
 		{
 			var settings = NSUserDefaults.StandardUserDefaults;
@@ -394,57 +680,32 @@ namespace Puratap
 			} else
 				PuratapServerPort = serverPort;
 
-			this._tabs._app.myLocationManager.StopUpdatingLocation ();
-			this._tabs._app.myLocationManager.StopMonitoringSignificantLocationChanges ();		
+			PrepareForDataExchange ();
+			bool DataInputCompletedForRun = CheckDataInputCompletedForRun();
 
-			// summaries
-			try {
-				// this generates summaries for all runs in the database, not just the current run
-				if (this._tabs._paySummaryView.GenerateAllSummaryFiles ()) {
-					Log ("Summary files generated.");
-				}
-				else {
-					Log ("Error : An exception was raised while generating summary files!");
-				}
+			if (! DataInputCompletedForRun) {
+				var alert = new UIAlertView("Warning", "Data has not been input for some of the jobs.\nStart data exchange anyway?", null, "No", "Yes");
+				alert.Dismissed += delegate(object _sender, UIButtonEventArgs ev) {
+					if (ev.ButtonIndex != alert.CancelButtonIndex) {
+						PushSignStockOrStartDataExchange();
+					} else {
+						this._tabs._app.myLocationManager.StartUpdatingLocation ();
+						this._tabs._app.myLocationManager.StartMonitoringSignificantLocationChanges ();
+					}
+				};
+				alert.Show ();
+			} else {
+				PushSignStockOrStartDataExchange ();
 			}
-			catch (Exception exc) {
-				this._tabs._scView.Log (String.Format ("Daily Summary Failed To Generate: {0}, stack trace: {1}", exc.Message, exc.StackTrace));
-			}
-			// reload job run table data
-			try {
-				this._tabs._jobRunTable.TableView.ReloadData ();
-			} catch (Exception ex) {
-				this._tabs._scView.Log (String.Format ("Failed to reload JobRunTable data: {0}, stack trace: {1}", ex.Message, ex.StackTrace));
-			}
-			// write locations buffer to database
-			try {
-				this._tabs._app.myLocationDelegate.DumpLocationsBufferToDatabase ();
-			} catch (Exception exc) {
-				this._tabs._scView.Log (String.Format ("Failed to write iPad locations buffer to database: {0}, stack trace: {1}", exc.Message, exc.StackTrace));
-			}
+		}
 
-			// sign if necessary
+		private bool CheckDataInputCompletedForRun() {
 			bool DataInputCompletedForRun;
 			if ( string.IsNullOrEmpty(MyConstants.DBReceivedFromServer) || (!File.Exists(Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.Personal), MyConstants.DBReceivedFromServer))) ) {
 				DataInputCompletedForRun = true; // it is not, but we don't want the warning message to pop up
 			}
 			else DataInputCompletedForRun = this._tabs._jobRunTable.AllJobsDone;
-
-			if (! DataInputCompletedForRun)
-			{
-				var alert = new UIAlertView("Warning", "Data has not been input for some of the jobs.\nStart data exchange anyway?", null, "No", "Yes");
-				alert.Dismissed += delegate(object _sender, UIButtonEventArgs ev) {
-					if (ev.ButtonIndex != alert.CancelButtonIndex)
-					{
-						PushSignStockOrStartDataExchange();
-					}
-				};
-				alert.Show ();
-			}
-			else 
-			{
-				PushSignStockOrStartDataExchange ();
-			}
+			return DataInputCompletedForRun;
 		}
 
 		private void PushSignStockOrStartDataExchange() {
@@ -480,14 +741,12 @@ namespace Puratap
 		}
 
 		void HandleResetAlertDismissed (object sender, UIButtonEventArgs e) {
-			if (e.ButtonIndex != 1) // if user pressed the "Cancel" button that has index=0
-			{
+			if (e.ButtonIndex != 1) { // if user pressed the "Yes" button (index=0)
 				Log ("Resetting Device ID in UserDefaults database.");
 				try { 
 					// MyConstants.DeviceID = ""; 
 					MyConstants.DeviceID = MyConstants.NEW_DEVICE_GUID_STRING; 
-				}
-				catch (Exception ex) {
+				} catch (Exception ex) {
 					Log (String.Format ("Device ID Reset: Exception: {0}", ex.Message));
 				}
 				Log ("Device ID has been reset.");

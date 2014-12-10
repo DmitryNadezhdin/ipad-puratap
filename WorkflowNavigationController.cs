@@ -1016,9 +1016,10 @@ namespace Puratap
 
 									// IF THERE WAS A SERVICE REQUEST, THE AMOUNT VALUE SAVED WILL BE 0.00 IN ALL CASES
 									// if (_tabs._payment.ContainsInvoicePaymentType (j.Payments)) payment.Amount = 0;
-								if (payment.Type == PaymentTypes.Invoice) payment.Amount = 0;
-								cmd.Parameters.Add ("@Amount", System.Data.DbType.Double).Value = payment.Amount;
+								if (payment.Type == PaymentTypes.Invoice || payment.Amount < 0) 
+									payment.Amount = 0;
 
+								cmd.Parameters.Add ("@Amount", System.Data.DbType.Double).Value = payment.Amount;
 								cmd.Parameters.Add ("@ChequeNumber", System.Data.DbType.String).Value = payment.ChequeNumber;
 								cmd.Parameters.Add ("@CCNumber", System.Data.DbType.String).Value = payment.CreditCardNumber;
 								cmd.Parameters.Add ("@CCExpiry", System.Data.DbType.String).Value = payment.CreditCardExpiry;
