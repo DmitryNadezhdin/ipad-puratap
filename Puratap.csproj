@@ -9,7 +9,7 @@
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Puratap</RootNamespace>
-    <ReleaseVersion>1.5c</ReleaseVersion>
+    <ReleaseVersion>1.5d</ReleaseVersion>
     <SynchReleaseVersion>False</SynchReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
@@ -29,6 +29,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <AssemblyName>3</AssemblyName>
     <MtouchExtraArgs>-nosymbolstrip -nostrip -cxx --registrar:oldstatic</MtouchExtraArgs>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <DebugType>none</DebugType>
@@ -47,6 +48,7 @@
     <MtouchUseSGen>true</MtouchUseSGen>
     <MtouchUseRefCounting>true</MtouchUseRefCounting>
     <MtouchExtraArgs>-nosymbolstrip -nostrip -cxx --registrar:oldstatic</MtouchExtraArgs>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
     <DebugSymbols>True</DebugSymbols>
@@ -76,7 +78,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <CodesignKey>iPhone Developer</CodesignKey>
+    <CodesignKey>iPhone Distribution</CodesignKey>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <MtouchArch>ARMv7</MtouchArch>
     <BuildIpa>True</BuildIpa>

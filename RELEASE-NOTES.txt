@@ -1,3 +1,8 @@
+1.5c -- Stock fixes
+
+Assemblies will now be "split" into individual elements when selected by franchisees (except filters).
+Fixed a bug in stock selection that would sometimes crash the app.
+
 1.5b -- Emailing receipts, interface fixes for iOS 6 (!)
 
 Fixed the toolbar on pre-plumbing check screen on iOS 6

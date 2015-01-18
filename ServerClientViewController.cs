@@ -41,7 +41,7 @@ namespace Puratap
 		
 		public void Log(string text) {
 			this.InvokeOnMainThread (delegate {
-				Console.WriteLine(DateTime.Now.ToString ("HH:mm:ss")+": "+text);
+				// Console.WriteLine(DateTime.Now.ToString ("HH:mm:ss")+": "+text);
 				if (tvLog != null)
 				{
 					tvLog.Text = tvLog.Text + DateTime.Now.ToString ("HH:mm:ss")+": "+text+"\n";
@@ -113,6 +113,7 @@ namespace Puratap
 			} 
 			// no setter, this is a read-only property
 		}
+
 		public static string GetDBDirectoryPath()
 		{
 			return Environment.GetFolderPath (Environment.SpecialFolder.Personal);
@@ -167,8 +168,10 @@ namespace Puratap
 				settings.SetString (MyConstants.DEFAULT_IPAD_SERVER_PORT, "PuratapServerPort");
 			settings.Synchronize ();
 
-			_reachFTPServer = new Reachability ("puratap.com.au");
-			_reachFTPServer.ReachabilityUpdated += HandleFTPReachabilityUpdated;
+					// TODO :: uncomment lines below and comment out hiding of FTP data exchange button in the following versions
+			// _reachFTPServer = new Reachability ("puratap.com.au");
+			// _reachFTPServer.ReachabilityUpdated += HandleFTPReachabilityUpdated;
+			btnFTPDataExchange.Hidden = true;
 
 			_reachLocalServer = new Reachability ( settings.StringForKey ("PuratapServerIP") );
 			_reachLocalServer.ReachabilityUpdated += HandleLocalReachabilityUpdated;

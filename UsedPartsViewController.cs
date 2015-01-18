@@ -13,11 +13,6 @@ namespace Puratap
 {
 	public enum PartButtons { Left, Mid, Right }
 	public enum AssemblyButtons { Left, Mid, Right }
-	/*
-	public interface IImageUpdated {
-		void UpdatedImage (Uri uri);
-	}
-	*/
 	
 	public partial class UsedPartsViewController : DialogViewController
 	{
@@ -388,11 +383,10 @@ namespace Puratap
 			// IMPLEMENTED :: Data for the elements is read from database (part #, description, price, picture, etc). When no picture is found for a part, it uses a placeholder picture
 			
 			// IMPLEMENTED :: added code to ThreePartsView to handle situations when its constructor gets a list with 1 or 2 parts
-			// TODO :: add code to ThreePartsView to handle situations when one of the Parts is null for some weird reason
 
 			// IMPLEMENTED :: added assembly versions of classes that had to do with displaying and selecting parts, assemblies are now in their own section in the same format (3 large pics per row)
-			// TODO :: add code to ChosenAssembly method to add it to job's used stock and save it in database
-			// TODO :: implement AssemblyWithImageElement, AssemblyWithImageCell classes so that selected assemblies can be displayed in PartsSections
+			// IMPLEMENTED :: add code to ChosenAssembly method to add it to job's used stock and save it in database
+			// IMPLEMENTED :: implement AssemblyWithImageElement, AssemblyWithImageCell classes so that selected assemblies can be displayed in PartsSections
 			// TODO :: add code to keep a separate data file with current "float" of stock, updating it every time data is submitted to the server
 			
 			PartsSection psec = new PartsSection("Parts", this);
@@ -500,7 +494,8 @@ namespace Puratap
 			}
 		}
 
-		public void AssemblyChosen(Assembly asm, bool settingToStandard) {
+		public void AssemblyChosen (Assembly asm, bool settingToStandard)
+		{
 			if (ThisJob == null)
 				ThisJob = _navWorkflow._tabs._jobRunTable.CurrentJob;
 
@@ -508,35 +503,185 @@ namespace Puratap
 				ThisJob.UsedAssemblies = new List<Assembly> ();
 
 			bool exists = false;
-			foreach(Assembly a in ThisJob.UsedAssemblies) {
-				if (a.aID == asm.aID) {
+			for (int i = 0; i < ThisJob.UsedAssemblies.Count; i++) {
+				if (ThisJob.UsedAssemblies [i].aID == asm.aID) {
 					exists = true;
 					if (!settingToStandard)
-						a.Quantity += 1;
+						ThisJob.UsedAssemblies [i].Quantity += 1;
+					else
+						ThisJob.UsedAssemblies [i].Quantity += asm.Quantity;
 
 					foreach (Section sec in this.Root) {
 						if (sec is PartsSection) {
 							foreach (Element elmnt in sec) {
 								if (elmnt is AssemblyWithImageElement) {
-									if ((elmnt as AssemblyWithImageElement).ThisAssembly.aID == a.aID) {
-										(elmnt as AssemblyWithImageElement).Quantity = a.Quantity;
+									if ((elmnt as AssemblyWithImageElement).ThisAssembly.aID == ThisJob.UsedAssemblies [i].aID) {
+										(elmnt as AssemblyWithImageElement).Quantity = ThisJob.UsedAssemblies [i].Quantity;
+										this.ReloadData ();
 									}
 								}
 							}
 						}
 					}
+					break;
 				}
-				break;
 			}
-
+				
 			if (!exists) {
 				if (asm.Quantity <= 0)
 					asm.Quantity = 1;
-				ThisJob.UsedAssemblies.Add (asm);
-				this.Root[2].Add(new AssemblyWithImageElement(asm, asm.Quantity));
+
+				if (asm.SplitForFranchisees == false) {
+					ThisJob.UsedAssemblies.Add (asm);
+					this.Root [2].Add (new AssemblyWithImageElement (asm, asm.Quantity));
+				} else {
+					if (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee) {
+						// get list of elements that the chosen assembly consists of
+						var parts = GetAssemblyParts (asm);
+						var assemblies = GetAssemblyAssemblies (asm);
+						foreach (Assembly dbAsm in assemblies) {
+							bool AsmExists = false;
+							for (int i = 0; i < ThisJob.UsedAssemblies.Count; i++) {
+								if (ThisJob.UsedAssemblies [i].aID == dbAsm.aID) {
+									AsmExists = true;
+									ThisJob.UsedAssemblies [i].Quantity += dbAsm.Quantity;
+
+									// update the corresponding element in the table
+									foreach (Section sec in this.Root) {
+										if (sec is PartsSection) {
+											foreach (Element elmnt in sec) {
+												if (elmnt is AssemblyWithImageElement) {
+													if ((elmnt as AssemblyWithImageElement).ThisAssembly.aID == ThisJob.UsedAssemblies [i].aID) {
+														(elmnt as AssemblyWithImageElement).Quantity = ThisJob.UsedAssemblies [i].Quantity;
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+
+							if (!AsmExists) {
+								ThisJob.UsedAssemblies.Add (dbAsm);
+								this.Root [2].Add (new AssemblyWithImageElement (dbAsm, dbAsm.Quantity));
+							}
+						}
+						foreach (Part prt in parts) {
+							bool PrtExists = false;
+
+							for (int i = 0; i < ThisJob.UsedParts.Count; i++) {
+								if (ThisJob.UsedParts [i].PartNo == prt.PartNo) {
+									PrtExists = true;
+									ThisJob.UsedParts [i].Quantity += prt.Quantity;
+								}
+								// update the corresponding element in the table
+								foreach (Section sec in this.Root) {
+									if (sec.Elements.Count > 0) {
+										if (sec is PartsSection) {
+											foreach (Element pel in sec) {
+												if (pel is PartWithImageElement) {
+													if ((pel as PartWithImageElement).Part.PartNo == ThisJob.UsedParts [i].PartNo) {
+														(pel as PartWithImageElement).Quantity = ThisJob.UsedParts [i].Quantity;
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+
+							if (!PrtExists) {
+								ThisJob.UsedParts.Add (prt);
+								this.Root [2].Add (new PartWithImageElement (prt, prt.Quantity));
+							}
+						}
+					} else {
+						// split is true, but user is a plumber
+						ThisJob.UsedAssemblies.Add (asm);
+						this.Root [2].Add (new AssemblyWithImageElement (asm, asm.Quantity));
+					}
+				} 
 				this.ReloadData ();
 			}
+			// UsedPartsToConsole (true);
 		}
+
+		public void UsedAssembliesToConsole (bool afterAdding)
+		{
+			for (int i = 0; i < ThisJob.UsedAssemblies.Count; i++) {
+				string str = (!afterAdding)? 
+					"BEFORE :: " + String.Format ("A{0} {1}: quantity = {2}", ThisJob.UsedAssemblies[i].aID, ThisJob.UsedAssemblies[i].Description, ThisJob.UsedAssemblies[i].Quantity) : 
+					"AFTER :: " + String.Format ("A{0} {1}: quantity = {2}", ThisJob.UsedAssemblies[i].aID, ThisJob.UsedAssemblies[i].Description, ThisJob.UsedAssemblies[i].Quantity);
+				Console.WriteLine (str);
+			}
+		}
+
+		public void UsedPartsToConsole (bool afterAdding)
+		{
+			for (int i = 0; i < ThisJob.UsedParts.Count; i++) {
+				string str = (!afterAdding)? 
+					"BEFORE :: " + String.Format ("P{0} {1}: quantity = {2}", ThisJob.UsedParts[i].PartNo, ThisJob.UsedParts[i].Description, ThisJob.UsedParts[i].Quantity) : 
+					"AFTER :: " + String.Format ("P{0} {1}: quantity = {2}", ThisJob.UsedParts[i].PartNo, ThisJob.UsedParts[i].Description, ThisJob.UsedParts[i].Quantity);
+				Console.WriteLine (str);
+			}
+		}
+
+		public List<Assembly> GetAssemblyAssemblies (Assembly asm) {
+			List<Assembly> result = new List<Assembly> ();
+
+			using (var connection = new SqliteConnection ("Data Source=" + ServerClientViewController.dbFilePath)) {
+				using (var cmd = connection.CreateCommand ()) {
+					connection.Open ();
+					cmd.CommandText = "SELECT Element_Type, Element_OID, Element_Quantity FROM ASSEMBLY_PARTS WHERE ASSEMBLY_OID = ? AND Element_Type = ?";
+					cmd.Parameters.AddWithValue ("@AssemblyID", asm.aID);
+					cmd.Parameters.AddWithValue ("@Type", "A");
+
+					var reader = cmd.ExecuteReader ();
+					while (reader.Read ()) {
+						foreach (Assembly dbAsm in DBAssemblies) {
+							if ((long)reader ["Element_OID"] == dbAsm.aID) {
+								result.Add (new Assembly () { 
+									aID = dbAsm.aID, 
+									Image = dbAsm.Image, 
+									Description = dbAsm.Description, 
+									Quantity = Convert.ToDouble(reader["Element_Quantity"]) });
+							}
+						}
+					}
+				}
+			}
+			return result;
+		}
+
+		public List<Part> GetAssemblyParts(Assembly asm) {
+			List<Part> result = new List<Part> ();
+
+			using (var connection = new SqliteConnection ("Data Source=" + ServerClientViewController.dbFilePath)) {
+				using (var cmd = connection.CreateCommand ()) {
+					connection.Open ();
+					cmd.CommandText = "SELECT Element_Type, Element_OID, Element_Quantity FROM ASSEMBLY_PARTS WHERE ASSEMBLY_OID = ? AND Element_Type = ?";
+					cmd.Parameters.AddWithValue ("@AssemblyID", asm.aID);
+					cmd.Parameters.AddWithValue ("@Type", "P");
+
+					var reader = cmd.ExecuteReader ();
+					while (reader.Read ()) {
+						foreach (Part prt in DBParts) {
+							if ((long)reader ["Element_OID"] == prt.PartNo) {
+								result.Add (new Part () { 
+									Image = prt.Image,
+									PartNo = prt.PartNo, 
+									Description = prt.Description, 
+									Quantity = Convert.ToDouble(reader["Element_Quantity"])
+								}); 
+							}
+						}
+					}
+					reader.Close ();
+				}
+			}
+			return result;
+		}
+
 			
 		public void PartChosen(Part part, bool settingToStandard)
 		{
@@ -544,12 +689,14 @@ namespace Puratap
 				ThisJob = _navWorkflow._tabs._jobRunTable.CurrentJob;
 
 			bool exists = false;
-			foreach (Part x in ThisJob.UsedParts) {
-				if ( x.PartNo == part.PartNo ) { 
+			for (int i = 0; i < ThisJob.UsedParts.Count; i++) {
+				if (ThisJob.UsedParts [i].PartNo == part.PartNo) {
 					exists = true;
 
-					if (! settingToStandard) 
-						x.Quantity += 1;
+					if (!settingToStandard)
+						ThisJob.UsedParts [i].Quantity += 1;
+					else
+						ThisJob.UsedParts [i].Quantity += part.Quantity;
 
 					// search through the sections
 					foreach( Section sec in this.Root) {
@@ -558,9 +705,9 @@ namespace Puratap
 								// found the section with parts
 								foreach (Element pel in sec) {
 									if (pel is PartWithImageElement) {
-										if ((pel as PartWithImageElement).Part.PartNo == x.PartNo) {
+										if ((pel as PartWithImageElement).Part.PartNo == ThisJob.UsedParts [i].PartNo) {
 											// set the quantity
-											(pel as PartWithImageElement).Quantity = x.Quantity;
+											(pel as PartWithImageElement).Quantity = ThisJob.UsedParts [i].Quantity;
 										}
 									}
 								}
@@ -570,6 +717,7 @@ namespace Puratap
 					break;
 				}
 			}
+				
 			if (! exists) {
 				if (part.Quantity <= 0)
 					part.Quantity = 1;
@@ -1331,14 +1479,14 @@ namespace Puratap
 				bool isLast = ( (UsedPartsViewController.DBAssemblies.Count - i) <= 3 );
 
 				if (isLast) {
-					// check to see how many parts left
-					int partsLeft = UsedPartsViewController.DBAssemblies.Count - i;
+					// check to see how many elements left
+					int elementsLeft = UsedPartsViewController.DBAssemblies.Count - i;
 
 					List<Assembly> tmpAssemblies = new List<Assembly> ();
-					tmpAssemblies.Add(UsedPartsViewController.DBAssemblies[i]); // we are guaranteed to have 1 part because the iteration brought us here
+					tmpAssemblies.Add(UsedPartsViewController.DBAssemblies[i]); // we are guaranteed to have 1 element because the iteration brought us here
 
-					if (partsLeft > 1) { tmpAssemblies.Add(UsedPartsViewController.DBAssemblies[i+1]); }
-					if (partsLeft > 2) { tmpAssemblies.Add(UsedPartsViewController.DBAssemblies[i+2]); }
+					if (elementsLeft > 1) { tmpAssemblies.Add(UsedPartsViewController.DBAssemblies[i+1]); }
+					if (elementsLeft > 2) { tmpAssemblies.Add(UsedPartsViewController.DBAssemblies[i+2]); }
 
 					this.Add (new ThreeAssembliesElement (tmpAssemblies, _upvc.NavUsedParts) );
 
@@ -1372,12 +1520,12 @@ namespace Puratap
 				using (var cmd = connection.CreateCommand ()) {
 					connection.Open ();
 					string sql = (MyConstants.EmployeeType == MyConstants.EmployeeTypes.Franchisee) ? 
-						"SELECT asm.Assembly_ID, asm.Name, asm.Picture " +
+						"SELECT asm.Assembly_ID, asm.Name, asm.Picture, asm.iPad_Fra_Split " +
 						"  FROM ASSEMBLIES asm" +
-						"  WHERE asm.Is_Active = 1 AND asm.Plumbers_Only = 0" :
-						"SELECT asm.Assembly_ID, asm.Name, asm.Picture " +
+						"  WHERE asm.Is_Active = 1 AND asm.iPad_Selectable = 1 AND asm.Plumbers_Only = 0" :
+						"SELECT asm.Assembly_ID, asm.Name, asm.Picture, asm.iPad_Fra_Split " +
 						"  FROM ASSEMBLIES asm" +
-						"  WHERE asm.Is_Active = 1 ";
+						"  WHERE asm.Is_Active = 1 AND asm.iPad_Selectable = 1";
 
 					cmd.CommandText = sql;
 
@@ -1388,6 +1536,8 @@ namespace Puratap
 								Assembly asm = new Assembly();
 								asm.aID = Convert.ToInt32(reader["Assembly_ID"]);
 								asm.Description = (string)reader["Name"];
+								asm.Quantity = 1;
+								asm.SplitForFranchisees = Convert.ToBoolean(reader["iPad_Fra_Split"]);
 								if (reader["Picture"] == DBNull.Value || ((byte[])reader["Picture"]).Length == 0) {
 									UIImage asmImgFromFile = GetImageForAssembly('A' + asm.aID.ToString());
 									if (asmImgFromFile == null) {

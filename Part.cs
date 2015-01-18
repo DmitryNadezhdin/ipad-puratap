@@ -7,7 +7,8 @@ namespace Puratap
 	public class Part
 	{
 		// this class holds the appropriate part data
-		private double _quantity;
+
+		// private double _quantity;
 		private int _partNo;
 		private string _name;
 		private string _description;
@@ -15,7 +16,7 @@ namespace Puratap
 		private UIImage _image;
 		private bool _imageNotFound;
 
-		public double Quantity { get { return _quantity; } set { _quantity = value; } }
+		public double Quantity { get; set; }
 		public int PartNo { get { return _partNo; } set { _partNo = value; } }
 		public string Name { get { return _name; } set { _name = value; } }
 		public string Description  { get { return _description; } set {_description = value; } }
@@ -29,6 +30,7 @@ namespace Puratap
 	public class Assembly : Part
 	{
 		public int aID { get; set; }
+		public bool SplitForFranchisees { get; set; }
 	}
 }
 
