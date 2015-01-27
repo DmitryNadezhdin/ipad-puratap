@@ -8,7 +8,7 @@ using MonoTouch.Foundation;
 using MonoTouch.CoreLocation;
 using Mono.Data.Sqlite;
 using System.Threading;
-using MonoTouch.TestFlight; 
+// using MonoTouch.TestFlight; 
 using MonoTouch.MessageUI;
 
 
@@ -43,12 +43,9 @@ namespace Puratap
 		// You have approximately 17 seconds to return from this method, or iOS will terminate your application.
 		public override bool FinishedLaunching (UIApplication app, NSDictionary options)
 		{	
-			// this still does not allow TestFlight website to identify devices properly
-			// MonoTouch.TestFlight.TestFlight.SetDeviceIdentifier (MyConstants.DeviceID);
-
-
-			// Xamarin.Insights.Initialize ("20b7565ad9a4eee1d56492b26841b0bf70fbb5ed");
-			MonoTouch.TestFlight.TestFlight.TakeOffThreadSafe("f1e1ead5-5ee8-4a3c-a52b-a18e7919b06d");
+			Xamarin.Insights.Initialize ("20b7565ad9a4eee1d56492b26841b0bf70fbb5ed");
+			Xamarin.Insights.Identify (MyConstants.DeviceID, MyConstants.EmployeeID.ToString (), MyConstants.EmployeeName);
+			// MonoTouch.TestFlight.TestFlight.TakeOffThreadSafe("f1e1ead5-5ee8-4a3c-a52b-a18e7919b06d");
 			InitializeLocationObjects();
 
 			// if database file does not exist, copy test database from app bundle to /Documents folder so that we can edit it
@@ -543,28 +540,28 @@ namespace Puratap
 			LastCoordsRecordedTimeStamp = DateTime.Now.AddMinutes(-2);
 		}
 
-		[Obsolete]
-		public override void UpdatedLocation (CLLocationManager manager, CLLocation newLocation, CLLocation oldLocation)
-		{
-			// if one of the coordinates has changed, the address has to be reset
-			if (thisDeviceLat != newLocation.Coordinate.Latitude || thisDeviceLng != newLocation.Coordinate.Longitude)
-			{
-				Interlocked.Exchange<string>(ref thisDeviceAddress, string.Empty);
-			}
-
-			thisDeviceLat = newLocation.Coordinate.Latitude;
-			thisDeviceLng = newLocation.Coordinate.Longitude;
-
-			if ( (DateTime.Now - LastCoordsRecordedTimeStamp).TotalMinutes >= 1 )
-			{
-				// string time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-				// string time = (DateTime.SpecifyKind (newLocation.Timestamp, DateTimeKind.Unspecified)).ToString("yyyy-MM-dd HH:mm:ss");
-				string anotherTime = (new DateTime(2001,1,1,0,0,0)).AddSeconds(newLocation.Timestamp.SecondsSinceReferenceDate).ToLocalTime().ToString ("yyyy-MM-dd HH:mm:ss");
-				AddLocationToBuffer (thisDeviceLng, thisDeviceLat, anotherTime, thisDeviceAddress, -1, -1);
-				LastCoordsRecordedTimeStamp = DateTime.Now;
-
-			}
-		}
+//		[Obsolete]
+//		public override void UpdatedLocation (CLLocationManager manager, CLLocation newLocation, CLLocation oldLocation)
+//		{
+//			// if one of the coordinates has changed, the address has to be reset
+//			if (thisDeviceLat != newLocation.Coordinate.Latitude || thisDeviceLng != newLocation.Coordinate.Longitude)
+//			{
+//				Interlocked.Exchange<string>(ref thisDeviceAddress, string.Empty);
+//			}
+//
+//			thisDeviceLat = newLocation.Coordinate.Latitude;
+//			thisDeviceLng = newLocation.Coordinate.Longitude;
+//
+//			if ( (DateTime.Now - LastCoordsRecordedTimeStamp).TotalMinutes >= 1 )
+//			{
+//				// string time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+//				// string time = (DateTime.SpecifyKind (newLocation.Timestamp, DateTimeKind.Unspecified)).ToString("yyyy-MM-dd HH:mm:ss");
+//				string anotherTime = (new DateTime(2001,1,1,0,0,0)).AddSeconds(newLocation.Timestamp.SecondsSinceReferenceDate).ToLocalTime().ToString ("yyyy-MM-dd HH:mm:ss");
+//				AddLocationToBuffer (thisDeviceLng, thisDeviceLat, anotherTime, thisDeviceAddress, -1, -1);
+//				LastCoordsRecordedTimeStamp = DateTime.Now;
+//
+//			}
+//		}
 
 		public void AddLocationToBuffer(double lng, double lat, string timeStamp, string address, long customer, long job)
 		{

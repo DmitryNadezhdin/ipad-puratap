@@ -201,17 +201,19 @@ namespace Puratap
 			base.ViewDidDisappear (animated);
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override void ViewDidUnload ()
 		{
-			// base.ViewDidUnload ();
-			this.sigCanvas.Dispose ();
+			base.ViewDidUnload ();
+
+			// this.sigCanvas.Dispose ();
 			// this.sigCanvas  = null;
+
 			// Release any retained subviews of the main view.
 			// e.g. this.myOutlet = null;
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations

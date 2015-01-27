@@ -637,7 +637,7 @@ namespace Puratap
 
 		public static int GetNthIndex(string s, char t, int n)
 		{
-			if (string.IsNullOrEmpty (s) || n < 1 || t == null)
+			if (string.IsNullOrEmpty (s) || n < 1)
 				return -1;
 
 			int count = 0;

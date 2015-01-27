@@ -912,7 +912,7 @@ namespace Puratap
 //					43 Puratap 0x0000bfa7 start + 39
 		}*/
 
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations

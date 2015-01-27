@@ -51,7 +51,7 @@ namespace Puratap
 			base.ViewDidAppear (animated);
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override void ViewDidUnload ()
 		{
 			base.ViewDidUnload ();
@@ -64,7 +64,7 @@ namespace Puratap
 			ReleaseDesignerOutlets ();
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations

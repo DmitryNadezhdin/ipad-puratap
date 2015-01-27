@@ -62,7 +62,7 @@ namespace Puratap
 			this.SigningMode = false;
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override void ViewDidUnload ()
 		{
 			base.ViewDidUnload ();
@@ -70,7 +70,7 @@ namespace Puratap
 			// e.g. this.myOutlet = null;
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations
@@ -354,7 +354,7 @@ namespace Puratap
 
 			// set up OpenGL context
 			this.context = new EAGLContext (EAGLRenderingAPI.OpenGLES2);
-			this.Context = this.context;
+			this.Context = this.context;	
 
 			if (this.context != null) {
 				this.DrawableDepthFormat = GLKViewDrawableDepthFormat.Format24;
@@ -366,18 +366,18 @@ namespace Puratap
 				this.SetupGL ();
 
 				// set up gesture recognizers
-				panner = new UIPanGestureRecognizer (this, new MonoTouch.ObjCRuntime.Selector ("GLSignatureViewPan"));
+				panner = new UIPanGestureRecognizer (this, new MonoTouch.ObjCRuntime.Selector ("GLSignatureViewPan:"));
 				panner.MaximumNumberOfTouches = panner.MinimumNumberOfTouches = 1;
 				this.AddGestureRecognizer (panner);
 
-				tapper = new UITapGestureRecognizer (this, new MonoTouch.ObjCRuntime.Selector ("GLSignatureViewTap"));
+				tapper = new UITapGestureRecognizer (this, new MonoTouch.ObjCRuntime.Selector ("GLSignatureViewTap:"));
 				this.AddGestureRecognizer (tapper);
 			} else
 				throw new Exception ("Failed to create OpenGL ES2 context");
 		}
 
 		// Gesture recognizer actions
-		[Export ("GLSignatureViewTap")]
+		[Export ("GLSignatureViewTap:")]
 		unsafe protected void tap(UITapGestureRecognizer sender)
 		{
 			if (nsvc.SigningMode) {
@@ -436,7 +436,7 @@ namespace Puratap
 			} // end if the corresponding view controller is in Signing mode
 		}
 
-		[Export ("GLSignatureViewPan")]
+		[Export ("GLSignatureViewPan:")]
 		unsafe protected void pan(UIPanGestureRecognizer sender)
 		{
 			if (nsvc.SigningMode) {

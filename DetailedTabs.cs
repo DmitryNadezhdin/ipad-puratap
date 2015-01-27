@@ -763,7 +763,8 @@ namespace Puratap
 				//			viewer.PresentOpenInMenu(new RectangleF(360,-260,320,320),this.View, true);
 
 			string checkPointMessage = MyConstants.EmployeeID.ToString() + ": Opened franchisee manual";
-			MonoTouch.TestFlight.TestFlight.PassCheckpoint (checkPointMessage);
+			Xamarin.Insights.Track (checkPointMessage);
+			// MonoTouch.TestFlight.TestFlight.PassCheckpoint (checkPointMessage);
 
 			QLPreviewController previewController = new QLPreviewController();             
 			previewController.DataSource = new PuratapQlPreviewControllerDataSource();     
@@ -1141,7 +1142,7 @@ namespace Puratap
 			}
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{ // allows to adjust the view when device is turned
 			return true; // (toInterfaceOrientation == UIInterfaceOrientation.LandscapeLeft || toInterfaceOrientation == UIInterfaceOrientation.LandscapeRight);

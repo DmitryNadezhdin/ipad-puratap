@@ -23,8 +23,8 @@ namespace Puratap
 		private Reachability _reachLocalServer;
 		public ReachabilityStatus CurrentReachabilityStatusLocalServer { get { return _reachLocalServer.CurrentStatus; } }
 
-		private Reachability _reachFTPServer;
-		public ReachabilityStatus CurrentReachabilityStatusFTPServer { get { return _reachFTPServer.CurrentStatus; } }
+		// private Reachability _reachFTPServer;
+		// public ReachabilityStatus CurrentReachabilityStatusFTPServer { get { return _reachFTPServer.CurrentStatus; } }
 
 		public string PuratapServerIP { get; set; }
 		public int PuratapServerPort { get; set; }
@@ -726,7 +726,7 @@ namespace Puratap
 
 		public void StartNewDataExchange() {
 			SetDataExchangeInProgress ();
-			MonoTouch.TestFlight.TestFlight.PassCheckpoint (String.Format ("DataExchangeInitiated : {0} {1}", MyConstants.EmployeeID, MyConstants.EmployeeName));
+			// MonoTouch.TestFlight.TestFlight.PassCheckpoint (String.Format ("DataExchangeInitiated : {0} {1}", MyConstants.EmployeeID, MyConstants.EmployeeName));
 			csde = new ClientServerDataExchange (this);
 			csde.CallServer (PuratapServerIP, PuratapServerPort);
 		}

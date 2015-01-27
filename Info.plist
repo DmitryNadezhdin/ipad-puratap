@@ -38,8 +38,6 @@
 		<string>Images/Puratap_logo_72.png</string>
 		<string>Images/Puratap_logo_50.png</string>
 	</array>
-	<key>CFBundleVersion</key>
-	<string>1.5d</string>
 	<key>MinimumOSVersion</key>
 	<string>5.0</string>
 	<key>UIDeviceFamily</key>
@@ -90,5 +88,11 @@
 	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Puratap</string>
+	<key>CFBundleIdentifier</key>
+	<string>puratap</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.5.5</string>
+	<key>CFBundleVersion</key>
+	<string>1.5.5</string>
 </dict>
 </plist>

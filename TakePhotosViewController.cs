@@ -146,23 +146,7 @@ namespace Puratap
 			}
 		}
 
-		public override void ViewWillDisappear (bool animated)
-		{
-			if (Runtime.Arch != Arch.SIMULATOR) {
-
-			}
-		}
-
-		[Obsolete]
-		public override void ViewDidUnload ()
-		{
-			base.ViewDidUnload ();
-			
-			// Release any retained subviews of the main view.
-			// e.g. this.myOutlet = null;
-		}
-
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations

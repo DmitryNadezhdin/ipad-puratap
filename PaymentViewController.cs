@@ -1711,7 +1711,7 @@ namespace Puratap
 			tfSplitPaymentAmount2.EditingDidEnd -= HandleTfSplitPaymentAmount2EditingDidEndOnExit;
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override void ViewDidUnload ()
 		{
 			base.ViewDidUnload ();
@@ -2059,7 +2059,7 @@ namespace Puratap
 			acExpiryDateEditingDidEnd (this);
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations

@@ -131,7 +131,7 @@ namespace Puratap
 			this.oJobHistoryTable.AutoresizingMask = UIViewAutoresizing.FlexibleWidth;
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override void ViewDidUnload ()
 		{
 			base.ViewDidUnload ();
@@ -140,7 +140,7 @@ namespace Puratap
 			// e.g. this.myOutlet = null;
 		}
 
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations

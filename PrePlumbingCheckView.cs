@@ -891,18 +891,7 @@ namespace Puratap
 			};
 		}
 
-		[Obsolete]
-		public override void ViewDidUnload ()
-		{
-			// base.ViewDidUnload ();
-			
-			// Release any retained subviews of the main view.
-			// e.g. this.myOutlet = null;
-			
-			// _generatedPdfView = null
-		}
-
-		[Obsolete]
+		// [Obsolete]
 		public override bool ShouldAutorotateToInterfaceOrientation (UIInterfaceOrientation toInterfaceOrientation)
 		{
 			// Return true for supported orientations
