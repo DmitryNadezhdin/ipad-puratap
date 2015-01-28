@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Puratap
@@ -13,13 +13,13 @@ namespace Puratap
 	partial class NotDoneCommentViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem tbtnCancel { get; set; }
+		UIKit.UIBarButtonItem tbtnCancel { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem tbtnDone { get; set; }
+		UIKit.UIBarButtonItem tbtnDone { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextView tvComment { get; set; }
+		UIKit.UITextView tvComment { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{

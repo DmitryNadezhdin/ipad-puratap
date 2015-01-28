@@ -4,7 +4,7 @@
 // actions made in the Xcode designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 
 namespace Puratap
 {
@@ -12,55 +12,55 @@ namespace Puratap
 	partial class JobServiceCallViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfFollowUp { get; set; }
+		UIKit.UITextField tfFollowUp { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbCustomerNumber { get; set; }
+		UIKit.UILabel lbCustomerNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbCustomerName { get; set; }
+		UIKit.UILabel lbCustomerName { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbDate { get; set; }
+		UIKit.UILabel lbDate { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbServiceRepName { get; set; }
+		UIKit.UILabel lbServiceRepName { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfFilterType { get; set; }
+		UIKit.UITextField tfFilterType { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfTapType { get; set; }
+		UIKit.UITextField tfTapType { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfPressureTest { get; set; }
+		UIKit.UITextField tfPressureTest { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfUnitCondition { get; set; }
+		UIKit.UITextField tfUnitCondition { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfChemicalsInCupboard { get; set; }
+		UIKit.UITextField tfChemicalsInCupboard { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIImageView ivUnitImage { get; set; }
+		UIKit.UIImageView ivUnitImage { get; set; }
 
 		[Action ("acFollowUpTouchDown")]
 		partial void acFollowUpTouchDown ();
 
 		[Action ("acFilterTypeTouchDown:")]
-		partial void acFilterTypeTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void acFilterTypeTouchDown (Foundation.NSObject sender);
 
 		[Action ("acTapTypeTouchDown:")]
-		partial void acTapTypeTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void acTapTypeTouchDown (Foundation.NSObject sender);
 
 		[Action ("acUnitConditionTouchDown:")]
-		partial void acUnitConditionTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void acUnitConditionTouchDown (Foundation.NSObject sender);
 
 		[Action ("acChemicalsInCupboardTouchDown:")]
-		partial void acChemicalsInCupboardTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void acChemicalsInCupboardTouchDown (Foundation.NSObject sender);
 
 		[Action ("acPressureTestEditingDidEnd:")]
-		partial void acPressureTestEditingDidEnd (MonoTouch.Foundation.NSObject sender);
+		partial void acPressureTestEditingDidEnd (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{

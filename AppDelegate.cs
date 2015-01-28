@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Linq;
 using System.IO;
-using MonoTouch.UIKit;
-using MonoTouch.Foundation;
-using MonoTouch.CoreLocation;
+using UIKit;
+using Foundation;
+using CoreLocation;
 using Mono.Data.Sqlite;
 using System.Threading;
 // using MonoTouch.TestFlight; 
-using MonoTouch.MessageUI;
+using MessageUI;
 
 
 namespace Puratap
@@ -179,8 +179,8 @@ namespace Puratap
 		public override void DidEnterBackground (UIApplication application)
 		{
 			// Console.WriteLine ("AppDelegate.DidEnterBackground method fired.");
-			int taskID = 0;
-			NSAction backgroundTimerExpired = delegate {
+			nint taskID = 0;
+			Action backgroundTimerExpired = delegate {
 				application.EndBackgroundTask (taskID);
 				taskID = UIApplication.BackgroundTaskInvalid;
 			};
@@ -437,7 +437,7 @@ namespace Puratap
 			if (c != null) {
 				var mail = new MFMailComposeViewController();
 
-				NSAction act = delegate {	};
+				Action act = delegate {	};
 
 				string msg = String.Format ("Dear office,\r\n\r\n I hereby inform you that job {0} for customer {1} has been accepted.", jobID, c.CustomerNumber);
 
@@ -471,13 +471,13 @@ namespace Puratap
 	            
 	            if (dvc != null) {
 					// defines the new frame for right side view controller which should now take up the entire screen space
-					dvc.View.Frame = new System.Drawing.RectangleF(0,0, 768, 1004);
+					dvc.View.Frame = new CoreGraphics.CGRect(0,0, 768, 1004);
 					
 					// adds a button which will show the left side table with customers data when tapped
 	                dvc.AddLeftNavBarButton (barButtonItem);
 					
 					// defines a navigation frame for the navigation bar
-					dvc.MyNavigationBar.Frame = new System.Drawing.RectangleF(0, 0, dvc.View.Bounds.Width,44);
+					dvc.MyNavigationBar.Frame = new CoreGraphics.CGRect(0, 0, dvc.View.Bounds.Width,44);
 					
 					// set up the popover view controller ( JobRunTable )
 	                dvc.Popover = pc;
@@ -490,7 +490,7 @@ namespace Puratap
 	            
 	            if (dvc != null) {
 					// if we can get the detailed tabs controller, undo all the changes made when orientation changed last time
-					dvc.View.Frame = new System.Drawing.RectangleF(0,0, 703, 748);		// set the frame to old size
+					dvc.View.Frame = new CoreGraphics.CGRect(0,0, 703, 748);		// set the frame to old size
 	                dvc.RemoveLeftNavBarButton ();															// remove navigation bar button
 					// dvc.NavigationBar.Frame = new System.Drawing.RectangleF(0, 0, dvc.View.Bounds.Width, 44);
 	                dvc.Popover = null;																			// remove popover controller link
@@ -509,7 +509,7 @@ namespace Puratap
 		}
 	}
 
-	public class LocManager : MonoTouch.CoreLocation.CLLocationManager
+	public class LocManager : CoreLocation.CLLocationManager
 	{
 		public AppDelegate thisApp;
 		public LocManager(AppDelegate app) : base ()
@@ -520,7 +520,7 @@ namespace Puratap
 		}
 	}
 
-	public class LocDelegate : MonoTouch.CoreLocation.CLLocationManagerDelegate
+	public class LocDelegate : CoreLocation.CLLocationManagerDelegate
 	{
 		private LocManager thisManager;
 		private Object locationsBufferLock = new object();

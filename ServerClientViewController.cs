@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
-using System.Drawing;
+using CoreGraphics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using MonoTouch.UIKit;
+using UIKit;
 using Mono.Data.Sqlite;
-using MonoTouch.Foundation;
+using Foundation;
 
 using BigTed; // BTProgressHud component
 
@@ -67,8 +67,8 @@ namespace Puratap
 				UIView.BeginAnimations (null);
 
 				aivConnectingToService.StopAnimating ();
-				btnResetDeviceID.Frame = new RectangleF( btnResetDeviceID.Frame.X, btnResetDeviceID.Frame.Y, 160, btnResetDeviceID.Frame.Height);
-				btnStartDataExchange.Frame = new RectangleF( btnStartDataExchange.Frame.X, btnStartDataExchange.Frame.Y, 160, btnStartDataExchange.Frame.Height);
+				btnResetDeviceID.Frame = new CGRect( btnResetDeviceID.Frame.X, btnResetDeviceID.Frame.Y, 160, btnResetDeviceID.Frame.Height);
+				btnStartDataExchange.Frame = new CGRect( btnStartDataExchange.Frame.X, btnStartDataExchange.Frame.Y, 160, btnStartDataExchange.Frame.Height);
 				btnStartDataExchange.Enabled = true;
 				btnStartDataExchange.SetTitle("Send/receive data", UIControlState.Normal);
 				btnStartDataExchange.SetTitleColor(btnChangeDate.TitleColor (UIControlState.Normal), UIControlState.Normal);
@@ -84,8 +84,8 @@ namespace Puratap
 				UIView.BeginAnimations (null);
 
 				aivConnectingToService.StartAnimating ();
-				btnStartDataExchange.Frame = new RectangleF( btnStartDataExchange.Frame.X, btnStartDataExchange.Frame.Y, 270, btnStartDataExchange.Frame.Height);
-				btnResetDeviceID.Frame = new RectangleF( btnResetDeviceID.Frame.X, btnResetDeviceID.Frame.Y, 270, btnResetDeviceID.Frame.Height);
+				btnStartDataExchange.Frame = new CGRect( btnStartDataExchange.Frame.X, btnStartDataExchange.Frame.Y, 270, btnStartDataExchange.Frame.Height);
+				btnResetDeviceID.Frame = new CGRect( btnResetDeviceID.Frame.X, btnResetDeviceID.Frame.Y, 270, btnResetDeviceID.Frame.Height);
 
 				UIView.CommitAnimations ();
 			}); 

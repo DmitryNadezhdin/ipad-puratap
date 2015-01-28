@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using MonoTouch.UIKit;
+using UIKit;
 
 namespace Puratap
 {

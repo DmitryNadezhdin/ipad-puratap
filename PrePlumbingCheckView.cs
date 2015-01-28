@@ -1,8 +1,8 @@
-using MonoTouch.UIKit;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.IO;
-using MonoTouch.Foundation;
+using Foundation;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -13,7 +13,7 @@ namespace Puratap
 		public WorkflowNavigationController _navWorkflow;
 		UIActionSheet ac;
 		
-		float MovedViewY;
+		nfloat MovedViewY;
 
 		public UINavigationController Nav {
 			get { return this.NavigationController; }
@@ -422,7 +422,7 @@ namespace Puratap
 			Customer c = _navWorkflow._tabs._jobRunTable.CurrentCustomer;
 			
 			NSArray a = NSBundle.MainBundle.LoadNib ("PrePlumbingPDFView", this, null);
-			_generatedPdfView = (UIView)MonoTouch.ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
+			_generatedPdfView = (UIView)ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
 			
 			UIImageView imgv = (UIImageView)_generatedPdfView.ViewWithTag (MyConstants.PrePlumbingPDFTemplateTags.PuratapLogo);
 			using (var image = UIImage.FromBundle ("Images/puratap-logo") ) imgv.Image = image;
@@ -842,28 +842,28 @@ namespace Puratap
 
 			// if iOS 7 -- bring the toolbar down 14 pixels
 			if (systemVersion == 7) {
-				RectangleF current = this.ppcToolbar.Frame;
+				CGRect current = this.ppcToolbar.Frame;
 
-				this.ppcToolbar.Frame = new RectangleF (current.X, current.Y+14, current.Width, current.Height);
+				this.ppcToolbar.Frame = new CGRect (current.X, current.Y+14, current.Width, current.Height);
 				this.ppcToolbar.SetNeedsLayout ();
 			}
 
 			// if iOS 6 -- bring the toolbar down 60 pixels -- tested on Greg D.'s iPad -- not many iOS 6 devices left
 			if (systemVersion == 6) {
-				RectangleF current = this.ppcToolbar.Frame;
+				CGRect current = this.ppcToolbar.Frame;
 
-				this.ppcToolbar.Frame = new RectangleF (current.X, current.Y+60, current.Width, current.Height);
+				this.ppcToolbar.Frame = new CGRect (current.X, current.Y+60, current.Width, current.Height);
 				this.ppcToolbar.SetNeedsLayout ();
 			}
 
 
 			this.commentsTextView.ShouldBeginEditing = delegate {
 				MovedViewY = commentsTextView.Frame.Y;
-				float offset = commentsTextView.Frame.Y - 280;
+				nfloat offset = commentsTextView.Frame.Y - 280;
 				UIView.BeginAnimations (null);
 				UIView.SetAnimationDuration (0.5);
-				commentsTextView.Frame = new RectangleF(commentsTextView.Frame.X, 280, commentsTextView.Frame.Size.Width, commentsTextView.Frame.Size.Height);
-				lbComments.Frame = new RectangleF(lbComments.Frame.X, lbComments.Frame.Y-offset, lbComments.Frame.Size.Width, lbComments.Frame.Size.Height);
+				commentsTextView.Frame = new CGRect(commentsTextView.Frame.X, 280, commentsTextView.Frame.Size.Width, commentsTextView.Frame.Size.Height);
+				lbComments.Frame = new CGRect(lbComments.Frame.X, lbComments.Frame.Y-offset, lbComments.Frame.Size.Width, lbComments.Frame.Size.Height);
 
 				// hide the necessary objects
 				lbExistingDamage.Alpha = 0.05f;
@@ -875,11 +875,11 @@ namespace Puratap
 			};
 			
 			this.commentsTextView.ShouldEndEditing = delegate {
-				float offset = MovedViewY - commentsTextView.Frame.Y;
+				nfloat offset = MovedViewY - commentsTextView.Frame.Y;
 				UIView.BeginAnimations (null);
 				UIView.SetAnimationDuration (0.5);
-				commentsTextView.Frame = new RectangleF(commentsTextView.Frame.X, MovedViewY, commentsTextView.Frame.Size.Width, commentsTextView.Frame.Size.Height);
-				lbComments.Frame = new RectangleF(lbComments.Frame.X, lbComments.Frame.Y+offset, lbComments.Frame.Size.Width, lbComments.Frame.Size.Height);
+				commentsTextView.Frame = new CGRect(commentsTextView.Frame.X, MovedViewY, commentsTextView.Frame.Size.Width, commentsTextView.Frame.Size.Height);
+				lbComments.Frame = new CGRect(lbComments.Frame.X, lbComments.Frame.Y+offset, lbComments.Frame.Size.Width, lbComments.Frame.Size.Height);
 
 				// Un-hide the necessary objects
 				lbExistingDamage.Alpha = 1f;

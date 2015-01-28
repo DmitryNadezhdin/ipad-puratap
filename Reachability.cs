@@ -15,9 +15,9 @@ using System;
 using System.Net;
 
 #if !MONOMAC
-    using MonoTouch.Foundation;
-    using MonoTouch.SystemConfiguration;
-    using MonoTouch.CoreFoundation;
+    using Foundation;
+    using SystemConfiguration;
+    using CoreFoundation;
 #else
     using MonoMac.Foundation;
     using MonoMac.CoreFoundation;
@@ -83,7 +83,7 @@ namespace Puratap
             NetworkReachability = reachability;
             HasWWAN = hasWWAN;
             AllowWWAN = true;
-            NetworkReachability.SetCallback(OnReachabilityNotification);
+			NetworkReachability.SetNotification(OnReachabilityNotification);
             NetworkReachability.Schedule(CFRunLoop.Current, CFRunLoop.ModeDefault);
         }
 
@@ -424,7 +424,7 @@ namespace Puratap
             if (_disposed)
                 return;
 
-            NetworkReachability.SetCallback(null);
+			NetworkReachability.SetNotification(null);
             NetworkReachability.Dispose();
             NetworkReachability = null;
 

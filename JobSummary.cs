@@ -1,7 +1,7 @@
 using System;
 using MonoTouch.Dialog;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 
 namespace Puratap
 {
@@ -187,14 +187,14 @@ namespace Puratap
 		{
 			UIView.BeginAnimations (null);
 			UIView.SetAnimationDuration (0.3);
-			this.View.Frame = new System.Drawing.RectangleF(20,50,663,313);
+			this.View.Frame = new CoreGraphics.CGRect(20,50,663,313);
 			UIView.CommitAnimations ();
 		}
 		void MoveViewDown()
 		{
 			UIView.BeginAnimations (null);
 			UIView.SetAnimationDuration (0.3);			
-			this.View.Frame = new System.Drawing.RectangleF(20,411,663,233);
+			this.View.Frame = new CoreGraphics.CGRect(20,411,663,233);
 			UIView.CommitAnimations ();
 		}
 		

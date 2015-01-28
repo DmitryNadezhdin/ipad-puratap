@@ -1,12 +1,11 @@
-using MonoTouch.UIKit;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
-using MonoTouch.Foundation;
+using Foundation;
 using MonoTouch.Dialog;
-using MonoTouch.CoreGraphics;
 using Mono.Data.Sqlite;
 
 namespace Puratap
@@ -893,7 +892,7 @@ namespace Puratap
 				LineBreakMode = UILineBreakMode.WordWrap
 			};
 			
-			imageView = new UIImageView (new RectangleF (PicXPad, PicYPad, PicSizeX, PicSizeY));
+			imageView = new UIImageView (new CGRect (PicXPad, PicYPad, PicSizeX, PicSizeY));
 			stepper = new UIStepper() { Value = this.element.Quantity }; // new RectangleF(0, 0, 10, 0) 
 			
 			UpdateCell ( this.element.Part, this.element.Quantity);
@@ -934,7 +933,7 @@ namespace Puratap
 			textLabel.Text = String.Format (" Part number: {0} \n Description: {1} \n Quantity: {2:0.0}", element.Part.PartNo, element.Part.Description, element.Part.Quantity);
 		}
 
-		public static float GetCellHeight (RectangleF bounds, string caption)
+		public static float GetCellHeight (CGRect bounds, string caption)
 		{
 			bounds.Height = 999;
 			
@@ -944,7 +943,7 @@ namespace Puratap
 			
 			using (var nss = new NSString (caption)){
 				var dim = nss.StringSize (textFont, bounds.Size, UILineBreakMode.WordWrap);
-				return Math.Max (dim.Height + TextYOffset + 2*TextHeightPadding, MinHeight);
+				return (float) Math.Max (dim.Height + TextYOffset + 2*TextHeightPadding, MinHeight);
 			}
 		}
 		
@@ -1001,7 +1000,7 @@ namespace Puratap
 				LineBreakMode = UILineBreakMode.WordWrap
 			};
 
-			imageView = new UIImageView (new RectangleF (PicXPad, PicYPad, PicSizeX, PicSizeY));
+			imageView = new UIImageView (new CGRect (PicXPad, PicYPad, PicSizeX, PicSizeY));
 			stepper = new UIStepper() { Value = this.element.Quantity }; // new RectangleF(0, 0, 10, 0) 
 
 			UpdateCell ( this.element.ThisAssembly, this.element.Quantity);
@@ -1041,7 +1040,7 @@ namespace Puratap
 			textLabel.Text = String.Format (" Part number: {0} \n Description: {1} \n Quantity: {2:0.0}", newElement.ThisAssembly.aID, newElement.ThisAssembly.Description, newElement.ThisAssembly.Quantity);
 		}
 
-		public static float GetCellHeight(RectangleF bounds, string caption) {
+		public static float GetCellHeight(CGRect bounds, string caption) {
 			bounds.Height = 999;
 
 			// Keep the same as LayoutSubviews
@@ -1050,7 +1049,7 @@ namespace Puratap
 
 			using (var nss = new NSString (caption)){
 				var dim = nss.StringSize (textFont, bounds.Size, UILineBreakMode.WordWrap);
-				return Math.Max (dim.Height + TextYOffset + 2*TextHeightPadding, MinHeight);
+				return (float) Math.Max (dim.Height + TextYOffset + 2*TextHeightPadding, MinHeight);
 			}
 		}
 
@@ -1103,12 +1102,12 @@ namespace Puratap
 			}
 		}
 
-		public float GetHeight(UITableView tableView, NSIndexPath indexPath)
+		public nfloat GetHeight(UITableView tableView, NSIndexPath indexPath)
 		{
 			return AssemblyWithImageCell.GetCellHeight (tableView.Bounds,  String.Format (" Part number: {0} \n Description: {1} \n Quantity: {2:0.0}", _assembly.PartNo, _assembly.Description, Quantity) );
 		}
 
-		public event NSAction Tapped;
+		public event Action Tapped;
 		public override void Selected (DialogViewController dvc, UITableView tableView, NSIndexPath path)
 		{
 			if (Tapped != null) Tapped();
@@ -1161,14 +1160,14 @@ namespace Puratap
 			}
 		}
 		
-		public event NSAction Tapped;
+		public event Action Tapped;
 		public override void Selected (DialogViewController dvc, UITableView tableView, NSIndexPath path)
 		{
 			if (Tapped != null) Tapped();
 			tableView.DeselectRow (path, true);
 		}
 		
-		public float GetHeight(UITableView tableView, NSIndexPath indexPath)
+		public nfloat GetHeight(UITableView tableView, NSIndexPath indexPath)
 		{
 			return PartWithImageCell.GetCellHeight (tableView.Bounds,  String.Format (" Part number: {0} \n Description: {1} \n Quantity: {2:0.0}", _part.PartNo, _part.Description, _quantity) );
 		}
@@ -1183,13 +1182,13 @@ namespace Puratap
 		public ThreeAssembliesView(List<Assembly> assemblies) {
 			_assemblies = assemblies;
 
-			leftButton = new UIButton( new RectangleF(13, 20, 190, 190) );
-			midButton = new UIButton( new RectangleF(214, 20, 190, 190) );
-			rightButton = new UIButton( new RectangleF(415, 20, 190, 190) );
+			leftButton = new UIButton( new CGRect(13, 20, 190, 190) );
+			midButton = new UIButton( new CGRect(214, 20, 190, 190) );
+			rightButton = new UIButton( new CGRect(415, 20, 190, 190) );
 
-			leftLabel = new UILabel( new RectangleF(13,220,190,50) );
-			midLabel = new UILabel( new RectangleF(214, 220, 190, 50) );
-			rightLabel = new UILabel( new RectangleF(415, 220, 190, 50) );
+			leftLabel = new UILabel( new CGRect(13,220,190,50) );
+			midLabel = new UILabel( new CGRect(214, 220, 190, 50) );
+			rightLabel = new UILabel( new CGRect(415, 220, 190, 50) );
 
 			leftLabel.TextAlignment = midLabel.TextAlignment = rightLabel.TextAlignment = UITextAlignment.Center;
 			leftLabel.Lines = midLabel.Lines = rightLabel.Lines = 2;
@@ -1274,13 +1273,13 @@ namespace Puratap
 			_parts = parts;
 			// foreach (Part p in _parts) p.Quantity = 1;
 			
-			leftButton = new UIButton( new RectangleF(13, 20, 190, 190) );
-			midButton = new UIButton( new RectangleF(214, 20, 190, 190) );
-			rightButton = new UIButton( new RectangleF(415, 20, 190, 190) );
+			leftButton = new UIButton( new CGRect(13, 20, 190, 190) );
+			midButton = new UIButton( new CGRect(214, 20, 190, 190) );
+			rightButton = new UIButton( new CGRect(415, 20, 190, 190) );
 			
-			leftLabel = new UILabel( new RectangleF(13,220,190,50) );
-			midLabel = new UILabel( new RectangleF(214, 220, 190, 50) );
-			rightLabel = new UILabel( new RectangleF(415, 220, 190, 50) );
+			leftLabel = new UILabel( new CGRect(13,220,190,50) );
+			midLabel = new UILabel( new CGRect(214, 220, 190, 50) );
+			rightLabel = new UILabel( new CGRect(415, 220, 190, 50) );
 			
 			leftLabel.TextAlignment = midLabel.TextAlignment = rightLabel.TextAlignment = UITextAlignment.Center;
 			leftLabel.Lines = midLabel.Lines = rightLabel.Lines = 2;
@@ -1433,7 +1432,7 @@ namespace Puratap
 			return cell;
 		}
 
-		public float GetHeight(UITableView tv, NSIndexPath indexPath) { return 280f; }
+		public nfloat GetHeight(UITableView tv, NSIndexPath indexPath) { return 280f; }
 	}
 
 	public class ThreeAssembliesElement : Element, IElementSizing {
@@ -1459,7 +1458,7 @@ namespace Puratap
 			return cell;
 		}
 
-		public float GetHeight(UITableView tv, NSIndexPath indexPath) { return 280f; }
+		public nfloat GetHeight(UITableView tv, NSIndexPath indexPath) { return 280f; }
 	}
 
 	public class AssembliesSection : Section {
@@ -1770,25 +1769,26 @@ namespace Puratap
 		//
 		// Computes the X position for the entry by aligning all the entries in the Section
 		//
-		SizeF ComputeEntryPosition (UITableView tv, UITableViewCell cell)
+		CGSize ComputeEntryPosition (UITableView tv, UITableViewCell cell)
 		{
 			Section s = Parent as Section;
 
 			if (s.EntryAlignment.Width != 0)
 				return s.EntryAlignment;
 			
-			SizeF max = new SizeF (-1, -1);
+			CGSize max = new CGSize (-1, -1);
 			foreach (var e in s.Elements)
 			{
 				var ee = e as MultilineEntryElement;
 				if (ee == null)
 					continue;
 				
-				var size = tv.StringSize (ee.Caption, font);
+				CGSize size; // = tv.StringSize (ee.Caption, font);
+				size = UIKit.UIStringDrawing.StringSize ( (NSString)ee.Caption, font);
 				if (size.Width > max.Width)
 					max = size;	
 			}
-			s.EntryAlignment = new SizeF (25 + Math.Min (max.Width, 160), max.Height);
+			s.EntryAlignment = new CGSize ( (nfloat) (25 + Math.Min (max.Width, 160f)), max.Height);
 			return s.EntryAlignment;
 		}
 		
@@ -1805,7 +1805,7 @@ namespace Puratap
 			
 			
 			if (entry == null){
-				SizeF size = ComputeEntryPosition (tv, cell);
+				CGSize size = ComputeEntryPosition (tv, cell);
 				/*
 				 	entry = new UITextField (new RectangleF (size.Width, (cell.ContentView.Bounds.Height-size.Height)/2-1, 320-size.Width, size.Height))
 				 	{
@@ -1817,7 +1817,7 @@ namespace Puratap
 				// entry.AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleLeftMargin;
 				 */
 
-				entry = new UITextView( new RectangleF(150, 7, size.Width-110, 96));
+				entry = new UITextView( new CGRect(150, 7, size.Width-110, 96));
 				entry.BackgroundColor = UIColor.FromRGB (240,240,240);
 				entry.Text = Value ?? "";
 				entry.Font = MultilineEntryElement.font;
@@ -1863,7 +1863,7 @@ namespace Puratap
 			}
 		}
 		
-		public float GetHeight (UITableView tableView, NSIndexPath indexPath)
+		public nfloat GetHeight (UITableView tableView, NSIndexPath indexPath)
 		{
 			return 112;
 		}
@@ -1914,7 +1914,7 @@ namespace Puratap
 			this.Add (pressureElement);
 			this.Add (serviceReasonElement);
 			this.Add (problemPointElement);
-			this.EntryAlignment = new SizeF(565, 20);
+			this.EntryAlignment = new CGSize(565, 20);
 			this.Add (commentElement);
 		}
 		
@@ -2022,7 +2022,7 @@ namespace Puratap
 									PointDesc = (string)reader["point_desc"],
 								};
 
-								point.RectAround = new RectangleF( (long)reader["prec_x"], (long)reader["prec_y"], (long)reader["prec_width"], (long)reader["prec_height"]);
+								point.RectAround = new CGRect( (long)reader["prec_x"], (long)reader["prec_y"], (long)reader["prec_width"], (long)reader["prec_height"]);
 
 								result.Add ( point );
 							}
@@ -2143,7 +2143,7 @@ namespace Puratap
 	{
 		public long PointID = 0;
 		public string PointDesc = String.Empty;
-		public RectangleF RectAround = new RectangleF();
+		public CGRect RectAround = new CGRect();
 	}
 
 	public class JobReportData

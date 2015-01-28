@@ -1,11 +1,10 @@
-using MonoTouch.UIKit;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.Data;
-using MonoTouch.Foundation;
+using Foundation;
 using System.IO;
 using Mono.Data.Sqlite;
-using MonoTouch.CoreGraphics;
 using ZSDK_Test;
 
 namespace Puratap
@@ -347,7 +346,7 @@ namespace Puratap
 				int iOSversion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split('.')[0]);
 				int newY = (iOSversion == 7 || iOSversion == 8)? 45+18 : 45;
 
-				cSpecialInstructions.Frame = new System.Drawing.RectangleF(10, newY, 690, 352);
+				cSpecialInstructions.Frame = new CGRect(10, newY, 690, 352);
 				this._tabs._jobRunTable.TableView.UserInteractionEnabled = false;
 				foreach (UIBarButtonItem btn in this._tabs.MyNavigationBar.TopItem.RightBarButtonItems)	//NavigationItem.RightBarButtonItem.Enabled = false;
 					btn.Enabled = false;
@@ -369,7 +368,7 @@ namespace Puratap
 				int iOSversion = Convert.ToInt32(UIDevice.CurrentDevice.SystemVersion.Split('.')[0]);
 				int newY = (iOSversion == 7 || iOSversion == 8)? 45+18 : 45;
 
-				cAttentionReason.Frame = new System.Drawing.RectangleF(10, newY, 690, 352);
+				cAttentionReason.Frame = new CGRect(10, newY, 690, 352);
 				this._tabs._jobRunTable.TableView.UserInteractionEnabled = false;
 				foreach (UIBarButtonItem btn in this._tabs.MyNavigationBar.TopItem.RightBarButtonItems)	//NavigationItem.RightBarButtonItem.Enabled = false;
 					btn.Enabled = false;
@@ -443,7 +442,7 @@ namespace Puratap
 			// bring the text view down
 			UIView.BeginAnimations (null);
 			UIView.SetAnimationDuration (0.3);
-			cAttentionReason.Frame = new System.Drawing.RectangleF(156,657,403,32);
+			cAttentionReason.Frame = new CGRect(156,657,403,32);
 			cCompanyName.Hidden = false;
 			lbCompanyName.Hidden = false;
 			cCompanyName.Hidden = false;
@@ -467,7 +466,7 @@ namespace Puratap
 			// bring the text view down
 			UIView.BeginAnimations (null);
 			UIView.SetAnimationDuration (0.3);
-			cSpecialInstructions.Frame = new System.Drawing.RectangleF(355,454,328,195);
+			cSpecialInstructions.Frame = new CGRect(355,454,328,195);
 			cCompanyName.Hidden = false;
 			cContactPerson.Hidden = false;
 			lbCompanyName.Hidden = false;
@@ -528,9 +527,9 @@ namespace Puratap
 
 				CustomerDetailsUpdatableField field = CustomerDetailsUpdatableField.None;
 				if (sender is UITextField)
-					field = (CustomerDetailsUpdatableField) (sender as UITextField).Tag;
+					field = (CustomerDetailsUpdatableField) Convert.ToInt32((sender as UITextField).Tag);
 				else if (sender is UITextView)
-					field = (CustomerDetailsUpdatableField) (sender as UIView).Tag;
+					field = (CustomerDetailsUpdatableField) Convert.ToInt32((sender as UIView).Tag);
 				string OldValue;
 				switch(field)
 				{

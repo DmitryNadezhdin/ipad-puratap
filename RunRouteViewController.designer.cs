@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Puratap
@@ -13,13 +13,13 @@ namespace Puratap
 	partial class RunRouteViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnFindRoute { get; set; }
+		UIKit.UIButton btnFindRoute { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbRouteSearchIterations { get; set; }
+		UIKit.UILabel lbRouteSearchIterations { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIProgressView pvRouteSearchProgress { get; set; }
+		UIKit.UIProgressView pvRouteSearchProgress { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{

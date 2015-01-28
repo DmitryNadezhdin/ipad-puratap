@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Puratap
@@ -13,28 +13,28 @@ namespace Puratap
 	partial class ServerClientViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIActivityIndicatorView aivActivity { get; set; }
+		UIKit.UIActivityIndicatorView aivActivity { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIActivityIndicatorView aivConnectingToService { get; set; }
+		UIKit.UIActivityIndicatorView aivConnectingToService { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnChangeDate { get; set; }
+		UIKit.UIButton btnChangeDate { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnFTPDataExchange { get; set; }
+		UIKit.UIButton btnFTPDataExchange { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnResetDeviceID { get; set; }
+		UIKit.UIButton btnResetDeviceID { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnStartDataExchange { get; set; }
+		UIKit.UIButton btnStartDataExchange { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnUpload { get; set; }
+		UIKit.UIButton btnUpload { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextView tvLog { get; set; }
+		UIKit.UITextView tvLog { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{

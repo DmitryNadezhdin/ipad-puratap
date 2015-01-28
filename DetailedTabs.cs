@@ -5,17 +5,17 @@ using System.ComponentModel;
 using System.Threading;
 using System.Linq;
 using System.Text;
-using MonoTouch.QuickLook;
-using MonoTouch.Foundation;
-using MonoTouch.CoreLocation;
-using MonoTouch.AddressBook;
-using MonoTouch.AddressBookUI;
-using MonoTouch.UIKit;
-using System.Drawing;
+using QuickLook;
+using Foundation;
+using CoreLocation;
+using AddressBook;
+using AddressBookUI;
+using UIKit;
+using CoreGraphics;
 using Mono.Data.Sqlite;
 using MonoTouch.Dialog;
-using MonoTouch.MapKit;
-using MonoTouch.MessageUI;
+using MapKit;
+using MessageUI;
 
 namespace Puratap
 {
@@ -86,7 +86,7 @@ namespace Puratap
 		
 		UIAlertView _newMemoView;	// an alert dialog used when creating a new memo
 		
-		int _lastSelectedTab;
+
 		
 		// comments about view controllers are deprecated, the interface uses another logic now
 		
@@ -154,7 +154,8 @@ namespace Puratap
 			} 
 		}
 
-		public int LastSelectedTab { get { return _lastSelectedTab; } set { _lastSelectedTab = value; } }
+		private nint _lastSelectedTab;
+		public nint LastSelectedTab { get { return _lastSelectedTab; } set { _lastSelectedTab = value; } }
 		
 		public UIBarButtonItem BtnEdit {
 			get { return _btnEdit; }
@@ -588,7 +589,7 @@ namespace Puratap
 				// check if able to send emails
 				if (MFMailComposeViewController.CanSendMail) {
 					var mail = new MFMailComposeViewController(); 
-					NSAction act = delegate {	};
+					Action act = delegate {	};
 
 					mail.SetToRecipients (new string[] { "compliancereports@puratap.com" });
 					mail.SetCcRecipients (new string[] { "earcher@puratap.com" });
@@ -732,7 +733,7 @@ namespace Puratap
 				UIView.SetAnimationDuration (0.3f);
 
 				UIViewController mapController = new UIViewController();
-				UIWebView map = new UIWebView(new RectangleF(0, 40, this._customersView.View.Frame.Width, this._customersView.View.Frame.Height-40));
+				UIWebView map = new UIWebView(new CGRect(0, 40, this._customersView.View.Frame.Width, this._customersView.View.Frame.Height-40));
 				map.LoadHtmlString ( BuildHTML (), new NSUrl( Path.Combine (NSBundle.MainBundle.BundlePath, "Content/"), true));
 				mapController.Add (map);
 				if (this.CustomerNav.ViewControllers.Count() < 2) 
@@ -773,12 +774,12 @@ namespace Puratap
 
 		public class PuratapQlPreviewControllerDataSource : QLPreviewControllerDataSource
 		{
-			public override int PreviewItemCount (QLPreviewController controller)
+			public override nint PreviewItemCount (QLPreviewController controller)
 			{
 				return 1;
 			}
 
-			public override QLPreviewItem GetPreviewItem (QLPreviewController controller, int index)
+			public override IQLPreviewItem GetPreviewItem (QLPreviewController controller, nint index)
 			{
 				string fileName = @"Franchisee Training Manual.pdf";
 				var documents = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments);
@@ -788,7 +789,7 @@ namespace Puratap
 			}
 		}
 
-		public class PuratapQlItem : MonoTouch.QuickLook.QLPreviewItem 
+		public class PuratapQlItem : QuickLook.QLPreviewItem 
 		{
 			string _title; 
 			NSUrl _url;

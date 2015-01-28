@@ -1,9 +1,9 @@
-using MonoTouch.UIKit;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.IO;
 using System.Collections.Generic;
-using MonoTouch.Foundation;
+using Foundation;
 using Mono.Data.Sqlite;
 
 namespace Puratap
@@ -72,7 +72,7 @@ namespace Puratap
 				return cell;
 			}
 			
-			public override int RowsInSection (UITableView tableView, int section)
+			public override nint RowsInSection (UITableView tableView, nint section)
 			{	return (_memosView.CustomerMemos != null) ? _memosView.CustomerMemos.Count : 0;	}
 			public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
 			{	return true;	}
@@ -100,7 +100,7 @@ namespace Puratap
 					_memoView.oMemoText.ShouldBeginEditing = delegate {
 						UIView.SetAnimationDuration(0.3);
 						UIView.BeginAnimations(null);
-						_memoView.oMemoText.Frame = new RectangleF(10,70,683,300);
+						_memoView.oMemoText.Frame = new CGRect(10,70,683,300);
 						_memoView.oMemosTable.Hidden = true;
 						UIView.CommitAnimations();
 						return true;		// this means that oMemoText object is permitted to begin its editing
@@ -111,7 +111,7 @@ namespace Puratap
 						_memoView.oMemoText.Editable = false;
 						UIView.SetAnimationDuration(0.3);
 						UIView.BeginAnimations(null);
-						_memoView.oMemoText.Frame = new RectangleF(20,523,663,166);
+						_memoView.oMemoText.Frame = new CGRect(20,523,663,166);
 						_memoView._memos[indexPath.Row].MemoContents = _memoView.oMemoText.Text;
 
 						UIView.CommitAnimations();

@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Puratap
@@ -13,100 +13,100 @@ namespace Puratap
 	partial class PrePlumbingCheckView
 	{
 		[Outlet]
-		MonoTouch.UIKit.UITextView commentsTextView { get; set; }
+		UIKit.UITextView commentsTextView { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField customerAcceptedTextField { get; set; }
+		UIKit.UITextField customerAcceptedTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField existingDamageTextField { get; set; }
+		UIKit.UITextField existingDamageTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbComments { get; set; }
+		UIKit.UILabel lbComments { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbExistingDamage { get; set; }
+		UIKit.UILabel lbExistingDamage { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbJobType { get; set; }
+		UIKit.UILabel lbJobType { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbNotAPuratapProblem { get; set; }
+		UIKit.UILabel lbNotAPuratapProblem { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField leakFittingsTextField { get; set; }
+		UIKit.UITextField leakFittingsTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField leakPotentialTextField { get; set; }
+		UIKit.UITextField leakPotentialTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField leakTapTextField { get; set; }
+		UIKit.UITextField leakTapTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField nonPuratapTextField { get; set; }
+		UIKit.UITextField nonPuratapTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField notPuratapProblemTextField { get; set; }
+		UIKit.UITextField notPuratapProblemTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField officeFollowupTextField { get; set; }
+		UIKit.UITextField officeFollowupTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField oldTubingTextField { get; set; }
+		UIKit.UITextField oldTubingTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIToolbar ppcToolbar { get; set; }
+		UIKit.UIToolbar ppcToolbar { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField UnwillingToSignTextField { get; set; }
+		UIKit.UITextField UnwillingToSignTextField { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField upgradeOfferedTextfield { get; set; }
+		UIKit.UITextField upgradeOfferedTextfield { get; set; }
 
 		[Action ("acLeaveWorkflow:")]
-		partial void acLeaveWorkflow (MonoTouch.Foundation.NSObject sender);
+		partial void acLeaveWorkflow (Foundation.NSObject sender);
 
 		[Action ("acProceed:")]
-		partial void acProceed (MonoTouch.Foundation.NSObject sender);
+		partial void acProceed (Foundation.NSObject sender);
 
 		[Action ("btnChangeJobTypeClicked:")]
-		partial void btnChangeJobTypeClicked (MonoTouch.Foundation.NSObject sender);
+		partial void btnChangeJobTypeClicked (Foundation.NSObject sender);
 
 		[Action ("btnNotDoneClicked:")]
-		partial void btnNotDoneClicked (MonoTouch.Foundation.NSObject sender);
+		partial void btnNotDoneClicked (Foundation.NSObject sender);
 
 		[Action ("customerAcceptedTouchDown:")]
-		partial void customerAcceptedTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void customerAcceptedTouchDown (Foundation.NSObject sender);
 
 		[Action ("exisitingDamageTouchDown:")]
-		partial void exisitingDamageTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void exisitingDamageTouchDown (Foundation.NSObject sender);
 
 		[Action ("leakFittingsTouchDown:")]
-		partial void leakFittingsTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void leakFittingsTouchDown (Foundation.NSObject sender);
 
 		[Action ("leakPotentialTouchDown:")]
-		partial void leakPotentialTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void leakPotentialTouchDown (Foundation.NSObject sender);
 
 		[Action ("leakTapTouchDown:")]
-		partial void leakTapTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void leakTapTouchDown (Foundation.NSObject sender);
 
 		[Action ("nonPuratapTouchDown:")]
-		partial void nonPuratapTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void nonPuratapTouchDown (Foundation.NSObject sender);
 
 		[Action ("NotPuratapProblemTouchDown:")]
-		partial void NotPuratapProblemTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void NotPuratapProblemTouchDown (Foundation.NSObject sender);
 
 		[Action ("officeFollowupTouchDown:")]
-		partial void officeFollowupTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void officeFollowupTouchDown (Foundation.NSObject sender);
 
 		[Action ("oldTubingTouchDown:")]
-		partial void oldTubingTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void oldTubingTouchDown (Foundation.NSObject sender);
 
 		[Action ("unwillingToSignTouchDown:")]
-		partial void unwillingToSignTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void unwillingToSignTouchDown (Foundation.NSObject sender);
 
 		[Action ("upgradeOfferedTouchDown:")]
-		partial void upgradeOfferedTouchDown (MonoTouch.Foundation.NSObject sender);
+		partial void upgradeOfferedTouchDown (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{

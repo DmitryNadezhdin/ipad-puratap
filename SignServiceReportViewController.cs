@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using MonoTouch.UIKit;
-using MonoTouch.Foundation;
-using System.Drawing;
+using UIKit;
+using Foundation;
+using CoreGraphics;
 
 namespace Puratap
 {
@@ -111,7 +111,7 @@ namespace Puratap
 				{
 					Tabs._jobService.RedrawServiceCallPDF (true);
 					
-					PointF offset = new PointF(0, this.PDFView.ScrollView.ContentSize.Height - this.PDFView.ScrollView.Bounds.Height);
+					CGPoint offset = new CGPoint(0, this.PDFView.ScrollView.ContentSize.Height - this.PDFView.ScrollView.Bounds.Height);
 					PDFView.ScrollView.SetContentOffset (offset, true);
 					// Signature.Image = new UIImage();
 					Signature.Clear ();

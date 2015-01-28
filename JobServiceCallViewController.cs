@@ -1,8 +1,8 @@
-using MonoTouch.UIKit;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.IO;
-using MonoTouch.Foundation;
+using Foundation;
 using System.Collections.Generic;
 using MonoTouch.Dialog;
 using Mono.Data.Sqlite;
@@ -146,7 +146,7 @@ namespace Puratap
 			Customer c = _navOld._tabs._jobRunTable.CurrentCustomer;
 			
 			NSArray a = NSBundle.MainBundle.LoadNib ("JobServiceCallPDFView", this, null);
-			GeneratedPDFView = (UIView)MonoTouch.ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
+			GeneratedPDFView = (UIView)ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
 			
 			UILabel tl = (UILabel)GeneratedPDFView.ViewWithTag (MyConstants.ServiceCallPDFTemplateTags.CustomerNumber);
 			tl.Text = String.Format ("Customer Number: {0}", c.CustomerNumber);
@@ -722,7 +722,7 @@ namespace Puratap
 		public override void TouchesBegan (NSSet touches, UIEvent evt)
 		{
 			UITouch touch = (UITouch)touches.AnyObject;
-			PointF tappedPoint = touch.LocationInView (ivUnitImage);
+			CGPoint tappedPoint = touch.LocationInView (ivUnitImage);
 			touch.Dispose (); touch = null;
 
 			JobReportSection reportSection = _navOld._tabs._serviceParts.Root[0] as JobReportSection;

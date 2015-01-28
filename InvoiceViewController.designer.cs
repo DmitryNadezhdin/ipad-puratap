@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Puratap
@@ -13,85 +13,85 @@ namespace Puratap
 	partial class PaymentViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem btnAddChildJob { get; set; }
+		UIKit.UIBarButtonItem btnAddChildJob { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem btnBack { get; set; }
+		UIKit.UIBarButtonItem btnBack { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem btnClearChildJobs { get; set; }
+		UIKit.UIBarButtonItem btnClearChildJobs { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIBarButtonItem btnSplitPayment { get; set; }
+		UIKit.UIBarButtonItem btnSplitPayment { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbCardOwnerNameInvalid { get; set; }
+		UIKit.UILabel lbCardOwnerNameInvalid { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbCCNumberTip { get; set; }
+		UIKit.UILabel lbCCNumberTip { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbChequeNumberInvalid { get; set; }
+		UIKit.UILabel lbChequeNumberInvalid { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbDeposit { get; set; }
+		UIKit.UILabel lbDeposit { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbExpiryDateInvalid { get; set; }
+		UIKit.UILabel lbExpiryDateInvalid { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbJobsInCluster { get; set; }
+		UIKit.UILabel lbJobsInCluster { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbTip { get; set; }
+		UIKit.UILabel lbTip { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIToolbar myToolbar { get; set; }
+		UIKit.UIToolbar myToolbar { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISegmentedControl scPaymentType { get; set; }
+		UIKit.UISegmentedControl scPaymentType { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISegmentedControl scSplitPaymentMethod1 { get; set; }
+		UIKit.UISegmentedControl scSplitPaymentMethod1 { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISegmentedControl scSplitPaymentMethod2 { get; set; }
+		UIKit.UISegmentedControl scSplitPaymentMethod2 { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfChequeNumber { get; set; }
+		UIKit.UITextField tfChequeNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfCreditCardExpiry { get; set; }
+		UIKit.UITextField tfCreditCardExpiry { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfCreditCardName { get; set; }
+		UIKit.UITextField tfCreditCardName { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfCreditCardNumber { get; set; }
+		UIKit.UITextField tfCreditCardNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfDeposit { get; set; }
+		UIKit.UITextField tfDeposit { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfInvoicePO { get; set; }
+		UIKit.UITextField tfInvoicePO { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfPaymentType { get; set; }
+		UIKit.UITextField tfPaymentType { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfSplitPaymentAmount1 { get; set; }
+		UIKit.UITextField tfSplitPaymentAmount1 { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfSplitPaymentAmount2 { get; set; }
+		UIKit.UITextField tfSplitPaymentAmount2 { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfToBeCollected { get; set; }
+		UIKit.UITextField tfToBeCollected { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField tfTotalMoneyReceived { get; set; }
+		UIKit.UITextField tfTotalMoneyReceived { get; set; }
 
 		[Action ("acProceedClicked:")]
-		partial void acProceedClicked (MonoTouch.Foundation.NSObject sender);
+		partial void acProceedClicked (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{

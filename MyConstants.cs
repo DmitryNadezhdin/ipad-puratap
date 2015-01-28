@@ -1,15 +1,14 @@
 using System;
 using System.IO;
 using System.Threading;
-using System.Drawing;
+using CoreGraphics;
 using System.Collections.Generic;
-using MonoTouch.Foundation;
-using MonoTouch.CoreFoundation;
-using MonoTouch.CoreLocation;
-using MonoTouch.CoreGraphics;
-using MonoTouch.UIKit;
+using Foundation;
+using CoreFoundation;
+using CoreLocation;
+using UIKit;
 using Mono.Data.Sqlite;
-using MonoTouch.SystemConfiguration;
+using SystemConfiguration;
 using ZSDK_Test;
 
 namespace Puratap
@@ -168,11 +167,11 @@ namespace Puratap
 			return (ServerResponsesForUserID) received;
 		}
 		
-		public static	 RectangleF rectAroundBallValve = new RectangleF(75,210,150,165);
-		public static	 RectangleF rectAroundTap = new RectangleF(475, 0, 120, 210);
-		public static	 RectangleF rectAroundInletTubing = new RectangleF(70, 0, 140, 210);
-		public static	 RectangleF rectAroundOutletTubing = new RectangleF(460, 130, 80, 160);
-		public static	 RectangleF rectAroundUnit = new RectangleF(260, 85, 190, 280);
+		public static	 CGRect rectAroundBallValve = new CGRect(75,210,150,165);
+		public static	 CGRect rectAroundTap = new CGRect(475, 0, 120, 210);
+		public static	 CGRect rectAroundInletTubing = new CGRect(70, 0, 140, 210);
+		public static	 CGRect rectAroundOutletTubing = new CGRect(460, 130, 80, 160);
+		public static	 CGRect rectAroundUnit = new CGRect(260, 85, 190, 280);
 				
 		public struct PrePlumbingPDFTemplateTags
 		{
@@ -276,14 +275,14 @@ namespace Puratap
 				return null;
 			else {
 				CGPDFPage pdfPage = pdf.GetPage (pageNumber);
-				RectangleF rect = pdfPage.GetBoxRect (CGPDFBox.Art);
+				CGRect rect = pdfPage.GetBoxRect (CGPDFBox.Art);
 				
 				UIImage result = new UIImage();
 				
 				UIGraphics.BeginImageContext (rect.Size);
 				CGContext context = UIGraphics.GetCurrentContext ();
 				CGColorSpace rgb = CGColorSpace.CreateDeviceRGB ();
-				CGColor color = new CGColor(rgb, new float[] {1,1,1,1});
+				CGColor color = new CGColor(rgb, new nfloat[] {1,1,1,1});
 				context.SetFillColor (color);
 				context.FillRect (rect);
 				
@@ -316,20 +315,20 @@ namespace Puratap
 					UITableView myView = view;
 					myView.SizeToFit ();
 
-					UIGraphics.BeginPDFContext (pdfData, new RectangleF(0,0,myView.ContentSize.Width, myView.ContentSize.Height), null); // myView.Bounds
+					UIGraphics.BeginPDFContext (pdfData, new CGRect(0,0,myView.ContentSize.Width, myView.ContentSize.Height), null); // myView.Bounds
 					UIGraphics.BeginPDFPage ();
 					
 					// render the view completely by "scrolling" through and rendering the graphics layer each time
-					PointF currentOffset = new PointF(0, 0);
+					CGPoint currentOffset = new CGPoint(0, 0);
 					while (currentOffset.Y < myView.ContentSize.Height)
 					{
 						myView.Layer.RenderInContext (UIGraphics.GetCurrentContext ()); // OLD :: this.View.Layer.RenderInContext (UIGraphics.GetCurrentContext ());
-						myView.SetContentOffset (new PointF(0f, currentOffset.Y + myView.Bounds.Height), false);
+						myView.SetContentOffset (new CGPoint(0f, currentOffset.Y + myView.Bounds.Height), false);
 						currentOffset.Y += myView.Bounds.Height;
 					}
 					
 					UIGraphics.EndPDFContent ();
-					myView.SetContentOffset (new PointF(0,0), false);
+					myView.SetContentOffset (new CGPoint(0,0), false);
 				});
 
 				// save the rendered context to disk
@@ -356,20 +355,20 @@ namespace Puratap
 					myView.SizeToFit ();
 				
 					NSMutableData pdfData = new NSMutableData();
-					UIGraphics.BeginPDFContext (pdfData, new RectangleF(0,0,myView.ContentSize.Width, myView.ContentSize.Height), null); // myView.Bounds
+					UIGraphics.BeginPDFContext (pdfData, new CGRect(0,0,myView.ContentSize.Width, myView.ContentSize.Height), null); // myView.Bounds
 					UIGraphics.BeginPDFPage ();
 
 					// render the view completely by "scrolling" through and rendering the graphics layer each time
-					PointF currentOffset = new PointF(0, 0);
+					CGPoint currentOffset = new CGPoint(0, 0);
 					while (currentOffset.Y < myView.ContentSize.Height)
 					{
 						myView.Layer.RenderInContext (UIGraphics.GetCurrentContext ()); // OLD :: this.View.Layer.RenderInContext (UIGraphics.GetCurrentContext ());
-						myView.SetContentOffset (new PointF(0f, currentOffset.Y + myView.Bounds.Height), false);
+						myView.SetContentOffset (new CGPoint(0f, currentOffset.Y + myView.Bounds.Height), false);
 						currentOffset.Y += myView.Bounds.Height;
 					}
 
 					UIGraphics.EndPDFContent ();
-					myView.SetContentOffset (new PointF(0,0), false);
+					myView.SetContentOffset (new CGPoint(0,0), false);
 						// save the rendered context to disk
 					NSError err;
 					tmpFileName = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "tmp.pdf");
@@ -394,7 +393,7 @@ namespace Puratap
 			if (pdfDoc != null) { pdfDoc.Dispose (); pdfDoc = null; }
 			
 			// DEBUG
-			MonoTouch.ObjCRuntime.Class.ThrowOnInitFailure = false;
+			ObjCRuntime.Class.ThrowOnInitFailure = false;
 
 			// Connecting to printer
 			TcpPrinterConnection myConn;
@@ -503,8 +502,9 @@ namespace Puratap
 			NSDictionary settings = NSDictionary.FromFile(Path.Combine(settingsBundle,@"Root.plist"));
 			NSArray preferences = (NSArray) settings.ValueForKey(new NSString(@"PreferenceSpecifiers"));
 			NSMutableDictionary defaultsToRegister = new NSMutableDictionary();
-			for (uint i=0; i<preferences.Count; i++) {
-				NSDictionary prefSpecification = new NSDictionary(preferences.ValueAt(i));
+
+			for (nuint j = 0; j < preferences.Count; j++) {
+				NSDictionary prefSpecification = preferences.GetItem<NSDictionary> (j);
 				NSString key = (NSString) prefSpecification.ValueForKey(keyString);
 				if(key != null) {
 					NSObject def = prefSpecification.ValueForKey(defaultString);
@@ -882,7 +882,7 @@ namespace Puratap
 			}
 			this.WillDismiss += delegate(object sender, UIButtonEventArgs e) {
 				if (e.ButtonIndex!=-1)
-					fur = (FollowUpsRequired) e.ButtonIndex;
+					fur = (FollowUpsRequired) ( (int)e.ButtonIndex);
 			};
 		}
 		
@@ -935,7 +935,7 @@ namespace Puratap
 			this.WillDismiss += delegate(object sender, UIButtonEventArgs e) {
 				if (e.ButtonIndex != -1)
 				{
-					fct.Type = (FilterChangeTypesEnum) e.ButtonIndex;
+					fct.Type = (FilterChangeTypesEnum) ( (int) e.ButtonIndex);
 				}
 			};
 		}
@@ -952,7 +952,7 @@ namespace Puratap
 			
 			this.WillDismiss += delegate(object sender, UIButtonEventArgs e) {
 				if (e.ButtonIndex != -1) 
-					pac.Action = (PossibleActionsEnum) e.ButtonIndex;
+					pac.Action = (PossibleActionsEnum) ( (int) e.ButtonIndex);
 				dvc.ReloadDataAndCheck ();
 			};
 		}
@@ -969,7 +969,7 @@ namespace Puratap
 			
 			this.WillDismiss += delegate(object sender, UIButtonEventArgs e) {
 				if (e.ButtonIndex != -1)
-					prt.Type = (GeneralProblemTypesEnum) e.ButtonIndex;
+					prt.Type = (GeneralProblemTypesEnum) ( (int) e.ButtonIndex);
 					// ? some sort of feedback depending on the choice made (updating interface, etc.) ?
 			};
 		}
@@ -1241,7 +1241,7 @@ namespace Puratap
 		{		
 			InvokeOnMainThread(delegate() {
 				_activityView = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.WhiteLarge);
-				_activityView.Frame = new System.Drawing.RectangleF(122,50,40,40);
+				_activityView.Frame = new CGRect(122,50,40,40);
 				AddSubview(_activityView);
 				
 				Title = title;

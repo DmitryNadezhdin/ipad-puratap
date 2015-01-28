@@ -1,8 +1,8 @@
 using System;
-using System.Drawing;
-using MonoTouch.UIKit;
-using MonoTouch.MessageUI;
-using MonoTouch.Foundation;
+using CoreGraphics;
+using UIKit;
+using MessageUI;
+using Foundation;
 using System.IO;
 using System.Threading;
 using System.Text.RegularExpressions;
@@ -311,7 +311,7 @@ namespace Puratap
 			if (fileContents != null) {
 				mail.AddAttachmentData (fileContents, "application/pdf", receiptFileName);
 
-				NSAction emptyAction = delegate { };
+				Action emptyAction = delegate { };
 				mail.SetToRecipients (new string[] { emailRecepients });
 				mail.SetSubject (String.Format ("Puratap receipt: CN# {0} {1}", Tabs._jobRunTable.CurrentCustomer.CustomerNumber, MyConstants.DEBUG_TODAY));
 				mail.SetMessageBody (String.Format ("Dear customer,\n\nPlease find attached your receipt.\n\nKind regards, \n   Puratap"), false);

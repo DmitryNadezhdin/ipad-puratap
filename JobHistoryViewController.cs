@@ -1,9 +1,9 @@
-using MonoTouch.UIKit;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using MonoTouch.Foundation;
+using Foundation;
 
 namespace Puratap
 {
@@ -60,7 +60,7 @@ namespace Puratap
 				// cell.DetailTextLabel.Text = ""; // apparently, there's nothing else to display about a job that has been done in the past
 				return cell;
 			}
-			public override int RowsInSection (UITableView tableView, int section)
+			public override nint RowsInSection (UITableView tableView, nint section)
 			{
 				return (JobHistory != null) ? JobHistory.Count : 0;
 			}
@@ -84,24 +84,24 @@ namespace Puratap
 				JobHistory = new List<HistoryJob>();
 			}
 			
-			public override int GetComponentCount(UIPickerView picker)
+			public override nint GetComponentCount(UIPickerView picker)
 			{
 				return 1; // 2 or more would split the picker and it would act like that number of separate pickers
 			}
-			public override int GetRowsInComponent (UIPickerView picker, int component)
+			public override nint GetRowsInComponent (UIPickerView picker, nint component)
 			{
 				int rows = JobHistory.Count;
 				return rows;
 			}
-			public override string GetTitle (UIPickerView picker, int row, int component)
+			public override string GetTitle (UIPickerView picker, nint row, nint component)
 			{
 				string jobSummary = String.Format ("{0} {1} Collected: ${2} Performed by: {3}", 
-				                                   JobHistory[row].JobDate.ToString("dd/MM/yyyy"),
-				                                   JobHistory[row].JobType,
-				                                   JobHistory[row].MoneyCollected.ToString() );
+					JobHistory[(int) row].JobDate.ToString("dd/MM/yyyy"),
+					JobHistory[(int) row].JobType,
+					JobHistory[(int) row].MoneyCollected.ToString() );
 				return jobSummary;
 			}
-			public override float GetRowHeight (UIPickerView picker, int component)
+			public override nfloat GetRowHeight (UIPickerView picker, nint component)
 			{
 				return 40f;
 			}

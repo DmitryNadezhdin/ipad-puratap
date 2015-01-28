@@ -2,14 +2,14 @@ using System;
 using System.IO;
 using System.Data;
 using System.Linq;
-using System.Drawing;
+using CoreGraphics;
 using System.Threading;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using MonoTouch.UIKit;
+using UIKit;
 using Mono.Data.Sqlite;
-using MonoTouch.Foundation;
-using MonoTouch.ObjCRuntime;
+using Foundation;
+using ObjCRuntime;
 
 namespace Puratap
 {
@@ -1451,12 +1451,12 @@ namespace Puratap
 				return cell;
 			}
 			
-			public override int NumberOfSections (UITableView tableView)
+			public override nint NumberOfSections (UITableView tableView)
 			{
 				return 4;
 			}
 			
-			public override int RowsInSection (UITableView tableview, int section)
+			public override nint RowsInSection (UITableView tableview, nint section)
 			{
 				switch (section)
 				{

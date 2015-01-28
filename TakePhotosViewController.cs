@@ -1,10 +1,9 @@
-using MonoTouch.UIKit;
-using MonoTouch.ObjCRuntime;
-using System.Drawing;
+using UIKit;
+using ObjCRuntime;
+using CoreGraphics;
 using System;
 using System.IO;
-using MonoTouch.Foundation;
-using MonoTouch.CoreGraphics;
+using Foundation;
 
 namespace Puratap
 {
@@ -75,7 +74,7 @@ namespace Puratap
 		public static UIImage ScaleImage(UIImage image, int maxSize)
 		{
 			UIImage result;
-			int width, height;
+			nint width, height;
 
 			using (CGImage imageRef = image.CGImage) {
 				CGImageAlphaInfo alphaInfo = imageRef.AlphaInfo;
@@ -122,7 +121,7 @@ namespace Puratap
 						break;
 				}
 
-				bitmap.DrawImage(new Rectangle(0, 0, width, height), imageRef);
+				bitmap.DrawImage(new CGRect(0, 0, width, height), imageRef);
 
 				result = UIImage.FromImage(bitmap.ToImage());
 				bitmap = null;

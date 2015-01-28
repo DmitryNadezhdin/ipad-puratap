@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
-using System.Drawing;
+using CoreGraphics;
 using System.Threading;
 using System.ComponentModel;
-using MonoTouch.UIKit;
+using UIKit;
 using MonoTouch.Dialog;
-using MonoTouch.Foundation;
+using Foundation;
 
 namespace Puratap
 {

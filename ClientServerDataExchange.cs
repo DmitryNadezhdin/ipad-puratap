@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Drawing;
+using CoreGraphics;
 using System.Threading;
 using System.Net.Sockets;
 using System.Collections.Generic;
 
-using MonoTouch.UIKit;
-using MonoTouch.Foundation;
+using UIKit;
+using Foundation;
 
 namespace Puratap
 {
@@ -54,7 +54,7 @@ namespace Puratap
 				if (ns != null) {
 
 					string hostName = ns.HostName;
-					int port = ns.Port;
+					nint port = ns.Port;
 					
 					ThreadStart ts = new ThreadStart ( delegate {
 						using (var pool = new NSAutoreleasePool() ) {
@@ -63,7 +63,7 @@ namespace Puratap
 
 							TcpClient tcpClient = null;
 							try {
-								tcpClient = new TcpClient(hostName, port);
+								tcpClient = new TcpClient(hostName, (int) port);
 								tcpClient.ReceiveTimeout = 10000;
 								tcpClient.SendTimeout = 10000; // these timeouts only apply to sync read and write operations
 								
@@ -565,7 +565,7 @@ namespace Puratap
 						chosenEmp = null;
 					}
 					else {
-						chosenEmp = employees[e.ButtonIndex]; // fullNames[e.ButtonIndex];
+						chosenEmp = employees[ (int) e.ButtonIndex]; // fullNames[e.ButtonIndex];
 						// chosenEmp.EmployeeType = employees[e.ButtonIndex].EmployeeType;
 					}
 					EmployeeHasBeenChosen.Set ();

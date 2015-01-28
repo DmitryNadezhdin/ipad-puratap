@@ -1,8 +1,8 @@
-using MonoTouch.UIKit;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System.IO;
 using System;
-using MonoTouch.Foundation;
+using Foundation;
 using Mono.Data.Sqlite;
 using MonoTouch.Dialog;
 using System.Collections.Generic;
@@ -539,7 +539,7 @@ namespace Puratap
 	public class InstallTypeBadgeElement : BadgeElement
 	{
 		public InstallationType ThisInstall;
-		public InstallTypeBadgeElement(InstallationType inst, NSAction tapped) : base (inst.Image, inst.Name, tapped)
+		public InstallTypeBadgeElement(InstallationType inst, Action tapped) : base (inst.Image, inst.Name, tapped)
 		{
 			ThisInstall = inst;
 		}
@@ -548,7 +548,7 @@ namespace Puratap
 	public class ProductBadgeElement : BadgeElement
 	{
 		public Product ThisProduct;
-		public ProductBadgeElement(Product product, NSAction tapped) : base (product.Image, product.Name, tapped)
+		public ProductBadgeElement(Product product, Action tapped) : base (product.Image, product.Name, tapped)
 		{
 			ThisProduct = product;
 		}
@@ -557,7 +557,7 @@ namespace Puratap
 	public class SaleOptionBadgeElement : BadgeElement
 	{
 		public SaleOption ThisOption;
-		public SaleOptionBadgeElement(SaleOption option, NSAction tapped) : base (option.Image, option.Name, tapped)
+		public SaleOptionBadgeElement(SaleOption option, Action tapped) : base (option.Image, option.Name, tapped)
 		{
 			ThisOption = option;
 		}
@@ -673,7 +673,7 @@ namespace Puratap
 			EntryElement pressureElement = new EntryElement("Pressure", "Value", "", false);
 			pressureElement.KeyboardType = UIKeyboardType.NumbersAndPunctuation;
 			OptionsSection.Add (pressureElement);
-			OptionsSection.EntryAlignment = new SizeF(565, 20);
+			OptionsSection.EntryAlignment = new CGSize(565, 20);
 
 			/*
 			CheckboxElement drillElement = new CheckboxElement("Drilling", false);

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MonoTouch.Dialog;
-using MonoTouch.UIKit;
+using UIKit;
 
 namespace Puratap
 {
@@ -102,7 +102,7 @@ namespace Puratap
 			};
 		}
 		
-		public override void Selected (MonoTouch.Foundation.NSIndexPath indexPath)
+		public override void Selected (Foundation.NSIndexPath indexPath)
 		{
 			if (indexPath.Section == 1)
 			{

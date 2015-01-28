@@ -4,7 +4,7 @@
 // actions made in the Xcode designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 
 namespace Puratap
 {
@@ -12,88 +12,88 @@ namespace Puratap
 	partial class CustomersViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbContactPerson { get; set; }
+		UIKit.UILabel lbContactPerson { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cContactPerson { get; set; }
+		UIKit.UITextField cContactPerson { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbCompanyName { get; set; }
+		UIKit.UILabel lbCompanyName { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch swAttention { get; set; }
+		UIKit.UISwitch swAttention { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cCompanyName { get; set; }
+		UIKit.UITextField cCompanyName { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cCustomerNumber { get; set; }
+		UIKit.UITextField cCustomerNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cBookingNumber { get; set; }
+		UIKit.UITextField cBookingNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cUnitNumber { get; set; }
+		UIKit.UITextField cUnitNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cFirstName { get; set; }
+		UIKit.UITextField cFirstName { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cLastName { get; set; }
+		UIKit.UITextField cLastName { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cAddress { get; set; }
+		UIKit.UITextField cAddress { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cSuburb { get; set; }
+		UIKit.UITextField cSuburb { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cPhoneNumber { get; set; }
+		UIKit.UITextField cPhoneNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cMobileNumber { get; set; }
+		UIKit.UITextField cMobileNumber { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cJobType { get; set; }
+		UIKit.UITextField cJobType { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cJobTime { get; set; }
+		UIKit.UITextField cJobTime { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cMoneyToCollect { get; set; }
+		UIKit.UITextField cMoneyToCollect { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cNumberOfMemos { get; set; }
+		UIKit.UITextField cNumberOfMemos { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextView cSpecialInstructions { get; set; }
+		UIKit.UITextView cSpecialInstructions { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextView cPlumbingComments { get; set; }
+		UIKit.UITextView cPlumbingComments { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cLastInstallDate { get; set; }
+		UIKit.UITextField cLastInstallDate { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cLastJobType { get; set; }
+		UIKit.UITextField cLastJobType { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cFallbackContact { get; set; }
+		UIKit.UITextField cFallbackContact { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField cFallbackPhone { get; set; }
+		UIKit.UITextField cFallbackPhone { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextView cAttentionReason { get; set; }
+		UIKit.UITextView cAttentionReason { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel lbAttention { get; set; }
+		UIKit.UILabel lbAttention { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnTUDone { get; set; }
+		UIKit.UIButton btnTUDone { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton btnAttention { get; set; }
+		UIKit.UIButton btnAttention { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{

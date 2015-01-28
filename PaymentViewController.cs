@@ -1,11 +1,10 @@
 using System;
 using System.IO;
-using System.Drawing;
+using CoreGraphics;
 using System.Collections.Generic;
-using MonoTouch.UIKit;
+using UIKit;
 using MonoTouch.Dialog;
-using MonoTouch.Foundation;
-using MonoTouch.CoreGraphics;
+using Foundation;
 using Mono.Data.Sqlite;
 using ZSDK_Test;
 
@@ -212,7 +211,7 @@ namespace Puratap
 			int jobCount = this.Summary.mainJob.ChildJobs.Count + 1;
 			
 			NSArray a = NSBundle.MainBundle.LoadNib ("ReceiptPDFView", this, null);
-			GeneratedPdfView = (UIView)MonoTouch.ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
+			GeneratedPdfView = (UIView)ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
 			// Getting a Puratap logo on the receipt
 			using (var image = UIImage.FromBundle("Images/puratap-logo") )
 				((UIImageView)GeneratedPdfView.ViewWithTag(MyConstants.ReceiptPDFTemplateTags.Logo)).Image = image;
@@ -335,13 +334,13 @@ namespace Puratap
 			
 			// Adjusting the dimensions of the views for the job list to fit and for payment info to be placed directly after the end of the job list
 			UIView jobList = (UIView)GeneratedPdfView.ViewWithTag (28);
-			jobList.Frame = new RectangleF(jobList.Frame.X, jobList.Frame.Y, jobList.Frame.Width, Math.Min (41 + (jobCount-1)*29, 186));
+			jobList.Frame = new CGRect(jobList.Frame.X, jobList.Frame.Y, jobList.Frame.Width, Math.Min (41 + (jobCount-1)*29, 186));
 			UIView paymentInfo = (UIView)GeneratedPdfView.ViewWithTag (29);
-			paymentInfo.Frame = new RectangleF(paymentInfo.Frame.X, jobList.Frame.Y+jobList.Frame.Height+20, paymentInfo.Frame.Width, paymentInfo.Frame.Height);
+			paymentInfo.Frame = new CGRect(paymentInfo.Frame.X, jobList.Frame.Y+jobList.Frame.Height+20, paymentInfo.Frame.Width, paymentInfo.Frame.Height);
 			
 			// Adjusting the frame of the main view so that we won't use any whitespace unnecessarily
-			float lowestPdfPoint = paymentInfo.Frame.Y + paymentInfo.Frame.Height;
-			GeneratedPdfView.Frame = new RectangleF(GeneratedPdfView.Frame.X, GeneratedPdfView.Frame.Y, GeneratedPdfView.Frame.Width, lowestPdfPoint+10);
+			nfloat lowestPdfPoint = paymentInfo.Frame.Y + paymentInfo.Frame.Height;
+			GeneratedPdfView.Frame = new CGRect(GeneratedPdfView.Frame.X, GeneratedPdfView.Frame.Y, GeneratedPdfView.Frame.Width, lowestPdfPoint+10);
 			// MyConstants.PrintPDFFile (pdfFileName);
 		}
 
@@ -1448,13 +1447,13 @@ namespace Puratap
 			string CurrentValue = textField.Text;
 			string formattedValue = CurrentValue;
 			
-			char maskChar = ccNumberMask[range.Location];
+			char maskChar = ccNumberMask[Convert.ToInt32(range.Location)];
 			if (maskChar != '9') 
 			{ 
 				formattedValue += maskChar; 
 				if (range.Location+1 < ccNumberMask.Length) 
 				{
-					maskChar = ccNumberMask[range.Location+1];
+					maskChar = ccNumberMask[Convert.ToInt32(range.Location + 1)];
 					if (maskChar==' ') formattedValue += maskChar;
 				}
 			}
@@ -1515,16 +1514,16 @@ namespace Puratap
 			
 			// if iOS 7 -- bring the toolbar down 14 pixels
 			if (UIDevice.CurrentDevice.SystemVersion.Split ('.')[0] == "7") {
-				RectangleF current = this.myToolbar.Frame;
+				CGRect current = this.myToolbar.Frame;
 
-				this.myToolbar.Frame = new RectangleF (current.X, current.Y+14, current.Width, current.Height);
+				this.myToolbar.Frame = new CGRect (current.X, current.Y+14, current.Width, current.Height);
 				this.myToolbar.SetNeedsLayout ();
 			}
 			// if iOS 7 -- bring the toolbar down 40 pixels -- tested on Greg D.'s iPad -- not many iOS 6 devices left
 			if (UIDevice.CurrentDevice.SystemVersion.Split ('.')[0] == "6") {
-				RectangleF current = this.myToolbar.Frame;
+				CGRect current = this.myToolbar.Frame;
 
-				this.myToolbar.Frame = new RectangleF (current.X, current.Y+40, current.Width, current.Height);
+				this.myToolbar.Frame = new CGRect (current.X, current.Y+40, current.Width, current.Height);
 				this.myToolbar.SetNeedsLayout ();
 			}
 						
@@ -1537,7 +1536,7 @@ namespace Puratap
 			Summary = new JobSummary(_navWorkflow, _navWorkflow._tabs, new RootElement("Job Summary"), false);
 			Summary.View.AutosizesSubviews = false;
 			Summary.View.AutoresizingMask = UIViewAutoresizing.None;
-			Summary.View.Frame = new RectangleF(20,411,663,233); // upper position = (20,60,663,353)
+			Summary.View.Frame = new CGRect(20,411,663,233); // upper position = (20,60,663,353)
 			this.View.AddSubview (Summary.TableView);
 			this.View.SetNeedsLayout();
 

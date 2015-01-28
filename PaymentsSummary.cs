@@ -5,9 +5,9 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Data;
 using MonoTouch.Dialog;
-using MonoTouch.UIKit;
-using MonoTouch.MessageUI;
-using MonoTouch.Foundation;
+using UIKit;
+using MessageUI;
+using Foundation;
 using Mono.Data.Sqlite;
 using ZSDK_Test;
 
@@ -79,7 +79,7 @@ namespace Puratap
 							MyConstants.DEBUG_TODAY.Substring (2,10),
 							dailySummaryType) );
 
-					NSAction act = delegate {	};
+					Action act = delegate {	};
 					
 					mail.SetSubject (String.Format ("{0} summary {1}", dailySummaryType, MyConstants.DEBUG_TODAY.Substring (2,10) ));
 					mail.SetToRecipients (new string[] { "myemail@puratap.com" });

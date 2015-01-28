@@ -4,7 +4,7 @@
 // actions made in the Xcode designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 
 namespace Puratap
 {
@@ -12,12 +12,12 @@ namespace Puratap
 	partial class Memos
 	{
 		[Outlet]
-		MonoTouch.UIKit.UITextView oMemoText { get; set; }
+		UIKit.UITextView oMemoText { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITableView oMemosTable { get; set; }
+		UIKit.UITableView oMemosTable { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel oMemoLabel { get; set; }
+		UIKit.UILabel oMemoLabel { get; set; }
 	}
 }

@@ -1,4 +1,4 @@
-using MonoTouch.UIKit;
+using UIKit;
 using System;
 
 namespace Puratap
@@ -17,7 +17,7 @@ namespace Puratap
 			get { return _chosenPart; }
 			set {
 				_chosenPart = value;
-				PopViewControllerAnimated (true);
+				PopViewController (true);
 				if (this.TopViewController != null)
 				{
 					(this.TopViewController as UsedPartsViewController).PartChosen(ChosenPart, false);
@@ -30,7 +30,7 @@ namespace Puratap
 			get { return _chosenAssembly; }
 			set { 
 				_chosenAssembly = value;
-				PopViewControllerAnimated(true);
+				PopViewController(true);
 				if (this.TopViewController != null) {
 					(this.TopViewController as UsedPartsViewController).AssemblyChosen (ChosenAssembly, false);
 				}

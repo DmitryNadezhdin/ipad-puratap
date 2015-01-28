@@ -1,15 +1,11 @@
-using MonoTouch.GLKit;
-using MonoTouch.UIKit;
-using MonoTouch.CoreGraphics;
-
+using GLKit;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.IO;
-using System.Drawing;
 using System.Runtime.InteropServices;
-
-using MonoTouch.Foundation;
-
-using MonoTouch.OpenGLES;
+using Foundation;
+using OpenGLES;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.ES20;
@@ -49,9 +45,9 @@ namespace Puratap
 		{
 			this.Tabs = tabs;			
 			// PDFView = new UIWebView(new RectangleF(0,20,703,748));
-			pdfView = new UIWebView (new RectangleF(0, 64, 703, 448)); //(20,40,663,448));
+			pdfView = new UIWebView (new CGRect(0, 64, 703, 448)); //(20,40,663,448));
 
-			Signature = new GLSignatureView(new RectangleF(0,516,743,150), this); // new BezierSignatureView
+			Signature = new GLSignatureView(new CGRect(0,516,743,150), this); // new BezierSignatureView
 		}
 		
 		public override void ViewDidLoad ()
@@ -83,18 +79,18 @@ namespace Puratap
 	{		
 		NewSignatureViewController nsvc;
 
-		private PointF touchLocation;
-		private PointF prevTouchLocation;
+		private CGPoint touchLocation;
+		private CGPoint prevTouchLocation;
 		private CGPath drawPath;
 
 		private UIPanGestureRecognizer panner = null;
 
-		[Export ("BezierSignatureViewPan")]
-		protected void pan(UIPanGestureRecognizer sender)
+		[Export ("BezierSignatureViewPan:")]
+		unsafe protected void pan(UIPanGestureRecognizer sender)
 		{
 			if (nsvc.SigningMode == true) {
 				this.touchLocation = sender.LocationInView (this);
-				PointF mid = BezierSignatureView.MidPoint (this.touchLocation, this.prevTouchLocation);
+				CGPoint mid = BezierSignatureView.MidPoint (this.touchLocation, this.prevTouchLocation);
 
 				switch (sender.State) {
 				case UIGestureRecognizerState.Began:
@@ -125,14 +121,14 @@ namespace Puratap
 			SetNeedsDisplay ();			
 		}
 
-		public BezierSignatureView (RectangleF frame, NewSignatureViewController root) : base(frame)
+		public BezierSignatureView (CGRect frame, NewSignatureViewController root) : base(frame)
 		{
 			this.nsvc = root;
 			this.drawPath = new CGPath ();
 			this.BackgroundColor = UIColor.Yellow;
 			this.MultipleTouchEnabled = false;
 
-			panner = new UIPanGestureRecognizer (this, new MonoTouch.ObjCRuntime.Selector("BezierSignatureViewPan"));
+			panner = new UIPanGestureRecognizer (this, new ObjCRuntime.Selector("BezierSignatureViewPan:"));
 			panner.MaximumNumberOfTouches = panner.MinimumNumberOfTouches = 1;
 			this.AddGestureRecognizer (panner);
 		}
@@ -154,7 +150,7 @@ namespace Puratap
 			return returnImg;
 		}
 
-		public override void Draw (RectangleF rect)
+		public override void Draw (CGRect rect)
 		{
 			using (CGContext context = UIGraphics.GetCurrentContext()) 
 			{
@@ -165,8 +161,8 @@ namespace Puratap
 			}
 		}
 
-		public static PointF MidPoint(PointF p0, PointF p1) {
-			return new PointF() {
+		public static CGPoint MidPoint(CGPoint p0, CGPoint p1) {
+			return new CGPoint() {
 				X = (float)((p0.X + p1.X) / 2.0),
 				Y = (float)((p0.Y + p1.Y) / 2.0)
 			};
@@ -232,8 +228,8 @@ namespace Puratap
 		float previousThickness;
 
 		// Previous points for quadratic bezier computations
-		PointF previousPoint;
-		PointF previousMidPoint;
+		CGPoint previousPoint;
+		CGPoint previousMidPoint;
 		NICSignaturePoint previousVertex;
 
 		// NICSignaturePoint currentVelocity;
@@ -279,12 +275,12 @@ namespace Puratap
 			(*length) ++;
 		}
 
-		private PointF QuadraticPointInCurve(PointF start, PointF end, PointF controlPoint, float percent) {
+		private CGPoint QuadraticPointInCurve(CGPoint start, CGPoint end, CGPoint controlPoint, float percent) {
 			double a = Math.Pow ((1.0 - percent), 2.0);
 			double b = 2.0 * percent * (1.0 - percent);
 			double c = Math.Pow (percent, 2.0);
 
-			return new PointF { 
+			return new CGPoint { 
 				X = (float) (a * start.X + b * controlPoint.X + c * end.X),
 				Y = (float) (a * start.Y + b * controlPoint.Y + c * end.Y)
 			};
@@ -308,7 +304,7 @@ namespace Puratap
 			return pVector;
 		}
 
-		private NICSignaturePoint ViewPointToGL (PointF viewPoint, RectangleF bounds, Vector3 color) {
+		private NICSignaturePoint ViewPointToGL (CGPoint viewPoint, CGRect bounds, Vector3 color) {
 			NICSignaturePoint GLPoint = new NICSignaturePoint ();
 			GLPoint.Vertex.X = (float) (viewPoint.X / bounds.Size.Width * 2.0 - 1);
 			GLPoint.Vertex.Y = (float) ( ((viewPoint.Y / bounds.Size.Height) * 2.0 - 1) * (-1) );
@@ -346,7 +342,7 @@ namespace Puratap
 		}
 			
 		// Constructor(s)
-		public GLSignatureView(RectangleF frame, NewSignatureViewController root) : base(frame)
+		public GLSignatureView(CGRect frame, NewSignatureViewController root) : base(frame)
 		{
 			nsvc = root;
 			this.EnableSetNeedsDisplay = true;
@@ -366,11 +362,11 @@ namespace Puratap
 				this.SetupGL ();
 
 				// set up gesture recognizers
-				panner = new UIPanGestureRecognizer (this, new MonoTouch.ObjCRuntime.Selector ("GLSignatureViewPan:"));
+				panner = new UIPanGestureRecognizer (this, new ObjCRuntime.Selector ("GLSignatureViewPan:"));
 				panner.MaximumNumberOfTouches = panner.MinimumNumberOfTouches = 1;
 				this.AddGestureRecognizer (panner);
 
-				tapper = new UITapGestureRecognizer (this, new MonoTouch.ObjCRuntime.Selector ("GLSignatureViewTap:"));
+				tapper = new UITapGestureRecognizer (this, new ObjCRuntime.Selector ("GLSignatureViewTap:"));
 				this.AddGestureRecognizer (tapper);
 			} else
 				throw new Exception ("Failed to create OpenGL ES2 context");
@@ -381,7 +377,7 @@ namespace Puratap
 		unsafe protected void tap(UITapGestureRecognizer sender)
 		{
 			if (nsvc.SigningMode) {
-				PointF l = sender.LocationInView (this);
+				CGPoint l = sender.LocationInView (this);
 				if (sender.State == UIGestureRecognizerState.Recognized) {
 
 					this.nsvc.hasBeenSigned = true;
@@ -409,7 +405,7 @@ namespace Puratap
 					double angle = 0;
 
 					// Our view height is much less than width, for them dots to be more roundy
-					float uncompressY = this.Frame.Width / this.Frame.Height;
+					float uncompressY = (float) (this.Frame.Width / this.Frame.Height);
 
 					for (int i = 0; i <= segments; i++) {
 						NICSignaturePoint p = centerPoint;
@@ -442,8 +438,8 @@ namespace Puratap
 			if (nsvc.SigningMode) {
 				GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBuffer);
 
-				PointF vel = sender.VelocityInView (this);
-				PointF loc = sender.LocationInView (this);
+				CGPoint vel = sender.VelocityInView (this);
+				CGPoint loc = sender.LocationInView (this);
 
 				// currentVelocity = this.ViewPointToGL (vel, this.Frame, GLSignatureView.StrokeColor);
 				float distance = 0.0f;
@@ -480,7 +476,7 @@ namespace Puratap
 						break;
 					}
 				case UIGestureRecognizerState.Changed: {
-						PointF mid = new PointF ((loc.X + previousPoint.X) / 2.0f, (loc.Y + previousPoint.Y) / 2.0f);
+						CGPoint mid = new CGPoint ((loc.X + previousPoint.X) / 2.0f, (loc.Y + previousPoint.Y) / 2.0f);
 
 						if (distance > QUADRATIC_DISTANCE_TOLERANCE) {
 							// Plot quadratic Bezier line instead of a straight
@@ -493,7 +489,7 @@ namespace Puratap
 							for (i = 0; i < segments; i++) {
 								this.penThickness = startPenThickness + ((endPenThickness - startPenThickness) / segments) * i;
 
-								PointF quadPoint = QuadraticPointInCurve (previousMidPoint, mid, previousPoint, (float)i / (float)segments);
+								CGPoint quadPoint = QuadraticPointInCurve (previousMidPoint, mid, previousPoint, (float)i / (float)segments);
 								NICSignaturePoint v = this.ViewPointToGL (quadPoint, this.Frame, GLSignatureView.StrokeColor);
 								this.AddTriangleStripPointsForPreviousPoint (this.previousVertex, v);
 								this.previousVertex = v;
@@ -552,7 +548,7 @@ namespace Puratap
 		}
 
 		bool generatingImage = false; 
-		public override void Draw (RectangleF rect)
+		public override void Draw (CGRect rect)
 		{
 			if (!generatingImage) 
 				// view background is yellow while signing
@@ -640,7 +636,7 @@ namespace Puratap
 			vertexLength = 0;
 			dotsLength = 0;
 			penThickness = 0.004f;
-			previousPoint = new PointF { X = -100, Y = -100 };
+			previousPoint = new CGPoint { X = -100, Y = -100 };
 		}
 
 		private void TearDownGL()

@@ -1,9 +1,8 @@
-using MonoTouch.UIKit;
-using MonoTouch.CoreGraphics;
-using System.Drawing;
+using UIKit;
+using CoreGraphics;
 using System;
 using System.IO;
-using MonoTouch.Foundation;
+using Foundation;
 
 namespace Puratap
 {	
@@ -14,7 +13,7 @@ namespace Puratap
 		public bool hasBeenSigned;
 		
 		private UIImageView _sig;
-		private PointF lastPoint;
+		private CGPoint lastPoint;
 		private int mouseMoved;
 		private bool mouseSwiped;
 		
@@ -43,7 +42,7 @@ namespace Puratap
 		{
 			this._tabs = tabs;
 			
-			PDFView = new UIWebView(new RectangleF(0,20,703,748));
+			PDFView = new UIWebView(new CGRect(0,20,703,748));
 			
 			ToolbarItems = new UIBarButtonItem[] {
 				new UIBarButtonItem(UIBarButtonSystemItem.Reply),
@@ -88,7 +87,7 @@ namespace Puratap
 			
 			_sig = new UIImageView();
 			_sig.Image = new UIImage();
-			_sig.Frame = new RectangleF(0, 0, sigCanvas.Frame.Size.Width, sigCanvas.Frame.Size.Height);
+			_sig.Frame = new CGRect(0, 0, sigCanvas.Frame.Size.Width, sigCanvas.Frame.Size.Height);
 			_sig.AutoresizingMask = UIViewAutoresizing.FlexibleWidth; // resizing an image: concern!
 
 			sigCanvas.AddSubview (_sig);
@@ -120,10 +119,10 @@ namespace Puratap
 				mouseSwiped = true;
 				
 				UITouch touch = (UITouch)touches.AnyObject;
-				PointF currentPoint = touch.LocationInView (sigCanvas);
+				CGPoint currentPoint = touch.LocationInView (sigCanvas);
 				// Console.WriteLine("Event fired: TouchesMoved: "+currentPoint.ToString ());			
 				UIGraphics.BeginImageContext (sigCanvas.Frame.Size);			
-				_sig.Image.Draw (new RectangleF(0,0, sigCanvas.Frame.Size.Width, sigCanvas.Frame.Size.Height));
+				_sig.Image.Draw (new CGRect(0,0, sigCanvas.Frame.Size.Width, sigCanvas.Frame.Size.Height));
 				
 				CGContext cgc = UIGraphics.GetCurrentContext ();
 				cgc.SetLineCap(CGLineCap.Round);
@@ -160,7 +159,7 @@ namespace Puratap
 				
 				if (!mouseSwiped) {
 					UIGraphics.BeginImageContext (sigCanvas.Frame.Size);			
-					_sig.Image.Draw (new RectangleF(0,0, sigCanvas.Frame.Size.Width, sigCanvas.Frame.Size.Height));
+					_sig.Image.Draw (new CGRect(0,0, sigCanvas.Frame.Size.Width, sigCanvas.Frame.Size.Height));
 					CGContext cgc = UIGraphics.GetCurrentContext ();
 					cgc.SetLineCap(CGLineCap.Round);
 					cgc.SetLineWidth (5);

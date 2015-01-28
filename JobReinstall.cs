@@ -1,8 +1,8 @@
 using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using CoreGraphics;
+using UIKit;
 using MonoTouch.Dialog;
-using MonoTouch.Foundation;
+using Foundation;
 using System.Collections.Generic;
 
 namespace Puratap
@@ -22,7 +22,7 @@ namespace Puratap
 			EntryElement pressureElement = new EntryElement("Pressure", "Value", "", false);
 			pressureElement.KeyboardType = UIKeyboardType.NumbersAndPunctuation;
 			OptionsSection.Add (pressureElement);
-			OptionsSection.EntryAlignment = new SizeF(565, 20);
+			OptionsSection.EntryAlignment = new CGSize(565, 20);
 			
 			Root.Add(OptionsSection); 
 			

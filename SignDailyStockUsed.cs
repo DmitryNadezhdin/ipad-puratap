@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using System.Drawing;
+using CoreGraphics;
 using System.Collections.Generic;
 using Mono.Data.Sqlite;
-using MonoTouch.UIKit;
+using UIKit;
 using MonoTouch.Dialog;
-using MonoTouch.Foundation;
+using Foundation;
 
 namespace Puratap
 {
@@ -148,7 +148,7 @@ namespace Puratap
 				{
 					RedrawDailyStockPDF (true);
 					
-					PointF offset = new PointF(0, this.PDFView.ScrollView.ContentSize.Height - this.PDFView.ScrollView.Bounds.Height);
+					CGPoint offset = new CGPoint(0, this.PDFView.ScrollView.ContentSize.Height - this.PDFView.ScrollView.Bounds.Height);
 					PDFView.ScrollView.SetContentOffset (offset, true);
 					// Signature.Image = new UIImage();
 					Signature.Clear ();
@@ -176,7 +176,7 @@ namespace Puratap
 		public void GenerateStockUsedPDFPreview()
 		{
 			NSArray a = NSBundle.MainBundle.LoadNib ("DailyStockUsedPDFTemplate", this, null);
-			GeneratedPDFView = (UIView)MonoTouch.ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
+			GeneratedPDFView = (UIView)ObjCRuntime.Runtime.GetNSObject (a.ValueAt (0));
 
 			UILabel tl = (UILabel) GeneratedPDFView.ViewWithTag (1);
 			tl.Text = "Employee name: " + MyConstants.EmployeeName;
@@ -193,14 +193,14 @@ namespace Puratap
 
 			// if (dvc.Root[0].Count > 17)
 			{
-				float calculatedHeight = dvc.Root[0].Count * Math.Max(dvc.TableView.RowHeight, 44) + 44;
-				GeneratedPDFView.Frame = new RectangleF(GeneratedPDFView.Frame.X, GeneratedPDFView.Frame.Y, GeneratedPDFView.Frame.Width, usedStock.TableView.Frame.Y+calculatedHeight+114); 
-				usedStock.TableView.Frame = new RectangleF(usedStock.TableView.Frame.X, usedStock.TableView.Frame.Y, usedStock.TableView.Frame.Width, calculatedHeight);
+				float calculatedHeight = (float) (dvc.Root[0].Count * Math.Max(dvc.TableView.RowHeight, 44) + 44);
+				GeneratedPDFView.Frame = new CGRect(GeneratedPDFView.Frame.X, GeneratedPDFView.Frame.Y, GeneratedPDFView.Frame.Width, usedStock.TableView.Frame.Y+calculatedHeight+114); 
+				usedStock.TableView.Frame = new CGRect(usedStock.TableView.Frame.X, usedStock.TableView.Frame.Y, usedStock.TableView.Frame.Width, calculatedHeight);
 
 				UIView sig = GeneratedPDFView.ViewWithTag (4);
-				sig.Frame = new RectangleF(sig.Frame.X, usedStock.TableView.Frame.Y+usedStock.TableView.Frame.Height+8, sig.Frame.Width, sig.Frame.Height);
+				sig.Frame = new CGRect(sig.Frame.X, usedStock.TableView.Frame.Y+usedStock.TableView.Frame.Height+8, sig.Frame.Width, sig.Frame.Height);
 				tl = (UILabel) GeneratedPDFView.ViewWithTag (5);
-				tl.Frame = new RectangleF(tl.Frame.X, usedStock.TableView.Frame.Y+usedStock.TableView.Frame.Height+8, tl.Frame.Width, tl.Frame.Height);
+				tl.Frame = new CGRect(tl.Frame.X, usedStock.TableView.Frame.Y+usedStock.TableView.Frame.Height+8, tl.Frame.Width, tl.Frame.Height);
 
 
 				// sig.Dispose (); sig = null;

@@ -3,9 +3,9 @@ using System.IO;
 using System.Data;
 using System.Collections.Generic;
 using System.Linq;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
-using System.Drawing;
+using Foundation;
+using UIKit;
+using CoreGraphics;
 using Mono.Data.Sqlite;
 using MonoTouch.Dialog;
 
@@ -65,7 +65,7 @@ namespace Puratap
 			get { return _chosenPart; }
 			set {
 				_chosenPart = value;
-				PopViewControllerAnimated (true);
+				PopViewController (true);
 				if (this.TopViewController != null) // && this.TopViewController.GetType ().Name == "FilterChangeViewController")
 					(this.TopViewController as UsedPartsViewController).PartChosen(ChosenPart, false);
 			}
